@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useState} from "react";
 import {createRoot} from "react-dom/client";
-import {offers,byName,defaults} from "./catalog.js";
+import {offers,byName,defaults,isModeled} from "./catalog.js";
 import {BASE,evaluate,diagnose,specialDecision} from "./engine.js";
 import {access,nodes,groups} from "./warplans.js";
 import {strategies,analyzeSetup} from "./strategy.js";
@@ -18,7 +18,7 @@ function Selector({value,change,placeholder}){
    query&&h("button",{type:"button",className:"clear-inline",onClick:()=>{setQuery("");change("");setOpen(true)}},"×"),
    open&&results.length>0&&h("div",{className:"dropdown"},...results.map(o=>h("button",{key:o.name,type:"button",onMouseDown:e=>e.preventDefault(),onClick:()=>{setQuery(o.name);change(o.name);setOpen(false)}},
       h("span",null,o.name),h("small",null,o.kind+" · "+o.detail)))))
-  ,picked&&h("div",{className:"offer-description"},h("span",{className:"tag"},picked.kind),h("span",null,picked.detail),picked.approximate&&h("span",{className:"uncertain"},"Approximate mechanics")));
+  ,picked&&h("div",{className:"offer-description"},h("span",{className:"tag"},picked.kind),h("span",null,picked.detail),!isModeled(picked.name)?h("span",{className:"uncertain"},"Not yet simulated"):picked.approximate&&h("span",{className:"uncertain"},"Approximate mechanics")));
 }
 function WarPlanPanel({state,setState}){
  const selected=state.warNodes||[];
@@ -56,9 +56,9 @@ function Recommendations({state}){
 const clean=s=>String(s||"").trim();
 function App(){
  const [state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
- const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]);
+ const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]&&isModeled(x));const unmodeled=[...new Set(selected)].filter(x=>byName[x]&&!isModeled(x));
  useEffect(()=>{localStorage.setItem(KEY,JSON.stringify(state))},[state]);
- function compute(){if(valid.length<2){setFeedback("Select at least two known offers to compare.");return}setRunning(true);setTimeout(()=>{const s=valid.map(o=>evaluate(state,o,Number(state.assumptions.samples)||1200)).sort((a,b)=>b.mean-a.mean);setScores(s);setRunning(false);setFeedback("")},20)}
+ function compute(){if(valid.length<2){setFeedback("Need two model-supported offers to compare. Unmodeled offers are identified separately; they are not falsely scored as +0.");return}setRunning(true);setTimeout(()=>{const s=valid.map(o=>evaluate(state,o,Number(state.assumptions.samples)||1200)).sort((a,b)=>b.mean-a.mean);setScores(s);setRunning(false);setFeedback("")},20)}
  function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null)}
  function link(){const url=location.origin+location.pathname+"#run="+encodeURIComponent(JSON.stringify(state));setShare(url);return url}
  async function copy(){const url=link();try{await navigator.clipboard.writeText(url);setFeedback("Share link copied.")}catch{setFeedback("Clipboard access blocked. Select and copy the URL below.")}}
