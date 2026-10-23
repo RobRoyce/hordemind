@@ -107,3 +107,32 @@ jobs:
       - name: Publish v2 only after all test and database gates pass
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify-public:
+    name: Verify public Pages release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Verify v2 HTML and JavaScript available over HTTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://robroyce.github.io/hordemind/"
+          for attempt in $(seq 1 30); do
+            if html="$(curl --fail --silent --show-error --location --max-time 12 "${base}?version=${GITHUB_SHA}")" && grep -q 'HordeMind 2' <<< "$html"; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "::error::Published page did not return v2 HTML."
+              exit 1
+            fi
+            sleep 5
+          done
+          js_path="$(grep -oE 'src="\./assets/[^"]+\.js"' <<< "$html" | head -n1 | cut -d '"' -f2)"
+          test -n "$js_path" || { echo "::error::Vite JavaScript bundle missing from live HTML."; exit 1; }
+          curl --fail --silent --show-error --location --max-time 15 "${base}${js_path#./}" --output /tmp/hordemind-v2-live.js
+          bytes="$(wc -c < /tmp/hordemind-v2-live.js)"
+          test "$bytes" -gt 3000 || { echo "::error::Live JavaScript bundle is unexpectedly small."; exit 1; }
+          echo "Verified public HordeMind v2 HTML and ${bytes}-byte JS bundle."

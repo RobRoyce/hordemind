@@ -1,45 +1,61 @@
-# HordeMind — Infernal Hordes Season 15
+# HordeMind
 
-A free, open-source, persistent web app for Diablo IV Infernal Offer decisions. No API keys or ChatGPT credits are needed.
+**Diablo IV · Season 15 · Community-driven Infernal Hordes intelligence**
 
-**Live:** https://robroyce.github.io/hordemind/
+**Website:** https://robroyce.github.io/hordemind/
 
-## How to use
+HordeMind is an open-source project for recording Infernal Hordes decisions and ultimately learning their mechanics from opt-in player observations. The v2 application separates setup, gameplay and analysis.
 
-1. Set your run length, wave, kill speed, and the Infernal Hordes War Plan nodes you actually have.
-2. Add previous offers (search by name or effect).
-3. Enter the three offers on your screen, plus a Chaos / special fourth option if present.
-4. Enable the experimental future-offer lookahead if you want hypothetical long-term synergy analysis.
-5. Compare predicted additional Burning Aether and read the exact reasoning, assumptions, warnings, and event contributions.
-6. Choose the offer and keep playing. Runs are saved in browser storage. Share Run generates a link encoding your current setup.
-7. Optionally record cumulative wave-end Aether and previous offers for coarse yield calibration.
+## Current application
 
-The one-time Black Pact extra choice is tracked; a scenario tool estimates future opportunity cost without pretending future offering probabilities are known.
+- **Strategy Lab:** character profiles, build reference URLs, War Plan branches and clear-speed settings.
+- **Live Run:** record each presented offer, the option selected, the one-time special slot and optional wave Aether/event counts.
+- **Insights:** locally saved run history and exportable JSON.
+- Runs are currently saved **in your browser only**. No account, paid hosting or community data upload is required.
 
-## Modules
+**Important:** the experimental recommender from v1 has **not yet been migrated** to the typed v2 codebase. The new interface is a research-grade recorder foundation, not a completed expected-Aether optimizer. See [M2 tracking issue](https://github.com/RobRoyce/hordemind/issues/3).
 
-- `src/catalog.js` — names, effects, metadata, uncertain and unsupported offer catalog entries
-- `src/engine.js` — seeded, 60-second wave-by-wave Monte Carlo simulation
-- `src/policy.js` — future offer draws, receding-horizon scenarios, and one-time Black Pact stopping approximation
-- `src/warplans.js` — named activity-tree nodes and mutually exclusive paths
-- `src/strategy.js` — synergy archetypes, contextual advice and perk recommendations
-- `src/calibration.js` — cautious total-Aether based rescaling (not causal learning)
-- `src/worker.js` — worker-thread simulation so offer selection remains responsive
-- `src/app.js`, `styles.css` — responsive React interface and styling
-- `tests/` — regression tests and Playwright browser smoke test
+## Run locally (free)
 
-## Scientific honesty
+Prerequisites: Node.js 22+, Docker-compatible runtime (Docker Desktop or OrbStack), Supabase CLI.
 
-The modeled future probabilities and many offer payout/throughput assumptions are **not experimentally verified**. This is an experimental decision aid—not guaranteed-optimal gameplay advice. We deliberately label unsupported mechanics instead of displaying them as +0 Aether. The 5–95% bands are scenario ranges, not confidence intervals.
+```bash
+git clone https://github.com/RobRoyce/hordemind.git
+cd hordemind
 
-See [MODEL.md](docs/MODEL.md) for formulas, references, exact limitations and validation roadmap.
+# Start Dockerized PostgreSQL and local Supabase Auth/Studio
+make up
 
-## Deploy
+cd apps/web
+npm ci
+npm run dev
+```
 
-GitHub Pages deploys from the repository `main` branch root, and each push triggers a deployment. The React client is loaded as browser modules using a pinned esm.sh import map. Simulations run locally in a Web Worker.
+Open http://127.0.0.1:5173. Local Postgres is on 127.0.0.1:54322 and Studio is http://127.0.0.1:54323. No hosted Supabase account is needed. **The frontend currently uses local browser storage even when Postgres is running**; backend sync is a later milestone.
 
-To run unit tests locally on Node 22+: `node tests/engine.test.mjs && node tests/policy.test.mjs && node tests/calibration.test.mjs`.
+To run application checks:
 
-The browser smoke workflow runs headless Chromium against a local HTTP server and verifies selection, comparison and sharing.
+```bash
+make check
+```
 
-No paid services, backend, accounts or subscription credentials are involved.
+See [local development instructions](docs/LOCAL_DEVELOPMENT.md) for database migrations, resetting, and generated types.
+
+## Architecture
+
+- `apps/web` — React/TypeScript/Vite UI and versioned local event journal
+- `supabase/migrations` — PostgreSQL schema with private RLS and append-only run events
+- `supabase/tests` — real Postgres authorization and security regression tests
+- `docs/adr` — architecture and privacy decisions
+- `docs/ROADMAP_V2.md` — development milestones
+- `src/` — archived experimental v1 simulation source, retained for migration and reference
+
+## Quality and deployment
+
+All `main` deployments are built from a pinned npm lockfile and gated on TypeScript, unit tests, a Chromium/Chrome production-build smoke test, and Dockerized PostgreSQL/RLS integration tests. GitHub Actions deploys the validated artifact to GitHub Pages and performs an HTTPS smoke check of the published files.
+
+## Research ethics
+
+Participation will remain optional, and collecting community contributions is not yet enabled. We preserve all presented choices (not just selections) for later probability inference, make model assumptions visible, and distinguish unknown measurements from zero. No Battle.net credentials or game memory access.
+
+See [roadmap](docs/ROADMAP_V2.md), [GitHub issues](https://github.com/RobRoyce/hordemind/issues), and [architecture decisions](docs/adr/0001-local-first-architecture.md).
