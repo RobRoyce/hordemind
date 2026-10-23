@@ -30,6 +30,10 @@ export const BASE={
   Butcher:guide(100)
  },
  hellborneGroup:guide(3,'Hellborne spawn in threes'),
+ /** Aether Events spawn at one of four cardinal points. */
+ eventLocations:guide(4,'Aether Events spawn at one of four cardinal points'),
+ /** Elite packs among the demons killed while filling the progress bar once. */
+ elitesPerFill:assumed(0.5,'Elite spawn rate is unmeasured'),
  /** Ambient Hellfire that Meteoric Hellborne can convert, in Hellborne groups per wave. */
  ambientHellfire:assumed(0.5,'Ambient Hellfire is unmeasured'),
  /** Seconds of demon-killing that fill the progress bar once, spawning one Aether Event. */
@@ -62,6 +66,8 @@ export type Effect=
  |{kind:'payoutMult';event:EventKind;factor:Param}
  /** Changes how often the progress bar yields this event type. */
  |{kind:'weightMult';event:EventKind;factor:Param}
+ /** Ordinary elites can spawn as this event instead (Fiendish Legions); killed in passing, so no extra event time. */
+ |{kind:'replaceElites';spawn:EventKind;chance:Param}
  /** Adds to the Aether Event spawn rate; stacks additively (Exalted Hordes). */
  |{kind:'eventRate';add:Param}
  /** Bane: an event takes longer, e.g. +100% health. */
@@ -113,7 +119,7 @@ export const MECHANICS:readonly OfferMechanics[]=[
  ],['The Ruthless Lords','The Meteoric Hellborne']),
  o('The Ruthless Lords','Lords & Fiends',[{kind:'payoutAdd',event:'Lord',amount:guide(5)}]),
  o('The Enduring Lords','Lords & Fiends',[{kind:'timeMult',event:'Lord',factor:guide(2,'Bane: Lords have +100% health; boon (Lords persist) not modeled')}]),
- o('The Fiendish Legions','Lords & Fiends',[{kind:'weightMult',event:'Fiend',factor:assumed(1.5,'Fiends may replace elites; rate not published')}]),
+ o('The Fiendish Legions','Lords & Fiends',[{kind:'replaceElites',spawn:'Fiend',chance:assumed(0.3,'Fiends can replace elites; the rate is not published')}],['The Exalted Fiends','The Colossal Fiends']),
  o('The Exalted Hellborne','Hellborne',[{kind:'payoutAdd',event:'Hellborne',amount:guide(1)}]),
  o('The Ambushing Hellborne','Hellborne',[{kind:'payoutAdd',event:'Hellborne',amount:guide(1)}]),
  o('The Summoned Hellborne','Hellborne',[
@@ -157,7 +163,11 @@ export const CHAOS_OUTCOMES:readonly {name:string;weight:Param;low:number;high:n
  {name:'Wisps and Burning Butcher',weight:assumed(1,'Equal weights'),low:80,high:220}
 ];
 
-/** War Plan values used by the simulator. */
+/** War Plan values used by the simulator; tooltips from the owner's S15 screenshots. */
 export const WAR_PLAN_EFFECTS={
- Bedlam:disputed(50,'Community guide: +50 Aether on entering a Chaos Wave')
+ Bedlam:observed(50,'Tooltip: +50 Aether when you enter a Chaos Wave'),
+ /** Impending Doom spawns Aether Events at all locations with this many seconds left. */
+ doomSeconds:observed(10,'Tooltip: Aether Events spawn at all locations with 10 seconds remaining'),
+ doomSplinterSeconds:observed(30,'Tooltip: at Splinter of Terror rank 14, also with 30 seconds remaining'),
+ doomSplinterRank:observed(14,'Tooltip: Splinter of Terror rank for the 30-second trigger')
 } as const;

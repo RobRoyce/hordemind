@@ -42,6 +42,18 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 - The engine is pure, with no domain or zod imports, and runs in a worker that receives only a `Scenario`.
 - Explanations come from the simulated component deltas, including losses from time displacement.
 
+## War Plan (owner screenshots, 2026-10-23)
+
+The tree, verbatim tooltips and their use are in [the War Plan research note](research/infernal-hordes-war-plan.md). Effects that change the model:
+- **Impending Doom** is simulated. Aether Events spawn at all four locations with 10 s left, and with 30 s left at Splinter of Terror rank 14.
+- **Bedlam** adds +50 to the Chaotic Offering. The value is from its tooltip.
+- **Reign in Hell** and **Total Chaos** set the number of offer rows in Live Run.
+- Pulse of Aether and Devil's Deal add Aether that is the same for every offer. Cult of Annihilation and Scale of Tathamet are not modeled.
+
+## Fiendish Legions
+
+Fiendish Legions is modeled as elites becoming Aether Fiends, at an assumed 0.5 elites per progress fill and a 30% replacement chance. The elites are killed in passing, so this costs no event time. Under Colossal Fiends they become Lords, which do take time. An earlier version raised the Fiend share of Aether Events instead, which wrongly took Aether from Masses and Spires.
+
 ## Confirmed in game (owner, 2026-10-23)
 
 - The first Infernal Offer is chosen before wave 1 starts.

@@ -36,7 +36,13 @@ try{
  await page.getByLabel('Build',{exact:true}).fill('Blessed Shield');
  await page.getByLabel('Elite / Lord clear speed',{exact:true}).selectOption('fast');
  await page.getByLabel('Mobility',{exact:true}).selectOption('low');
- await page.getByRole('checkbox',{name:/The Black Pact/}).check();
+ const warPlan=name=>page.getByRole('button',{name,exact:true});
+ // Locked upgrades are aria-disabled; force the click to prove it is ignored.
+ await warPlan('The Black Pact').click({force:true});
+ assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'false','locked upgrades cannot be learned');
+ for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await warPlan(name).click();
+ assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'true');
+ assert((await page.locator('.wp-detail').innerText()).includes('An ominous altar appears between waves'));
 
  step('a malformed build link is rejected inline and never blocks saving');
  await page.getByLabel('Build planner link').fill('not a link');
@@ -167,5 +173,6 @@ try{
  // Diagnostics for intermittent failures: what the page showed and logged.
  console.error('Browser errors:',errors);
  console.error('Recommendation panel:',await page.locator('.recommendations').innerText().catch(()=>'(none)'));
+ console.error('War Plan:',await page.locator('.wp-node').evaluateAll(ns=>ns.map(n=>n.textContent+':'+n.className.replace('wp-node ',''))).catch(()=>'(none)'));
  throw error;
 }finally{await browser.close()}

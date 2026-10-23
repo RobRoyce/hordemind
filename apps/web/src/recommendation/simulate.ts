@@ -11,7 +11,7 @@ import {BASE,CHAOS_OUTCOMES,EVENT_KINDS,WAR_PLAN_EFFECTS,mechanicsFor,type Event
 export type Breakdown=Record<EventKind,number>;
 export const emptyBreakdown=():Breakdown=>Object.fromEntries(EVENT_KINDS.map(k=>[k,0])) as Breakdown;
 
-export interface PlayerProfile{killSpeed:'fast'|'average'|'slow'|'unknown';mobility:'high'|'average'|'low'|'unknown';warPlanNodes:readonly string[]}
+export interface PlayerProfile{killSpeed:'fast'|'average'|'slow'|'unknown';mobility:'high'|'average'|'low'|'unknown';warPlanNodes:readonly string[];splinterRank?:number|null}
 
 /** Scales for sensitivity analysis; 1 everywhere is the baseline. */
 export interface Assumptions{completionScale:number;fillScale:number}
@@ -34,6 +34,7 @@ interface Rules{
  start:Map<EventKind,number>;
  onComplete:Map<EventKind,{spawn:EventKind;chance:number}[]>;
  withEvents:Map<EventKind,number>;
+ replaceElites:Map<EventKind,number>;
  payoutAdd:Map<EventKind,number>;
  payoutMult:Map<EventKind,number>;
  weightMult:Map<EventKind,number>;
@@ -52,13 +53,13 @@ const bump=(m:Map<EventKind,number>,k:EventKind,v:number)=>m.set(k,(m.get(k)??0)
 const scale=(m:Map<EventKind,number>,k:EventKind,v:number)=>m.set(k,(m.get(k)??1)*v);
 
 export function rulesFor(spec:WaveSpec):Rules{
- const r:Rules={start:new Map(),onComplete:new Map(),withEvents:new Map(),payoutAdd:new Map(),payoutMult:new Map(),weightMult:new Map(),timeMult:new Map(),
+ const r:Rules={start:new Map(),onComplete:new Map(),withEvents:new Map(),replaceElites:new Map(),payoutAdd:new Map(),payoutMult:new Map(),weightMult:new Map(),timeMult:new Map(),
   eventRate:0,convertFiendFactor:null,groupAdd:0,waveEnd:[],hellfireSources:0,hellfireSpawnsPerSource:0,puffing:0,
   stackSize:spec.stack.length+spec.genericPicks,massOffers:0};
  const picks=spec.stack.map((name,position)=>({m:mechanicsFor(name),position})).filter((x):x is {m:OfferMechanics;position:number}=>x.m!==null);
  // An offer another active offer replaces (Burning Rain under Wrath of Hell) contributes nothing.
  const replaced=new Set(picks.flatMap(({m})=>m.effects.flatMap(e=>e.kind==='waveEnd'&&e.replaces?[e.replaces]:[])));
- const misses=new Map<EventKind,number>();
+ const misses=new Map<EventKind,number>(),eliteMisses=new Map<EventKind,number>();
  for(const {m,position} of picks){
   if(m.category==='Masses')r.massOffers++;
   if(replaced.has(m.id))continue;
@@ -68,6 +69,7 @@ export function rulesFor(spec:WaveSpec):Rules{
     case 'onComplete':{const list=r.onComplete.get(e.from)??[];list.push({spawn:e.spawn,chance:e.chance.value});r.onComplete.set(e.from,list);break}
     // Independent chances combine as 1 − Π(1 − p).
     case 'withEvents':scale(misses,e.spawn,1-e.chance.value);break;
+    case 'replaceElites':scale(eliteMisses,e.spawn,1-e.chance.value);break;
     case 'payoutAdd':bump(r.payoutAdd,e.event,e.amount.value);break;
     case 'payoutMult':scale(r.payoutMult,e.event,e.factor.value);break;
     case 'weightMult':scale(r.weightMult,e.event,e.factor.value);break;
@@ -84,6 +86,7 @@ export function rulesFor(spec:WaveSpec):Rules{
   }
  }
  for(const [k,miss] of misses)r.withEvents.set(k,1-miss);
+ for(const [k,miss] of eliteMisses)r.replaceElites.set(k,1-miss);
  return r;
 }
 
@@ -102,7 +105,7 @@ interface Pending{kind:EventKind;/** Spawned where the player already is, e.g. a
 export function simulateWave(spec:WaveSpec,profile:PlayerProfile,seed:number,assumptions:Assumptions=BASELINE):Breakdown{
  const out=emptyBreakdown();
  const streams={types:random(hash(seed^0x51)),rolls:random(hash(seed^0xa3)),extras:random(hash(seed^0xc7)),chaos:random(hash(seed^0xe9)),
-  hellfire:random(hash(seed^0x2f)),waveEnd:random(hash(seed^0x7d))};
+  hellfire:random(hash(seed^0x2f)),waveEnd:random(hash(seed^0x7d)),elites:random(hash(seed^0x3b))};
  const speed=BASE.clearTime[profile.killSpeed==='unknown'?'average':profile.killSpeed].value;
  if(spec.chaos){
   const total=CHAOS_OUTCOMES.reduce((a,o)=>a+o.weight.value,0);
@@ -141,6 +144,21 @@ export function simulateWave(spec:WaveSpec,profile:PlayerProfile,seed:number,ass
   for(const [extra,chance] of r.withEvents)if(streams.extras()<chance)queue.push(event(extra,false));
  };
 
+ // Impending Doom: Aether Events at every location late in the wave (and earlier at Splinter rank 14).
+ const T=BASE.waveSeconds.value;
+ const doomAt=profile.warPlanNodes.includes('Impending Doom')?[
+  ...((profile.splinterRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?[T-WAR_PLAN_EFFECTS.doomSplinterSeconds.value]:[]),
+  T-WAR_PLAN_EFFECTS.doomSeconds.value]:[];
+ // Elites killed while filling the bar may arrive as another enemy; a converted Lord still takes time.
+ const killElites=(queue:Pending[])=>{
+  for(const [spawn,chance] of r.replaceElites){
+   if(streams.elites()>=BASE.elitesPerFill.value*chance)continue;
+   const e=event(spawn,true);
+   if(e.kind===spawn)pay(spawn);else queue.unshift(e);
+  }
+ };
+ const fireDoom=(queue:Pending[])=>{for(let i=0;i<BASE.eventLocations.value;i++)spawnFromProgress(queue)};
+
  const queue:Pending[]=[];
  for(const [kind,n] of r.start)for(let i=0;i<Math.round(n);i++)queue.push(event(kind,false));
  const hellfireGroups=r.hellfireSpawnsPerSource*(BASE.ambientHellfire.value+r.hellfireSources);
@@ -148,12 +166,15 @@ export function simulateWave(spec:WaveSpec,profile:PlayerProfile,seed:number,ass
  for(let i=0;i<hellfireCount;i++)queue.push(event('Hellborne',false));
 
  let time=0,progress=0,guard=0;
- const T=BASE.waveSeconds.value;
  while(time<T&&guard++<400){
+  while(doomAt.length&&time>=doomAt[0]!){doomAt.shift();fireDoom(queue)}
   const next=queue.shift();
   if(!next){
-   time+=(1-progress)*fill;progress=0;
-   if(time<T)spawnFromProgress(queue);
+   const need=(1-progress)*fill,doom=doomAt[0];
+   // Stop filling at a timed trigger so it fires on time.
+   if(doom!==undefined&&time+need>doom){progress+=(doom-time)/fill;time=doom;continue}
+   time+=need;progress=0;
+   if(time<T){killElites(queue);spawnFromProgress(queue)}
    continue;
   }
   const c=cost(next);
