@@ -5,16 +5,16 @@ up:
 	bash scripts/local-up.sh
 
 down:
-	supabase stop
+	bash scripts/supabase.sh stop
 
 status:
-	supabase status
+	bash scripts/supabase.sh status
 
 reset:
 	bash scripts/local-reset.sh
 
 web dev:
-	cd apps/web && npm run dev
+	cd apps/web && { test -d node_modules || npm ci --no-audit --no-fund; } && npm run dev
 
 # Fast iteration: local commands, without waiting for GitHub Actions.
 check verify:
@@ -33,7 +33,7 @@ verify-db:
 	bash scripts/verify-local.sh --with-db
 
 migrate:
-	supabase db reset
+	bash scripts/local-reset.sh
 
 types:
-	supabase gen types typescript --local > apps/web/src/domain/database.generated.ts
+	bash scripts/supabase.sh gen types typescript --local > apps/web/src/domain/database.generated.ts
