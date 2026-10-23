@@ -1,7 +1,8 @@
 /**
  * Infernal Hordes mechanics as data, each value tagged with where it comes from.
  *
- * `game`: stated or implied by the Diablo IV client text (src/data/game-text.json).
+ * `game`: stated by the Diablo IV client text (src/data/game-text.json).
+ * `implied`: HordeMind's reading of that text, e.g. "spawn an Aether Fiend" read as every time.
  * `observed`: reported from Season 15 play by the project owner.
  * `guide`: Warcraft Tavern and Maxroll agree. `disputed`: sources disagree.
  * `assumed`: no source; a modeling choice to be inferred from recorded runs.
@@ -9,12 +10,13 @@
  */
 import {resolveOffer,type OfferFamily} from '../catalog';
 
-export type Provenance='game'|'observed'|'guide'|'disputed'|'assumed';
+export type Provenance='game'|'implied'|'observed'|'guide'|'disputed'|'assumed';
 export type EventKind='Mass'|'Fiend'|'Lord'|'Spire'|'Hellborne'|'Goblin'|'Butcher'|'Hellfire'|'Chaos'|'Council';
 export const EVENT_KINDS:readonly EventKind[]=['Mass','Fiend','Lord','Spire','Hellborne','Goblin','Butcher','Hellfire','Chaos','Council'];
 
 export interface Param{value:number;provenance:Provenance;note?:string}
 const game=(value:number,note:string):Param=>({value,provenance:'game',note});
+const implied=(value:number,note:string):Param=>({value,provenance:'implied',note});
 const observed=(value:number,note:string):Param=>({value,provenance:'observed',note});
 const guide=(value:number,note?:string):Param=>({value,provenance:'guide',...(note?{note}:{})});
 const disputed=(value:number,note:string):Param=>({value,provenance:'disputed',note});
@@ -47,7 +49,7 @@ export const BASE={
  /** Share of progress still gained while busy at an event, from demons nearby. */
  progressWhileBusy:assumed(0.35,'Unmeasured'),
  /** Which event a filled progress bar produces. */
- eventWeights:{Mass:assumed(0.48,'Unmeasured'),Fiend:assumed(0.32,'Unmeasured'),Spire:assumed(0.2,'Unmeasured'),Lord:game(0,'Lords appear only with The Summoned Lords: "Aether Lords now spawn"')},
+ eventWeights:{Mass:assumed(0.48,'Unmeasured'),Fiend:assumed(0.32,'Unmeasured'),Spire:assumed(0.2,'Unmeasured'),Lord:implied(0,'Lords appear only with The Summoned Lords, read from its bane "Aether Lords now spawn"')},
  /** Seconds to complete an event once there. */
  completion:{
   Mass:assumed(3,'Kill one Aetheric Mass'),Fiend:assumed(3.5,'Kill an Aether Fiend pack'),
@@ -133,7 +135,7 @@ export const MECHANICS:readonly OfferMechanics[]=[
  o('The Hellish Masses',[{kind:'onComplete',from:'Mass',spawn:'Hellborne',chance:guide(0.5,'Game text: "a chance to spawn Hellborne"')}],[...HELLBORNE_PAYOFFS,'The Bursting Masses']),
  o('The Anchored Masses',[{kind:'onComplete',from:'Mass',spawn:'Spire',chance:guide(0.5,'Game text: "a chance to spawn a Soulspire"')}],SPIRE_PAYOFFS),
  o('The Fiendish Masses',[
-  {kind:'onComplete',from:'Mass',spawn:'Fiend',chance:game(1,'"Masses spawn an Aether Fiend on death": every Mass, as worded')},
+  {kind:'onComplete',from:'Mass',spawn:'Fiend',chance:implied(1,'"Masses spawn an Aether Fiend on death" read as every Mass')},
   {kind:'payoutAdd',event:'Mass',amount:game(3,'"Aetheric Masses grant +3 Aether"')}
  ],['The Exalted Fiends','The Colossal Fiends','The Bursting Masses']),
  o('The Gorging Mass',[
@@ -142,7 +144,7 @@ export const MECHANICS:readonly OfferMechanics[]=[
  ],MASS_ENGINE),
  o('The Precious Mass',[
   {kind:'onComplete',from:'Mass',spawn:'Spire',chance:game(0.25,'"+25% chance to spawn a Soulspire on death"')},
-  {kind:'timeMult',event:'Mass',factor:game(2,'"Aetheric Masses +100% health"')}
+  {kind:'timeMult',event:'Mass',factor:implied(2,'"Aetheric Masses +100% health" read as twice the kill time')}
  ],SPIRE_PAYOFFS),
  o('The Blighted Verge',[
   {kind:'weightMult',event:'Mass',factor:assumed(1.33,'"Masses spawn more often"; size assumed')},
@@ -159,7 +161,7 @@ export const MECHANICS:readonly OfferMechanics[]=[
   {kind:'timeMult',event:'Fiend',factor:assumed(2,'Bane: "greatly increased health"; size assumed')}
  ]),
  o('The Colossal Fiends',[
-  {kind:'convert',from:'Fiend',to:'Lord',payoutFactor:game(3,'"Aether Fiends spawn as Aether Lords and drop 3x Aether"; 3× the Lord base assumed')},
+  {kind:'convert',from:'Fiend',to:'Lord',payoutFactor:implied(3,'"drop 3x Aether" read as 3× an Aether Lord\'s 5 Aether')},
   {kind:'hellfireSource',amount:guide(1,'Bane: Lords erupt Hellfire')}
  ],['The Ruthless Lords','The Meteoric Hellborne','The Fiendish Legions']),
  o('The Fiendish Legions',[{kind:'replaceElites',spawn:'Fiend',chance:assumed(0.3,'"Aether Fiends have a chance to spawn in place of Elites"; rate assumed')}],['The Exalted Fiends','The Colossal Fiends','The Surging Elite']),
@@ -204,7 +206,7 @@ export const MECHANICS:readonly OfferMechanics[]=[
  o('The Hungry Spires',[{kind:'payoutAdd',event:'Spire',amount:assumed(3,'"Enemies killed in range of Soulspires have a chance to drop Aether"; about 3 per Spire assumed')}]),
  o('The Rising Spires',[{kind:'startEvents',event:'Spire',count:game(1,'"Wave start, spawn a Soulspire"')}],SPIRE_PAYOFFS),
  o('The Fiendish Spires',[
-  {kind:'onComplete',from:'Spire',spawn:'Fiend',chance:game(1,'"Soulspires spawn an Aether fiend on death": every Spire, as worded')},
+  {kind:'onComplete',from:'Spire',spawn:'Fiend',chance:implied(1,'"Soulspires spawn an Aether fiend on death" read as every Spire')},
   {kind:'payoutAdd',event:'Spire',amount:game(3,'"Soulspires grant +3 Aether"')}
  ],['The Exalted Fiends','The Colossal Fiends']),
  o('The Blighted Spires',[{kind:'onComplete',from:'Spire',spawn:'AetherEvent',chance:assumed(1,'"Soulspires spawn Aether Events"; one per Spire assumed')}],SPIRE_PAYOFFS),

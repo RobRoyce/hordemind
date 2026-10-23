@@ -248,7 +248,8 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
      </div>
      {error&&<p className="error-msg" role="alert">{error}</p>}
     </section>
-    <OfferRecommendations state={rec} slots={slots} chosen={chosen} special={special} remainingWaves={remaining} onChoose={setChosen}/>
+    <OfferRecommendations state={rec} slots={slots} chosen={chosen} special={special} remainingWaves={remaining} onChoose={setChosen}
+     reportContext={`Before wave ${p.nextWave} of ${p.totalWaves}. Taken so far: ${p.chosen.map(x=>x.payload.chosen).join(', ')||'none'}. On screen: ${offers.join(', ')}. War Plan: ${p.profile.warPlanNodes.join(', ')||'none'}. Clear speed ${p.profile.killSpeed}, mobility ${p.profile.mobility}.`}/>
    </div>:
    <section className="surface final">
     {ending?<>

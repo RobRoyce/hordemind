@@ -8,6 +8,7 @@ import {StrategyLab} from './StrategyLab';
 import {LiveRun} from './LiveRun';
 import {Insights} from './Insights';
 import {useSync,type SyncState} from './useSync';
+import {newIssueUrl} from './report';
 
 export type View='strategy'|'run'|'insights';
 const repository=createLocalRepository();
@@ -137,7 +138,7 @@ export function App(){
       <span className="navicon" aria-hidden="true">{icon}</span><span><b>{title}</b><small>{subtitle}</small></span>
      </button>
     )}
-    <div className="nav-foot"><p>Season 15 · experimental</p><span>Recommendations come from an uncalibrated simulator. Runs stay in this browser; nothing is uploaded.</span></div>
+    <div className="nav-foot"><p>Season 15 · experimental</p><span>Recommendations come from an uncalibrated simulator. Runs stay in this browser; nothing is uploaded.</span><a className="report-link" href={newIssueUrl} target="_blank" rel="noreferrer">Spotted something wrong? Report it on GitHub</a></div>
    </nav>
    <main className="workspace">
     {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}

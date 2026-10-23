@@ -60,6 +60,10 @@ Participation will remain optional, and collecting community contributions is no
 
 See [roadmap](docs/ROADMAP_V2.md), [GitHub issues](https://github.com/RobRoyce/hordemind/issues), and [architecture decisions](docs/adr/0001-local-first-architecture.md).
 
+## Found something wrong?
+
+If an offer, War Plan upgrade, number or explanation doesn't match the game, please [open an issue](https://github.com/RobRoyce/hordemind/issues/new/choose). Every estimate and War Plan tooltip in the app has a **Report it** link that fills in the form for you. In-game evidence, such as tooltip text, a screenshot or what happened in your run, is the most useful thing to include.
+
 ## Game data
 
 Offer and War Plan names and effect text are Blizzard Entertainment's, quoted from the Diablo IV client via [DiabloTools/d4data](https://github.com/DiabloTools/d4data) for reference. HordeMind is a fan project, not affiliated with Blizzard.

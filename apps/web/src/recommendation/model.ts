@@ -46,19 +46,22 @@ const SENSITIVITY:readonly (Assumptions&{name:string})[]=[
 const SAMPLE_SEED=0x15a4b4;
 const sum=(b:Breakdown)=>Object.values(b).reduce((a,v)=>a+v,0);
 
-interface Draws{mean:number;low:number;high:number;components:Breakdown}
+/** `noise` is each component's standard error across samples. */
+interface Draws{mean:number;low:number;high:number;components:Breakdown;noise:Breakdown}
 function marginal(s:Scenario,offer:string,samples:number,assumptions:Assumptions=BASELINE,history=s.history,remaining=remainingWaves(s)):Draws{
- const draws:number[]=[],components=emptyBreakdown();
+ const draws:number[]=[],components=emptyBreakdown(),squares=emptyBreakdown();
  for(let i=0;i<samples;i++){
   const seed=hash(SAMPLE_SEED+i*9733);
   const after=simulateRun(history,offer,remaining,s.profile,seed,assumptions);
   const before=simulateRun(history,null,remaining,s.profile,seed,assumptions);
   draws.push(sum(after)-sum(before));
-  for(const k of Object.keys(components) as EventKind[])components[k]+=(after[k]-before[k])/samples;
+  for(const k of Object.keys(components) as EventKind[]){const d=after[k]-before[k];components[k]+=d/samples;squares[k]+=d*d}
  }
  draws.sort((a,b)=>a-b);
  const mean=draws.reduce((a,b)=>a+b,0)/samples;
- return {mean,low:draws[Math.floor(samples*.05)]??mean,high:draws[Math.min(samples-1,Math.floor(samples*.95))]??mean,components};
+ const noise=emptyBreakdown();
+ for(const k of Object.keys(noise) as EventKind[])noise[k]=Math.sqrt(Math.max(0,squares[k]/samples-components[k]**2)/samples);
+ return {mean,low:draws[Math.floor(samples*.05)]??mean,high:draws[Math.min(samples-1,Math.floor(samples*.95))]??mean,components,noise};
 }
 
 const pct=(p:number)=>Math.round(p*100)+'%';
@@ -109,8 +112,10 @@ function payoffOnly(offer:string):EventKind|null{
 function explain(offer:string,s:Scenario,d:Draws):string[]{
  const m=mechanicsFor(offer)!,remain=remainingWaves(s),reasons:string[]=[];
  if(remain===0)return ['No waves remain, so no offer changes your Aether.'];
- const gains=Object.entries(d.components).filter(([,v])=>v>=1).sort((a,b)=>b[1]-a[1]);
- const losses=Object.entries(d.components).filter(([,v])=>v<=-1).sort((a,b)=>a[1]-b[1]);
+ // Only name effects clearly larger than simulation noise (three standard errors).
+ const real=([k,v]:[string,number])=>Math.abs(v)>=1&&Math.abs(v)>3*d.noise[k as EventKind];
+ const gains=Object.entries(d.components).filter(e=>e[1]>0&&real(e)).sort((a,b)=>b[1]-a[1]);
+ const losses=Object.entries(d.components).filter(e=>e[1]<0&&real(e)).sort((a,b)=>a[1]-b[1]);
  const puffing=s.history.some(x=>mechanicsFor(x)?.effects.some(e=>e.kind==='puffing'));
  const payoff=payoffOnly(offer);
  const converted=payoff?s.history.flatMap(x=>mechanicsFor(x)?.effects??[]).find(e=>e.kind==='convert'&&e.from===payoff):undefined;
@@ -133,7 +138,9 @@ function explain(offer:string,s:Scenario,d:Draws):string[]{
   const kinds=new Set(m.effects.map(e=>e.kind));
   reasons.push(m.category==='Chaos'?`Replacing the normal wave gives up its Aether from ${parts(losses)}.`:
    kinds.has('convert')?`Converted events no longer pay as before: ${parts(losses)}.`:
-   ['timeMult','startEvents','onComplete','withEvents','replaceElites','hellfireSpawns','groupAdd'].some(k=>kinds.has(k as Effect['kind']))?`Time spent on its events costs you Aether from ${parts(losses)}.`:
+   // Offers that only add or speed up events can only lose Aether elsewhere by running out of time.
+   ['timeMult','timeAdd','startEvents','onComplete','withEvents','replaceElites','hellfireSpawns','groupAdd','eventRate','weightAdd','eliteRate'].some(k=>kinds.has(k as Effect['kind']))?`Time spent on its events costs you Aether from ${parts(losses)}.`:
+   kinds.has('weightMult')?`It changes which events appear, so you get less from ${parts(losses)}.`:
    `It lowers Aether from ${parts(losses)}.`);
  }
  const effects=m.effects.map(describe).filter((x):x is string=>x!==null);
@@ -145,7 +152,7 @@ function provenanceNotes(offer:string):string[]{
  const m=mechanicsFor(offer)!,notes:string[]=[];
  if(m.category==='Chaos')notes.push('Chaos Wave types follow Maxroll; their odds and payouts are placeholders, not measurements.');
  const params=m.effects.flatMap(e=>Object.values(e).filter((v):v is Param=>typeof v==='object'&&v!==null&&'provenance' in v));
- const label={observed:'Observed in game',guide:'From guides',disputed:'Disputed',assumed:'Assumed'} as const;
+ const label={implied:'Implied by the game text',observed:'Observed in game',guide:'From guides',disputed:'Disputed',assumed:'Assumed'} as const;
  const flagged=params.filter((p):p is Param&{provenance:keyof typeof label}=>p.provenance!=='game');
  notes.push(...flagged.map(p=>`${label[p.provenance]}: ${p.note??p.value}.`));
  if(params.some(p=>p.provenance==='game'))notes.push('Other values come from the game\'s own offer text.');

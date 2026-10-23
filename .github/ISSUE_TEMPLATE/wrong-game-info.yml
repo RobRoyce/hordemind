@@ -1,0 +1,40 @@
+name: Wrong game information
+description: An offer, War Plan upgrade, number or explanation doesn't match what you see in game.
+title: "[Game info] "
+labels: ["game-data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for checking HordeMind against the game. The "Report it" links in the app fill in most of this form for you.
+  - type: input
+    id: item
+    attributes:
+      label: Offer or War Plan upgrade
+      placeholder: The Exalted Hordes
+    validations:
+      required: true
+  - type: textarea
+    id: hordemind
+    attributes:
+      label: What HordeMind says
+      description: The text, number or recommendation that looks wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: game
+    attributes:
+      label: What the game shows or does
+      description: Tooltip text, what happened in your run, or a screenshot. In-game evidence is the most useful thing you can add.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Run context
+      description: Filled in by the app; edit freely.
+  - type: input
+    id: version
+    attributes:
+      label: HordeMind model and game build
+      description: Filled in by the app.

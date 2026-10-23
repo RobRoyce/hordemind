@@ -45,7 +45,8 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 ## Offer catalog from the game client (2026-10-23)
 
 - **Source:** offer names, categories and boon/bane text come from the Diablo IV client strings, via [DiabloTools/d4data](https://github.com/DiabloTools/d4data) build 3.2.3.73883. `make game-text` regenerates `apps/web/src/data/game-text.json`.
-- **Provenance:** values the text states or plainly implies are tagged `game`. Text © Blizzard Entertainment, quoted for reference.
+- **Provenance:** values the text states are tagged `game`. HordeMind's readings of the text are tagged `implied` and flagged on each offer like assumptions, for example "spawn an Aether Fiend on death" read as every Mass. Text © Blizzard Entertainment, quoted for reference.
+- **Explanations** name a category's gain or loss only when it exceeds three standard errors of the simulation. That stops the text from reporting noise as an effect.
 - **What the client files lack:** numeric chances and rates. They appear to be computed server-side, so values such as the 50% Soulspire chance stay `guide` or `assumed`, labelled on each offer. Offers whose effect has no number (The Aether Rush, The Invigorating Hellborne) are not scored.
 - **Corrections this made:**
   - Removed The Corrupting Spires, The Bursting Fiends, The Exalted Masses and The Burning Hellborne, which don't exist.

@@ -94,6 +94,9 @@ try{
  assert(recText.includes('Chaotic Offering'));
  assert.equal(await page.locator('.verdict').count(),1,'robustness verdict shown');
  assert((await page.locator('.recommendations .danger').count())>0,'dangerous banes are flagged');
+ const report=new URL(await page.locator('.recommendations .report-link').first().getAttribute('href'));
+ assert.equal(report.searchParams.get('template'),'wrong-game-info.yml','each estimate links to the wrong-info form');
+ assert(report.searchParams.get('context').includes('Before wave 1 of'),'the report carries the run context');
 
  step('choose with the keyboard and record');
  await page.locator('#decision-title').click();
