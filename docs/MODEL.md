@@ -47,6 +47,7 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 - The first Infernal Offer is chosen before wave 1 starts.
 - **The Black Pact** adds one extra offer that always synergizes with your most recent pick. You can take it instead of the regular offers. Once taken, it does not return.
 - **The Stalking Devil's** Burning Butcher appears once per run, not every wave.
+- **Dying carries no penalty**, in the owner's experience. This contradicts Warcraft Tavern's claim that too many revives forfeit the rewards. Dangerous banes are therefore flagged in the UI, never priced (ADR 0004).
 
 ## Parameter discrepancies (found 2026-10-23)
 

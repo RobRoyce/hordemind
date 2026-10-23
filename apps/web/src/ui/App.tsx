@@ -3,7 +3,7 @@ import type {LocalState,CharacterProfile,RunRecord} from '../domain/schema';
 import {newProfile,newRun} from '../domain/run';
 import {validateProfile} from '../domain/profile';
 import {createLocalRepository,downloadExport,STORAGE_KEY} from '../storage/local';
-import {mergeStates} from '../domain/merge';
+import {mergeStates,reconcile,sameState} from '../domain/merge';
 import {StrategyLab} from './StrategyLab';
 import {LiveRun} from './LiveRun';
 import {Insights} from './Insights';
@@ -43,6 +43,8 @@ export function App(){
  const [view,setView]=useState<View>(viewFromHash);
  const [notice,setNotice]=useState('');
  const noticeTimer=useRef<number|undefined>(undefined);
+ const dataRef=useRef(data);dataRef.current=data;
+ const blockedRef=useRef(blocked);blockedRef.current=blocked;
  const selectedProfile=useMemo(()=>data.profiles.find(x=>x.id===data.activeProfileId)??null,[data]);
  const activeRun=useMemo(()=>data.runs.find(x=>x.id===data.activeRunId)??null,[data]);
  const recent=useMemo(()=>recentOffers(data.runs),[data.runs]);
@@ -58,7 +60,9 @@ export function App(){
    if(event.key!==STORAGE_KEY||!event.newValue)return;
    const theirs=repository.parse(event.newValue);
    if(!theirs)return;
-   setData(old=>{const merged=mergeStates(old,theirs);return JSON.stringify(merged)===JSON.stringify(old)?old:merged});
+   const {adopt,writeBack}=reconcile(dataRef.current,theirs);
+   if(adopt)setData(adopt);
+   else if(writeBack&&!blockedRef.current)try{repository.save(writeBack)}catch(err){setSaveError(err instanceof Error?err.message:String(err))}
   };
   window.addEventListener('storage',onStorage);
   return()=>window.removeEventListener('storage',onStorage);
@@ -73,7 +77,7 @@ export function App(){
   const merged=mergeStates(old,remote);
   // A restored device has no active character yet; pick the most recently edited one.
   if(!merged.activeProfileId&&merged.profiles.length)merged.activeProfileId=[...merged.profiles].sort((x,y)=>y.updatedAt.localeCompare(x.updatedAt))[0]!.id;
-  return JSON.stringify(merged)===JSON.stringify(old)?old:merged;
+  return sameState(merged,old)?old:merged;
  }),[]);
  const [sync,syncControls]=useSync(data,adopt,!blocked);
 

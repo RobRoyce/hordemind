@@ -178,3 +178,9 @@ code{font-size:12px;background:#253042;padding:1px 5px;border-radius:5px}
 .sensitivity th{text-align:left;font-weight:400;color:#c3cbd8;padding:3px 0}
 .sensitivity td{text-align:right;font-variant-numeric:tabular-nums;padding:3px 0}
 .model-footnote summary{cursor:pointer}
+
+/* Bane danger: flagged, never priced */
+.danger{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid}
+.danger-high{color:#ffb4a8;border-color:#a3483b;background:#3d1915}
+.danger-some{color:#f3cf98;border-color:#7d6138;background:#30261a}
+.recommendations .danger-note{font-size:11px;color:#e9b9a6;margin:4px 0}

@@ -1,4 +1,4 @@
-import {forwardRef,useId,useImperativeHandle,useMemo,useRef,useState} from 'react';
+import {forwardRef,useEffect,useId,useImperativeHandle,useMemo,useRef,useState} from 'react';
 import {resolveOffer,searchOffers,type OfferRef} from '../catalog';
 
 /** `offer` is a catalog label, deliberately kept unlisted text, or null while unresolved. */
@@ -16,7 +16,6 @@ interface Props{
  /** Called after a pick so the parent can move focus to the next row. */
  onPicked:()=>void;
 }
-const MAX_SHOWN=8;
 
 export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker({index,slot,recent,onChange,onPicked},ref){
  const id=useId(),listId=id+'-list';
@@ -24,7 +23,9 @@ export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker
  useImperativeHandle(ref,()=>input.current as HTMLInputElement);
  const [open,setOpen]=useState(false);
  const [active,setActive]=useState(0);
- const matches=useMemo(()=>searchOffers(slot.offer?'':slot.text,recent).slice(0,MAX_SHOWN),[slot.text,slot.offer,recent]);
+ // The full list scrolls; keyboard selection keeps the active option in view.
+ const matches=useMemo(()=>searchOffers(slot.offer?'':slot.text,recent),[slot.text,slot.offer,recent]);
+ useEffect(()=>{if(open)document.getElementById(`${listId}-${active}`)?.scrollIntoView({block:'nearest'})},[open,active,listId]);
  const ref_=slot.offer&&!slot.unlisted?resolveOffer(slot.offer):null;
  const unresolved=slot.text.trim()!==''&&slot.offer===null;
 

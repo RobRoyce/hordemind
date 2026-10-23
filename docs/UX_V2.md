@@ -9,6 +9,7 @@
    - An optional "Aether after wave *k−1*" field and collapsed event counts sit above the offers.
    - The recommendation sits beside the offers on wide screens. On narrow screens it sits below, with a one-line summary by the record button.
    - Keys: 1–5 choose a row, Ctrl/⌘+Enter records. Undo prefills the last wave. Ending early is always available.
+   - Offers with a dangerous bane show a *High danger* or *Some danger* badge with the bane text. Danger never changes the estimate.
 3. **Insights**: completed/in-progress runs, event completeness, charts, calibration warnings, future community benchmarks.
 
 ## Keyboard and thumb ergonomics
