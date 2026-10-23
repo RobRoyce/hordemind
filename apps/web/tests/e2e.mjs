@@ -10,7 +10,8 @@ const browser=await chromium.launch({
    : process.env.E2E_BUNDLED_CHROMIUM==='1' ? {} : {channel:'chrome'})
 });
 const base=process.env.E2E_BASE_URL||'http://127.0.0.1:5173/';
-const page=await browser.newPage({viewport:{width:1280,height:900},acceptDownloads:true});
+const context=await browser.newContext({viewport:{width:1280,height:900},acceptDownloads:true});
+const page=await context.newPage();
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text())});
@@ -55,6 +56,11 @@ try{
  assert.equal(await page.getByLabel('Difficulty',{exact:true}).inputValue(),'Torment XII');
  assert.equal(await page.getByLabel('Mobility',{exact:true}).inputValue(),'low');
  assert.equal(await page.getByLabel('Realm',{exact:true}).inputValue(),'Eternal');
+
+ // A second tab opened now holds this state while the first tab records a run.
+ const other=await context.newPage();
+ await other.goto(base+'#strategy',{waitUntil:'domcontentloaded'});
+ await other.getByLabel('Build',{exact:true}).waitFor();
 
  step('start a run: the first offer comes before wave 1');
  await page.getByRole('button',{name:'Start live run'}).click();
@@ -110,8 +116,24 @@ try{
  const stack=await page.locator('.stack').innerText();
  assert(stack.includes('The Puffing Masses')&&stack.includes('The Bursting Masses'));
 
- step('end the run early');
+ step('a second tab editing the profile does not erase recorded waves');
+ await other.getByLabel('Build',{exact:true}).fill('Blessed Shield (tab 2)');
+ await other.close();
+ await page.waitForTimeout(200);
+ const afterTabs=(await stored()).runs[0].events.filter(e=>e.type==='offer_chosen').length;
+ assert.equal(afterTabs,3,'both tabs kept every recorded choice, including the undone one');
+ assert.equal((await stored()).profiles[0].buildName,'Blessed Shield (tab 2)');
+
+ step('end the run early; shortcuts cannot record the hidden decision');
+ await pick(1,'rising','The Rising Spires');
+ await pick(2,'draining','The Draining Spires');
+ await page.locator('#decision-title').click();
+ await page.keyboard.press('1');
  await page.getByRole('button',{name:'End run early'}).click();
+ assert.equal(await page.evaluate(()=>document.activeElement?.textContent),'End this run now?');
+ const before=(await stored()).runs[0].events.length;
+ await page.keyboard.press('Control+Enter');
+ assert.equal((await stored()).runs[0].events.length,before);
  await page.getByLabel(/Final Aether/).fill('190');
  await page.getByRole('button',{name:'End run',exact:true}).click();
  await page.getByRole('heading',{name:'Run ended'}).waitFor();

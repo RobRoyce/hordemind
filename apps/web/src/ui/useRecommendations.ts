@@ -17,7 +17,8 @@ export function useRecommendations(scenario:Scenario|null,offers:string[]):Recom
 
  useEffect(()=>()=>{worker.current?.terminate();worker.current=null},[]);
  useEffect(()=>{
-  if(!key||!scenario){setState({result:null,busy:false,error:''});return}
+  // Invalidate any reply still in flight for the previous offer set.
+  if(!key||!scenario){latest.current++;setState({result:null,busy:false,error:''});return}
   const requestId=++latest.current;
   setState(s=>({...s,busy:true,error:''}));
   const timer=window.setTimeout(()=>{
