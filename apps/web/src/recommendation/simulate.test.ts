@@ -4,25 +4,35 @@ import {simulateRun,simulateWave,rulesFor,hash} from './simulate';
 const average={killSpeed:'average',mobility:'average',warPlanNodes:[]} as const;
 const total=(b:Record<string,number>)=>Object.values(b).reduce((a,v)=>a+v,0);
 const mean=(f:(seed:number)=>number,n=300)=>{let s=0;for(let i=0;i<n;i++)s+=f(hash(i*7919+1));return s/n};
-const plain={index:0,stack:[],newPicks:[],genericPicks:0,chaos:false};
+const plain={index:0,stack:[] as string[],newPickIndex:null as number|null,genericPicks:0,chaos:false};
 
 describe('wave simulator',()=>{
  it('is deterministic for a seed',()=>{
   const spec={...plain,stack:['The Puffing Masses','The Hellish Masses'],genericPicks:2};
   expect(simulateWave(spec,average,42)).toEqual(simulateWave(spec,average,42));
  });
- it('pays Wrath of Hell instead of Burning Rain when both are taken',()=>{
-  expect(rulesFor({...plain,stack:['The Burning Rain','The Wrath of Hell']}).waveEnd).toEqual([{min:15,max:24}]);
+ it('pays Wrath of Hell instead of Burning Rain when both are taken, without doubling Hellfire',()=>{
+  const rules=rulesFor({...plain,stack:['The Burning Rain','The Wrath of Hell']});
+  expect(rules.waveEnd).toEqual([{min:15,max:24}]);
+  expect(rules.hellfireSources).toBe(1);
+ });
+ it('converts every Fiend into a Lord under Colossal Fiends, including Teeming spawns',()=>{
+  const fiends=mean(seed=>simulateWave({...plain,stack:['The Teeming Masses','The Bursting Masses','The Colossal Fiends']},average,seed).Fiend);
+  expect(fiends).toBe(0);
  });
  it('fires a one-time Butcher only in the first wave after the pick',()=>{
   const gain=(waves:number)=>mean(seed=>total(simulateRun([],'The Stalking Devil',waves,average,seed))-total(simulateRun([],null,waves,average,seed)));
   const once=gain(1),many=gain(6);
   expect(once).toBeGreaterThan(50);
   expect(Math.abs(many-once)).toBeLessThan(15);
-  expect(rulesFor({...plain,index:2,stack:['The Stalking Devil'],newPicks:['The Stalking Devil']}).start.get('Butcher')).toBeUndefined();
+  expect(rulesFor({...plain,index:2,stack:['The Stalking Devil'],newPickIndex:0}).start.get('Butcher')).toBeUndefined();
+ });
+ it('fires only the new copy of a first-wave effect already in the stack',()=>{
+  const rules=rulesFor({...plain,stack:['The Stalking Devil','The Stalking Devil'],newPickIndex:1});
+  expect(rules.start.get('Butcher')).toBe(1);
  });
  it('replaces the whole wave with a Chaos outcome',()=>{
-  const w=simulateWave({...plain,stack:['Chaotic Offering'],newPicks:['Chaotic Offering'],chaos:true},average,7);
+  const w=simulateWave({...plain,stack:['Chaotic Offering'],newPickIndex:0,chaos:true},average,7);
   expect(w.Chaos).toBeGreaterThan(0);
   expect(total(w)-w.Chaos).toBe(0);
  });

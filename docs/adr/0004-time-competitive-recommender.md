@@ -34,4 +34,6 @@ The v2 simulator drew fixed Poisson event counts per wave and gave a 60 s × spe
 
 - Throughput assumptions (`fillSeconds`, event mix, completion and travel times) now drive rankings openly. They are the first targets for inference from recorded event counts.
 - With no data, the model's relative ordering roughly matches community grades: Puffing, Colossal Fiends, and the Spire multipliers are strong, and Massing is weak alone. That's reassuring, but it isn't validation.
+- **Banes that threaten survival are not modeled** (Hellfire, damage and attack-speed buffs), only banes that cost time. This flatters offers such as Burning Rain (+120 over 10 waves on an empty stack) relative to guide grades. Modeling survival risk needs death and revive observations.
+- **A review pass (2026-10-23) fixed several bugs.** Synergy arms now hold equal stack sizes. Colossal converts every Fiend. The Pact is not priced against unmodeled offers. Loss wording follows the cause. Net-negative offers lead with the loss. Spawn-on-death events cost no travel.
 - When recorded runs show which offers appear (`offers_presented` keeps every choice set), the Pact and synergy analyses can graduate to expected values estimated from that evidence, with the sample size shown.

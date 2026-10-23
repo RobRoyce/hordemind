@@ -132,3 +132,43 @@ describe('latency',()=>{
   expect(ms).toBeLessThan(2000);
  });
 });
+
+describe('review regressions (timeflow 3.0)',()=>{
+ const quick={sensitivity:false,synergy:false} as const;
+ it('does not report stack-size growth as synergy',()=>{
+  const hordes=compareScenario(state(['The Puffing Masses']),['The Exalted Hordes'],150,{sensitivity:false}).assessments[0];
+  const bursting=hordes?.modeled?hordes.synergies.find(x=>x.offer==='The Bursting Masses'):undefined;
+  if(bursting)expect(bursting.withThis-bursting.without).toBeLessThan(10);
+ });
+ it('cannot price the Pact against an unmodeled regular offer',()=>{
+  const result=compareScenario(state([],3),['The Bursting Masses','The Unmodeled Mystery'],100,{...quick,specialOffer:'The Bursting Masses'});
+  expect(result.pact?.premium).toBeNull();
+  expect(result.pact?.advice).toMatch(/not modeled/);
+ });
+ it('leads with the net loss when an offer costs more than it pays',()=>{
+  const prior=['The Puffing Masses','The Massing Masses','The Teeming Masses','The Bursting Masses'];
+  const anchored=compareScenario(state(prior),['The Anchored Masses'],200,quick).assessments[0];
+  expect(anchored?.modeled&&anchored.mean).toBeLessThan(0);
+  expect(anchored?.modeled&&anchored.reasons[0]).toMatch(/^Costs about \d+ Aether overall/);
+ });
+ it('explains that Colossal Fiends leaves no Fiends for a Fiend bonus',()=>{
+  const fiends=compareScenario(state(['The Colossal Fiends']),['The Exalted Fiends'],150,quick).assessments[0];
+  expect(fiends?.modeled&&fiends.reasons[0]).toMatch(/turns every Aether Fiend into an Aether Lord/);
+ });
+ it('writes plurals and articles correctly',()=>{
+  const text=compareScenario(state([]),['The Bursting Masses','The Teeming Masses','The Surging Hellborne'],100,quick).assessments
+   .flatMap(x=>x.modeled?x.reasons:[]).join(' ');
+  expect(text).toMatch(/Adds 2 Masses at the start/);
+  expect(text).toMatch(/chance to spawn an Aether Fiend/);
+  expect(text).not.toMatch(/Masss|Hellbornes/);
+ });
+ it('scores nothing and claims no robustness when no waves remain',()=>{
+  const result=compareScenario(state([],12),['The Bursting Masses','The Hellish Masses'],100,{synergy:false});
+  expect(result.robust).toBeNull();
+  for(const x of result.assessments)if(x.modeled){expect(x.mean).toBe(0);expect(x.reasons[0]).toMatch(/No waves remain/)}
+ });
+ it('labels Chaos payouts as placeholders',()=>{
+  const chaos=compareScenario(state([]),['Chaotic Offering'],100,quick).assessments[0];
+  expect(chaos?.modeled&&chaos.assumptions.join(' ')).toMatch(/placeholders/);
+ });
+});
