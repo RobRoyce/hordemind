@@ -2,7 +2,7 @@ name: One-time v2 dependency lockfile generation
 on:
   push:
     branches: [feature/v2-foundation]
-    paths: ['.github/workflows/generate-v2-lockfile.yml']
+    paths: ['.github/workflows/generate-v2-lockfile.yml','apps/web/package.json']
 permissions:
   contents: write
 jobs:
