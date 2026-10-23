@@ -13,7 +13,7 @@ HordeMind is an open-source project for recording Infernal Hordes decisions and 
 - **Insights:** locally saved run history and exportable JSON.
 - Runs are currently saved **in your browser only**. No account, paid hosting or community data upload is required.
 
-**Important:** the experimental recommender from v1 has **not yet been migrated** to the typed v2 codebase. The new interface is a research-grade recorder foundation, not a completed expected-Aether optimizer. See [M2 tracking issue](https://github.com/RobRoyce/hordemind/issues/3).
+**Recommendations are back:** Live Run now uses an experimental, typed, Monte Carlo offering comparison with explicit synergy explanations and warnings for unmodeled choices. This is a working recommender, but its parameters are not yet calibrated from gameplay evidence and its Black Pact future opportunity cost is not included in the main ranking. See [M2 tracking issue](https://github.com/RobRoyce/hordemind/issues/3).
 
 ## Run locally (free)
 
@@ -33,11 +33,15 @@ npm run dev
 
 Open http://127.0.0.1:5173. Local Postgres is on 127.0.0.1:54322 and Studio is http://127.0.0.1:54323. No hosted Supabase account is needed. **The frontend currently uses local browser storage even when Postgres is running**; backend sync is a later milestone.
 
-To run application checks:
+Before pushing changes, run the full verification **locally**:
 
 ```bash
-make check
+make verify       # TypeScript + unit tests + production build + browser
+make verify-db    # Same checks plus Docker/Postgres/RLS integration
+make verify-fast  # Skip browser when iterating on domain-only code
 ```
+
+GitHub Actions remains the final release safety net, not our inner debugging loop.
 
 See [local development instructions](docs/LOCAL_DEVELOPMENT.md) for database migrations, resetting, and generated types.
 
