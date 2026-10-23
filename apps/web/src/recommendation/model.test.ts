@@ -192,3 +192,33 @@ describe('Fiendish Legions: Fiends replace elites, not other Aether Events',()=>
   expect(legions?.modeled&&legions.components.Lord).toBeGreaterThan(5);
  });
 });
+
+describe('mechanics from the game client text',()=>{
+ const quick={sensitivity:false,synergy:false} as const;
+ const gain=(history:string[],offer:string,wave=4,n=200)=>{const a=compareScenario(state(history,wave),[offer],n,quick).assessments[0];return a?.modeled?a:null};
+ it('has no Aether Lords unless something spawns them',()=>{
+  const ruthless=gain([],'The Ruthless Lords');
+  expect(ruthless?.mean).toBeCloseTo(0,0);
+  expect(ruthless?.reasons[0]).toMatch(/Nothing in your stack spawns Aether Lords/);
+  expect(gain(['The Summoned Lords'],'The Ruthless Lords')!.mean).toBeGreaterThan(5);
+ });
+ it('turns every Mass into an Aether Fiend under The Fiendish Masses',()=>{
+  expect(gain([],'The Fiendish Masses')!.components.Fiend).toBeGreaterThan(10);
+ });
+ it('pays the Council bonus once, however many waves remain',()=>{
+  const early=gain([],'The Wanderer Withered',1)!.mean,late=gain([],'The Wanderer Withered',10)!.mean;
+  expect(early).toBeCloseTo(25,0);
+  expect(late).toBeCloseTo(25,0);
+ });
+ it('makes The Surging Elite worth more alongside The Fiendish Legions',()=>{
+  expect(gain(['The Fiendish Legions'],'The Surging Elite')!.mean).toBeGreaterThan(gain([],'The Surging Elite')!.mean+3);
+ });
+ it('leaves offers whose effect has no number unscored',()=>{
+  const result=compareScenario(state([]),['The Aether Rush','The Invigorating Hellborne','The Bursting Masses'],100,quick);
+  expect(result.assessments.filter(a=>!a.modeled).map(a=>a.offer).sort()).toEqual(['The Aether Rush','The Invigorating Hellborne']);
+ });
+ it('labels every value by source, game text first',()=>{
+  const fiendish=gain([],'The Fiendish Masses')!;
+  expect(fiendish.assumptions.join(' ')).toMatch(/game's own offer text/);
+ });
+});

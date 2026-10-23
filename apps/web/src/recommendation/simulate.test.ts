@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {simulateRun,simulateWave,rulesFor,hash,type PlayerProfile} from './simulate';
+import {simulateRun,simulateWave,simulateWaveDetailed,rulesFor,hash,type PlayerProfile} from './simulate';
 
 const average={killSpeed:'average',mobility:'average',warPlanNodes:[]} as const;
 const total=(b:Record<string,number>)=>Object.values(b).reduce((a,v)=>a+v,0);
@@ -56,5 +56,19 @@ describe('War Plan: Impending Doom (tooltip, S15)',()=>{
  it('makes offers that pay per event worth more',()=>{
   const puffingGain=(p:PlayerProfile)=>wave(p,['The Puffing Masses'])-wave(p);
   expect(puffingGain(doom)).toBeGreaterThan(puffingGain(average));
+ });
+});
+
+describe('The Enduring Lords',()=>{
+ it('carries unfinished Lords into the next wave',()=>{
+  const slow={killSpeed:'slow',mobility:'low',warPlanNodes:[]} as const;
+  const spec={...plain,stack:['The Summoned Lords','The Enduring Lords']};
+  let carried=0;
+  for(let i=0;i<200;i++)carried+=simulateWaveDetailed(spec,slow,hash(i)).leftover.length;
+  expect(carried).toBeGreaterThan(0);
+  const none={...plain,stack:['The Summoned Lords']};
+  let without=0;
+  for(let i=0;i<200;i++)without+=simulateWaveDetailed(none,slow,hash(i)).leftover.length;
+  expect(without).toBe(0);
  });
 });

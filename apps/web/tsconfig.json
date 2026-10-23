@@ -21,9 +21,11 @@
       "vite/client",
       "vitest/globals"
     ],
-    "noEmit": true
+    "noEmit": true,
+    "resolveJsonModule": true
   },
   "include": [
+    "src/**/*.json",
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts"

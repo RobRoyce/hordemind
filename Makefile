@@ -1,5 +1,5 @@
 SHELL := /usr/bin/env bash
-.PHONY: up down status reset web dev env check verify verify-clean verify-fast verify-db migrate types
+.PHONY: up down status reset web dev env check verify verify-clean verify-fast verify-db migrate types game-text
 
 up:
 	bash scripts/local-up.sh
@@ -41,3 +41,7 @@ migrate:
 
 types:
 	bash scripts/supabase.sh gen types typescript --local > apps/web/src/domain/database.generated.ts
+
+# Regenerate the offer catalog from the game's client text (DiabloTools/d4data). Pass COMMIT=<sha> to pin a newer build.
+game-text:
+	node scripts/import-game-text.mjs $(COMMIT)

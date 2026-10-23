@@ -61,7 +61,12 @@ input[aria-invalid=true]{border-color:#d4788a}
 .fam-lords{color:#f2c97e;border-color:#7d6334;background:#352a17}
 .fam-spires{color:#a9c6f5;border-color:#45608f;background:#1b2840}
 .fam-chaos{color:#d6b4ff;border-color:#6d4c99;background:#2b1f40}
-.fam-other{color:#c9d0db;border-color:#566173;background:#252c38}
+.fam-fiends{color:#f5b98a;border-color:#7d5236;background:#33231a}
+.fam-monsters,.fam-other{color:#c9d0db;border-color:#566173;background:#252c38}
+.fam-hellfire{color:#ffb37a;border-color:#8a4f2c;background:#3a2416}
+.fam-player{color:#bfe3a8;border-color:#4f6e3f;background:#1f2e1a}
+.fam-council{color:#e3b8ff;border-color:#6f4a8a;background:#2a1d36}
+.fam-special{color:#ff9fae;border-color:#8a3d4a;background:#3a1a20}
 .fam-unlisted{color:#c9d0db;border-color:#566173;border-style:dashed;background:transparent}
 
 /* Strategy Lab */

@@ -87,7 +87,7 @@ try{
  await offer(1).press('Enter');
  assert.equal(await offer(1).inputValue(),'The Puffing Masses');
  await pick(2,'massing','The Massing Masses');
- await pick(3,'chaos','Chaotic Offering');
+ await pick(3,'chaos','The Chaotic Offering');
  await page.locator('.recommend-card').first().waitFor({timeout:25000});
  const recText=await page.locator('.recommendations').innerText();
  assert(recText.includes('Aether, modeled'),'modeled estimates shown');
