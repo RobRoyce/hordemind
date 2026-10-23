@@ -42,6 +42,12 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 - The engine is pure, with no domain or zod imports, and runs in a worker that receives only a `Scenario`.
 - Explanations come from the simulated component deltas, including losses from time displacement.
 
+## Confirmed in game (owner, 2026-10-23)
+
+- The first Infernal Offer is chosen before wave 1 starts.
+- **The Black Pact** adds one extra offer that always synergizes with your most recent pick. You can take it instead of the regular offers. Once taken, it does not return.
+- **The Stalking Devil's** Burning Butcher appears once per run, not every wave.
+
 ## Parameter discrepancies (found 2026-10-23)
 
 Recent guides disagreed with the v2 parameters. v3 adopts the guide values; all still need checking against the S15 client.

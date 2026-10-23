@@ -39,7 +39,7 @@ export const OFFERS:OfferRef[]=[
 
 export const WAR_PLAN_NODES=[
  {id:'Method and Madness',path:'Offer control',hint:'Affects which offerings may be presented in later waves; exact probability is uncertain.'},
- {id:'The Black Pact',path:'Offer control',hint:'One-use mid-run special choice. Saving it preserves future option value.'},
+ {id:'The Black Pact',path:'Offer control',hint:'One extra offer, matched to your most recent pick. One use per run.'},
  {id:'Total Chaos',path:'Chaos',hint:'Favors random Chaos Waves, at a cost to ordinary choice opportunities.'},
  {id:'Bedlam',path:'Chaos',hint:'Additional Chaos Aether opportunity. Verify ranks and values in-game.'},
  {id:'Reign in Hell',path:'Steady strategies',hint:'Alternative to Chaos-focused routing.'},

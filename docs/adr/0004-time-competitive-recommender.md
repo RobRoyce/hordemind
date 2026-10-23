@@ -13,7 +13,7 @@ The v2 simulator drew fixed Poisson event counts per wave and gave a 60 s × spe
 
 ## Decision
 
-1. **Mechanics as data** (`recommendation/mechanics.ts`). Every value is tagged `guide` (Warcraft Tavern and Maxroll agree), `disputed`, or `assumed`, with a note. Offers missing from current guides are flagged `nameConfirmed: false`.
+1. **Mechanics as data** (`recommendation/mechanics.ts`). Every value is tagged `observed` (reported from Season 15 play), `guide` (Warcraft Tavern and Maxroll agree), `disputed`, or `assumed`, with a note. Offers missing from current guides are flagged `nameConfirmed: false`.
 2. **Time-competitive waves** (`recommendation/simulate.ts`).
    - Demon kills fill the progress bar, and each fill spawns an Aether Event.
    - Completing an event costs travel plus kill time, during which progress slows. A slow event therefore displaces later events.

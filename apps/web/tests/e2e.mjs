@@ -155,4 +155,9 @@ try{
 
  assert.deepEqual(errors,[],'Browser emitted errors');
  console.log('v2 browser smoke passed');
+}catch(error){
+ // Diagnostics for intermittent failures: what the page showed and logged.
+ console.error('Browser errors:',errors);
+ console.error('Recommendation panel:',await page.locator('.recommendations').innerText().catch(()=>'(none)'));
+ throw error;
 }finally{await browser.close()}

@@ -1,6 +1,6 @@
 # ADR 0003 — Run timeline and Aether observation semantics
 
-**Status:** Accepted (2026-10-23)
+**Status:** Accepted, and confirmed in game by the owner (2026-10-23)
 
 ## Context
 
@@ -15,7 +15,7 @@
 | [Warcraft Tavern](https://www.warcrafttavern.com/d4/infernal-hordes/) | An offer is chosen before wave 1 and before each later wave. No offer follows the final wave. |
 | [Maxroll](https://maxroll.gg/d4/resources/infernal-hordes) (updated for S14) | "Once you have completed each wave, you are faced with a choice." Silent on wave 1 and the final wave. |
 
-Owner confirmation in-game is still requested.
+The owner confirmed in Season 15 play that the first offer comes before wave 1 starts.
 
 ## Decision
 

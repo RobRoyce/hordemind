@@ -103,9 +103,11 @@ describe('uncertainty reporting',()=>{
   const best=result.assessments[0];
   expect(best?.modeled&&best.sensitivity).toHaveLength(3);
  });
- it('flags assumed and disputed parameters on the offer itself',()=>{
+ it('flags disputed and in-game-observed parameters on the offer itself',()=>{
+  const coveted=compareScenario(state([]),['The Coveted Spires'],100,{sensitivity:false,synergy:false}).assessments[0];
+  expect(coveted?.modeled&&coveted.assumptions.join(' ')).toMatch(/Disputed/);
   const devil=compareScenario(state([]),['The Stalking Devil'],100,{sensitivity:false,synergy:false}).assessments[0];
-  expect(devil?.modeled&&devil.assumptions.join(' ')).toMatch(/Disputed/);
+  expect(devil?.modeled&&devil.assumptions.join(' ')).toMatch(/Observed in game: One Burning Butcher per run/);
  });
 });
 
