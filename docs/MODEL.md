@@ -42,6 +42,20 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 - The engine is pure, with no domain or zod imports, and runs in a worker that receives only a `Scenario`.
 - Explanations come from the simulated component deltas, including losses from time displacement.
 
+## Offer catalog from the game client (2026-10-23)
+
+- **Source:** offer names, categories and boon/bane text come from the Diablo IV client strings, via [DiabloTools/d4data](https://github.com/DiabloTools/d4data) build 3.2.3.73883. `make game-text` regenerates `apps/web/src/data/game-text.json`.
+- **Provenance:** values the text states or plainly implies are tagged `game`. Text © Blizzard Entertainment, quoted for reference.
+- **What the client files lack:** numeric chances and rates. They appear to be computed server-side, so values such as the 50% Soulspire chance stay `guide` or `assumed`, labelled on each offer. Offers whose effect has no number (The Aether Rush, The Invigorating Hellborne) are not scored.
+- **Corrections this made:**
+  - Removed The Corrupting Spires, The Bursting Fiends, The Exalted Masses and The Burning Hellborne, which don't exist.
+  - Renamed The Gorging Mass, The Wanderer variants, and The Surging and Unstoppable Elite.
+  - Added Fiendish Masses and Spires, Precious Mass, Blighted Spires and Verge, Desolate Verge, and The Exalted Council as an offer.
+  - Split The Summoned Hellborne into its two versions.
+  - Aether Lords now appear only with The Summoned Lords.
+  - The Enduring Lords now models its boon.
+- **Open questions** for the owner are in [the offer checklist](research/offer-checklist.md).
+
 ## War Plan (owner screenshots, 2026-10-23)
 
 The tree, verbatim tooltips and their use are in [the War Plan research note](research/infernal-hordes-war-plan.md). Effects that change the model:

@@ -62,15 +62,15 @@ function marginal(s:Scenario,offer:string,samples:number,assumptions:Assumptions
 }
 
 const pct=(p:number)=>Math.round(p*100)+'%';
-const SOURCE:Record<EventKind,string>={Mass:'Masses',Fiend:'Fiends',Lord:'Lords',Spire:'Spires',Hellborne:'Hellborne',Goblin:'Goblins',Butcher:'the Butcher',Hellfire:'wave-end Hellfire',Chaos:'the Chaos Wave'};
+const SOURCE:Record<EventKind,string>={Mass:'Masses',Fiend:'Fiends',Lord:'Lords',Spire:'Spires',Hellborne:'Hellborne',Goblin:'Goblins',Butcher:'the Butcher',Hellfire:'wave-end Hellfire',Chaos:'the Chaos Wave',Council:'the Council'};
 const parts=(list:[string,number][])=>list.slice(0,2).map(([k,v])=>`${SOURCE[k as EventKind]} (${v<0?'−':'+'}${Math.abs(Math.round(v))})`).join(' and ');
 const plural=(n:number,word:string)=>`${n} ${word}${n===1?'':'s'}`;
 const NAMES:Record<EventKind,readonly [string,string]>={Mass:['Mass','Masses'],Fiend:['Aether Fiend','Aether Fiends'],Lord:['Aether Lord','Aether Lords'],
  Spire:['Soulspire','Soulspires'],Hellborne:['Hellborne','Hellborne'],Goblin:['Goblin','Goblins'],Butcher:['Burning Butcher','Burning Butchers'],
- Hellfire:['Hellfire','Hellfire'],Chaos:['Chaos Wave','Chaos Waves']};
+ Hellfire:['Hellfire','Hellfire'],Chaos:['Chaos Wave','Chaos Waves'],Council:['Council fight','Council fights']};
 const one=(k:EventKind)=>NAMES[k][0],many=(k:EventKind)=>NAMES[k][1];
 const count=(n:number,k:EventKind)=>`${n} ${n===1?one(k):many(k)}`;
-const a=(k:EventKind)=>k==='Hellborne'?'Hellborne':(/^[AEIOU]/.test(one(k))?'an ':'a ')+one(k);
+const a=(k:EventKind|'AetherEvent')=>k==='AetherEvent'?'an Aether Event':k==='Hellborne'?'Hellborne':(/^[AEIOU]/.test(one(k))?'an ':'a ')+one(k);
 function describe(e:Effect):string|null{
  switch(e.kind){
   case 'puffing':return 'Every Mass pays +1 Aether per offer in your stack, with Mass offers counting twice. Your stack grows by one offer each wave, so this keeps rising.';
@@ -89,6 +89,11 @@ function describe(e:Effect):string|null{
   case 'hellfireSpawns':return 'Hellfire spawns Hellborne, so it pays most with a Hellfire source such as Burning Rain.';
   case 'hellfireSource':return null;
   case 'chaos':return null;
+  case 'weightAdd':return `${many(e.event)} start appearing among Aether Events.`;
+  case 'eliteRate':return `Elites spawn ${e.factor.value}× as often.`;
+  case 'timeAdd':return `Each ${one(e.event)} kill costs about ${e.seconds.value} s more.`;
+  case 'once':return e.event==='Council'?`+${e.amount.value} Aether once, when you defeat the Council.`:`+${e.amount.value} Aether once.`;
+  case 'persist':return `Unfinished ${many(e.event)} carry into the next wave.`;
  }
 }
 
@@ -138,13 +143,12 @@ function explain(offer:string,s:Scenario,d:Draws):string[]{
 
 function provenanceNotes(offer:string):string[]{
  const m=mechanicsFor(offer)!,notes:string[]=[];
- if(!m.nameConfirmed)notes.push('This offer name is not in current guides; its effect is a guess.');
  if(m.category==='Chaos')notes.push('Chaos Wave types follow Maxroll; their odds and payouts are placeholders, not measurements.');
  const params=m.effects.flatMap(e=>Object.values(e).filter((v):v is Param=>typeof v==='object'&&v!==null&&'provenance' in v));
- const label={observed:'Observed in game',disputed:'Disputed',assumed:'Assumed'} as const;
- const flagged=params.filter((p):p is Param&{provenance:keyof typeof label}=>p.provenance!=='guide');
+ const label={observed:'Observed in game',guide:'From guides',disputed:'Disputed',assumed:'Assumed'} as const;
+ const flagged=params.filter((p):p is Param&{provenance:keyof typeof label}=>p.provenance!=='game');
  notes.push(...flagged.map(p=>`${label[p.provenance]}: ${p.note??p.value}.`));
- if(params.some(p=>p.provenance==='guide'))notes.push('Other effect values match current guides but are not verified in game.');
+ if(params.some(p=>p.provenance==='game'))notes.push('Other values come from the game\'s own offer text.');
  return notes;
 }
 const GLOBAL_ASSUMPTIONS=[

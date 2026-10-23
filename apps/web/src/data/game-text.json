@@ -1,0 +1,502 @@
+{
+ "source": {
+  "repo": "DiabloTools/d4data",
+  "commit": "76b722a340d22001171b4cfb0fc39e8efa761654",
+  "build": "3.2.3.73883",
+  "url": "https://github.com/DiabloTools/d4data/tree/76b722a340d22001171b4cfb0fc39e8efa761654/json/enUS_Text/meta/StringList",
+  "note": "Infernal Hordes text from the Diablo IV client (code name BSK). © Blizzard Entertainment."
+ },
+ "offers": [
+  {
+   "key": "AetherGoblins",
+   "name": "The Aether Goblins",
+   "category": "BSK_Mob",
+   "tier": "unique",
+   "boon": "Aether Events can spawn Aether Goblins",
+   "bane": "Monsters now have greatly increased health",
+   "text": "Monsters now have greatly increased health / Aether Events can spawn Aether Goblins"
+  },
+  {
+   "key": "AetherRush",
+   "name": "The Aether Rush",
+   "category": "BSK_PlayerBoon",
+   "tier": "white",
+   "boon": "Gathering Aether Increases movement speed (8 seconds)",
+   "bane": "Normal monster damage +25%",
+   "text": "Normal monster damage +25% / Gathering Aether Increases movement speed (8 seconds)"
+  },
+  {
+   "key": "AmbushingHellborne",
+   "name": "The Ambushing Hellborne",
+   "category": "BSK_Hellborne",
+   "tier": "white",
+   "boon": "Hellborne grant +1 Aether",
+   "bane": "Hellborne can now ambush you",
+   "text": "Hellborne can now ambush you / Hellborne grant +1 Aether"
+  },
+  {
+   "key": "AnchoredMasses",
+   "name": "The Anchored Masses",
+   "category": "BSK_AetherMass",
+   "tier": "white",
+   "boon": "Masses have a chance to spawn a Soulspire on death",
+   "bane": "Masses have greatly increased attack speed",
+   "text": "Masses have greatly increased attack speed / Masses have a chance to spawn a Soulspire on death"
+  },
+  {
+   "key": "BlightedSpires",
+   "name": "The Blighted Spires",
+   "category": "BSK_Soulspire",
+   "tier": "white",
+   "boon": "Soulspires spawn Aether Events",
+   "bane": "Soulspires no longer Invigorate",
+   "text": "Soulspires no longer Invigorate / Soulspires spawn Aether Events"
+  },
+  {
+   "key": "BlightedVerge",
+   "name": "The Blighted Verge",
+   "category": "BSK_AetherMass",
+   "tier": "yellow",
+   "boon": "Masses spawn more often",
+   "bane": "Soulspires spawn less often",
+   "text": "Masses spawn more often / Soulspires spawn less often"
+  },
+  {
+   "key": "RagingHellfire",
+   "name": "The Burning Rain",
+   "category": "BSK_Hellfire",
+   "tier": "white",
+   "boon": "At the end of each wave spawn 9-15 Aether",
+   "bane": "Hellfire rains upon you",
+   "text": "Hellfire rains upon you / At the end of each wave spawn 9-15 Aether"
+  },
+  {
+   "key": "ThrivingMasses",
+   "name": "The Bursting Masses",
+   "category": "BSK_AetherMass",
+   "tier": "white",
+   "boon": "Wave start, spawn two Aetheric Masses",
+   "bane": "Masses deal unavoidable damage",
+   "text": "Masses deal unavoidable damage / Wave start, spawn two Aetheric Masses"
+  },
+  {
+   "key": "ChaoticOffering",
+   "name": "The Chaotic Offering",
+   "category": "Icon_Tooltip_Chaos",
+   "tier": "RuneEffect",
+   "boon": "Start a random Chaos Wave which grants bonus Aether",
+   "bane": "",
+   "text": "Start a random Chaos Wave which grants bonus Aether"
+  },
+  {
+   "key": "ColossalFiends",
+   "name": "The Colossal Fiends",
+   "category": "BSK_AetherHost",
+   "tier": "legendary",
+   "boon": "Aether Fiends spawn as Aether Lords and drop 3x Aether",
+   "bane": "Aether Lords cause Hellfire to erupt around them",
+   "text": "Aether Lords cause Hellfire to erupt around them / Aether Fiends spawn as Aether Lords and drop 3x Aether"
+  },
+  {
+   "key": "CovetedSpires",
+   "name": "The Coveted Spires",
+   "category": "BSK_Soulspire",
+   "tier": "unique",
+   "boon": "Soulspires grant 2x Aether",
+   "bane": "Soulspires spawn less often",
+   "text": "Soulspires spawn less often / Soulspires grant 2x Aether"
+  },
+  {
+   "key": "DesolateVerge",
+   "name": "The Desolate Verge",
+   "category": "BSK_AetherMass",
+   "tier": "yellow",
+   "boon": "Soulspires spawn more often",
+   "bane": "Masses spawn less often",
+   "text": "Soulspires spawn more often Masses spawn less often"
+  },
+  {
+   "key": "DeadlySpires",
+   "name": "The Draining Spires",
+   "category": "BSK_Soulspire",
+   "tier": "white",
+   "boon": "Soulspires grant +3 Aether",
+   "bane": "Soulspires drain health",
+   "text": "Soulspires drain health / Soulspires grant +3 Aether"
+  },
+  {
+   "key": "EnduringLords",
+   "name": "The Enduring Lords",
+   "category": "BSK_GreaterHost",
+   "tier": "rare",
+   "boon": "Aether Lords no longer despawn at round end",
+   "bane": "Aether Lords health is greatly increased",
+   "text": "Aether Lords health is greatly increased / Aether Lords no longer despawn at round end"
+  },
+  {
+   "key": "EmpoweredCouncil",
+   "name": "The Exalted Council",
+   "category": "BSK_Council",
+   "tier": "legendary",
+   "boon": "Defeating them grants +25 Aether",
+   "bane": "The Fell Council damage +50%",
+   "text": "The Fell Council damage +50% / Defeating them grants +25 Aether"
+  },
+  {
+   "key": "EmpoweredElites",
+   "name": "The Exalted Fiends",
+   "category": "BSK_AetherHost",
+   "tier": "white",
+   "boon": "Aether Fiends grant +2 Aether",
+   "bane": "Aether Fiends have greatly increased health",
+   "text": "Aether Fiends have greatly increased health / Aether Fiends grant +2 Aether"
+  },
+  {
+   "key": "EmpoweredHellborne",
+   "name": "The Exalted Hellborne",
+   "category": "BSK_Hellborne",
+   "tier": "white",
+   "boon": "Hellborne grant +1 Aether",
+   "bane": "Hellborne damage is increased",
+   "text": "Hellborne damage is increased / Hellborne grant +1 Aether"
+  },
+  {
+   "key": "BlisteringHordes",
+   "name": "The Exalted Hordes",
+   "category": "BSK_Mob",
+   "tier": "rare",
+   "boon": "Aether Events spawn faster",
+   "bane": "Normal monster damage increased",
+   "text": "Normal monster damage increased / Aether Events spawn faster"
+  },
+  {
+   "key": "FiendishLegions",
+   "name": "The Fiendish Legions",
+   "category": "BSK_AetherHost",
+   "tier": "white",
+   "boon": "Aether Fiends have a chance to spawn in place of Elites",
+   "bane": "Elite and Aether Fiend damage increased",
+   "text": "Elite and Aether Fiend damage increased / Aether Fiends have a chance to spawn in place of Elites"
+  },
+  {
+   "key": "FiendishMasses",
+   "name": "The Fiendish Masses",
+   "category": "BSK_AetherMass",
+   "tier": "yellow",
+   "boon": "Aetheric Masses grant +3 Aether",
+   "bane": "Masses spawn an Aether Fiend on death",
+   "text": "Masses spawn an Aether Fiend on death / Aetheric Masses grant +3 Aether"
+  },
+  {
+   "key": "FiendishSpires",
+   "name": "The Fiendish Spires",
+   "category": "BSK_Soulspire",
+   "tier": "yellow",
+   "boon": "Soulspires grant +3 Aether",
+   "bane": "Soulspires spawn an Aether fiend on death",
+   "text": "Soulspires spawn an Aether fiend on death / Soulspires grant +3 Aether"
+  },
+  {
+   "key": "GorgingMasses",
+   "name": "The Gorging Mass",
+   "category": "BSK_AetherMass",
+   "tier": "white",
+   "boon": "+25% chance to spawn another mass on death",
+   "bane": "Slaying Aetheric Masses slow you (8s)",
+   "text": "Slaying Aetheric Masses slow you (8s) / +25% chance to spawn another mass on death"
+  },
+  {
+   "key": "HellishMasses",
+   "name": "The Hellish Masses",
+   "category": "BSK_AetherMass",
+   "tier": "white",
+   "boon": "Masses have a chance to spawn Hellborne on death",
+   "bane": "Masses explode on death",
+   "text": "Masses explode on death / Masses have a chance to spawn Hellborne on death"
+  },
+  {
+   "key": "CorruptingSpires",
+   "name": "The Hungry Spires",
+   "category": "BSK_Soulspire",
+   "tier": "legendary",
+   "boon": "Enemies killed in range of Soulspires have a chance to drop Aether",
+   "bane": "Soulspires pull both enemies and players towards them",
+   "text": "Soulspires pull both enemies and players towards them / Enemies killed in range of Soulspires have a chance to drop Aether"
+  },
+  {
+   "key": "InsatiableSpires",
+   "name": "The Insatiable Spires",
+   "category": "BSK_Soulspire",
+   "tier": "white",
+   "boon": "Soulspires grant 2x Aether",
+   "bane": "Soulspires require +10 kills",
+   "text": "Soulspires require +10 kills / Soulspires grant 2x Aether"
+  },
+  {
+   "key": "InvigoratingHellborne",
+   "name": "The Invigorating Hellborne",
+   "category": "BSK_PlayerBoon",
+   "tier": "yellow",
+   "boon": "Slaying Hellborne Invigorates you",
+   "bane": "Hellborne damage: +25%",
+   "text": "Hellborne damage: +25% / Slaying Hellborne Invigorates you"
+  },
+  {
+   "key": "MassingMasses",
+   "name": "The Massing Masses",
+   "category": "BSK_AetherMass",
+   "tier": "rare",
+   "boon": "Masses have a chance to reform on death",
+   "bane": "Masses health is greatly increased",
+   "text": "Masses health is greatly increased / Masses have a chance to reform on death"
+  },
+  {
+   "key": "MeteoricHellborne",
+   "name": "The Meteoric Hellborne",
+   "category": "BSK_Hellborne",
+   "tier": "rare",
+   "boon": "Hellfire spawns Hellborne",
+   "bane": "Hellborne damage increased",
+   "text": "Hellborne damage increased / Hellfire spawns Hellborne"
+  },
+  {
+   "key": "PreciousMasses",
+   "name": "The Precious Mass",
+   "category": "BSK_AetherMass",
+   "tier": "yellow",
+   "boon": "+25% chance to spawn a Soulspire on death",
+   "bane": "Aetheric Masses +100% health",
+   "text": "Aetheric Masses +100% health / +25% chance to spawn a Soulspire on death"
+  },
+  {
+   "key": "PreciousSpires",
+   "name": "The Precious Spires",
+   "category": "BSK_Soulspire",
+   "tier": "rare",
+   "boon": "Soulspires grant 2.5x Aether",
+   "bane": "Soulspires spawn less often",
+   "text": "Soulspires spawn less often / Soulspires grant 2.5x Aether"
+  },
+  {
+   "key": "PuffingMasses",
+   "name": "The Puffing Masses",
+   "category": "BSK_AetherMass",
+   "tier": "legendary",
+   "boon": "Masses drop +1 Aether per Offering, doubled for Mass Offerings",
+   "bane": "Damage from Masses applies Vulnerable",
+   "text": "Damage from Masses applies Vulnerable / Masses drop +1 Aether per Offering, doubled for Mass Offerings"
+  },
+  {
+   "key": "TransitiveSpires",
+   "name": "The Rising Spires",
+   "category": "BSK_Soulspire",
+   "tier": "white",
+   "boon": "Wave start, spawn a Soulspire",
+   "bane": "Soulspires empower enemies",
+   "text": "Soulspires empower enemies / Wave start, spawn a Soulspire"
+  },
+  {
+   "key": "RuthlessLords",
+   "name": "The Ruthless Lords",
+   "category": "BSK_GreaterHost",
+   "tier": "rare",
+   "boon": "Aether Lords grant +5 Aether",
+   "bane": "Aether Lords gain health and damage for each spawn",
+   "text": "Aether Lords gain health and damage for each spawn / Aether Lords grant +5 Aether"
+  },
+  {
+   "key": "InfernalStalker",
+   "name": "The Stalking Devil",
+   "category": "BSK_SpecialBoss",
+   "tier": "legendary",
+   "boon": "Slay it to gain +100 Aether",
+   "bane": "A demon of great power has your scent",
+   "text": "A demon of great power has your scent / Slay it to gain +100 Aether"
+  },
+  {
+   "key": "SkulkingHellborne",
+   "name": "The Summoned Hellborne",
+   "category": "BSK_Hellborne",
+   "tier": "white",
+   "boon": "Hellborne grant +1 Aether",
+   "bane": "Hellborne are hunting you",
+   "text": "Hellborne are hunting you / Hellborne grant +1 Aether"
+  },
+  {
+   "key": "SummonedHellborne",
+   "name": "The Summoned Hellborne",
+   "category": "BSK_Hellborne",
+   "tier": "legendary",
+   "boon": "Hellborne grant +1 Aether",
+   "bane": "Hellborne can now spawn with Aether Events",
+   "text": "Hellborne can now spawn with Aether Events / Hellborne grant +1 Aether"
+  },
+  {
+   "key": "InfernalLords",
+   "name": "The Summoned Lords",
+   "category": "BSK_GreaterHost",
+   "tier": "yellow",
+   "boon": "They grant +4 Aether",
+   "bane": "Aether Lords now spawn",
+   "text": "Aether Lords now spawn / They grant +4 Aether"
+  },
+  {
+   "key": "SurgingElites",
+   "name": "The Surging Elite",
+   "category": "BSK_Mob",
+   "tier": "yellow",
+   "boon": "Aether Fiends grant +2 Aether",
+   "bane": "Chance for Elite Doubled",
+   "text": "Chance for Elite Doubled / Aether Fiends grant +2 Aether"
+  },
+  {
+   "key": "SurgingHellborne",
+   "name": "The Surging Hellborne",
+   "category": "BSK_Hellborne",
+   "tier": "rare",
+   "boon": "+1 Hellborne when spawned",
+   "bane": "Hellborne health is greatly increased",
+   "text": "Hellborne health is greatly increased / +1 Hellborne when spawned"
+  },
+  {
+   "key": "GestatingMasses",
+   "name": "The Teeming Masses",
+   "category": "BSK_AetherMass",
+   "tier": "white",
+   "boon": "Masses have a chance to spawn an Aether Fiend on death",
+   "bane": "Masses knockback when dealing damage",
+   "text": "Masses knockback when dealing damage / Masses have a chance to spawn an Aether Fiend on death"
+  },
+  {
+   "key": "TreasuredSpires",
+   "name": "The Treasured Spires",
+   "category": "BSK_Soulspire",
+   "tier": "legendary",
+   "boon": "Soulspires grant 2.25x Aether",
+   "bane": "Soulspires spawn less often",
+   "text": "Soulspires spawn less often / Soulspires grant 2.25x Aether"
+  },
+  {
+   "key": "UnstoppableElites",
+   "name": "The Unstoppable Elite",
+   "category": "BSK_Mob",
+   "tier": "yellow",
+   "boon": "Aether Fiends grant +2 Aether",
+   "bane": "Elites are Unstoppable",
+   "text": "Elites are Unstoppable / Aether Fiends grant +2 Aether"
+  },
+  {
+   "key": "IncreasedPotionCooldown",
+   "name": "The Wanderer Enfeebled",
+   "category": "BSK_PlayerBane",
+   "tier": "legendary",
+   "boon": "Defeating The Council grants +25 Aether",
+   "bane": "Increase Potion Cooldown +2 Seconds",
+   "text": "Increase Potion Cooldown +2 Seconds / Defeating The Council grants +25 Aether"
+  },
+  {
+   "key": "IncreasedEvadeCooldown",
+   "name": "The Wanderer Exhausted",
+   "category": "BSK_PlayerBane",
+   "tier": "legendary",
+   "boon": "Defeating The Council grants +25 Aether",
+   "bane": "Increase Evade Cooldown +2 Seconds",
+   "text": "Increase Evade Cooldown +2 Seconds / Defeating The Council grants +25 Aether"
+  },
+  {
+   "key": "ReduceAllResistance",
+   "name": "The Wanderer Withered",
+   "category": "BSK_PlayerBane",
+   "tier": "legendary",
+   "boon": "Defeating The Council grants +25 Aether",
+   "bane": "Reduce All Resist -10%",
+   "text": "Reduce All Resist -10% / Defeating The Council grants +25 Aether"
+  },
+  {
+   "key": "HellsWrath",
+   "name": "The Wrath of Hell",
+   "category": "BSK_Hellfire",
+   "tier": "rare",
+   "boon": "At the end of each wave spawn 15-24 additional Aether",
+   "bane": "Hellfire intensifies",
+   "text": "Hellfire intensifies / At the end of each wave spawn 15-24 additional Aether"
+  }
+ ],
+ "warPlan": [
+  {
+   "key": "BossBoost",
+   "desc": "Bartuc and the Fell Council have +1 Monster Power and drop additional items when slain.",
+   "seasonal": ""
+  },
+  {
+   "key": "Challenges",
+   "desc": "At the start of the Infernal Hordes, gain an Infernal Challenge. Completing the Infernal Challenge will grant +200 Aether.",
+   "seasonal": ""
+  },
+  {
+   "key": "Chaos1",
+   "desc": "Chaos Waves appear more frequently. However, one less Infernal Offering appears each wave.",
+   "seasonal": ""
+  },
+  {
+   "key": "Chaos2",
+   "desc": "When you enter a Chaos Wave, gain +50 Aether and all enemies in the Infernal Hordes gain +1 Monster Power.",
+   "seasonal": ""
+  },
+  {
+   "key": "EventRush",
+   "desc": "When the current wave has 10 seconds remaining, Aether Events spawn at all locations.",
+   "seasonal": "At Rank 14 with the Splinter of Terror, Impending Doom also triggers when the current wave has 30 seconds remaining."
+  },
+  {
+   "key": "GemBoost",
+   "desc": "Gem Fragments drop instead of Obducite in the Infernal Hordes.",
+   "seasonal": ""
+  },
+  {
+   "key": "KillCommand",
+   "desc": "Once per wave the Scale of Tathamet may appear, a primordial relic that kills all enemies within the Infernal Hordes.",
+   "seasonal": ""
+  },
+  {
+   "key": "LikeBargains",
+   "desc": "Your Infernal Offerings are more likely to share a category with your previous choice.",
+   "seasonal": ""
+  },
+  {
+   "key": "ObduciteBoost",
+   "desc": "Obducite drops instead of Gem Fragments in the Infernal Hordes.",
+   "seasonal": ""
+  },
+  {
+   "key": "Omens",
+   "desc": "Doomsayers appear during the Infernal Hordes. Doomsayers are dangerous enemies but also drop Aether.",
+   "seasonal": "At Rank 5 with the Splinter of Terror, a Doomsayer appears at the start of each wave."
+  },
+  {
+   "key": "Order1",
+   "desc": "An additional Infernal Offering appears each wave. However, you suppress Chaos Waves from appearing.",
+   "seasonal": ""
+  },
+  {
+   "key": "Order2",
+   "desc": "Suppressing a Chaos Wave grants +50 Aether. All enemies in the Infernal Hordes gain +1 Monster Power.",
+   "seasonal": ""
+  },
+  {
+   "key": "Replicator",
+   "desc": "An ominous altar appears between waves in the Infernal Hordes. It can be invoked only once, and provides an Infernal Offering that shares a category with your previous choice.",
+   "seasonal": ""
+  },
+  {
+   "key": "RuneChest",
+   "desc": "The Chest of Talismans will appear after defeating either the Fell Council or Bartuc.",
+   "seasonal": "At Rank 20 with the Splinter of Terror, the Chest of Talismans now costs 1 Aether."
+  },
+  {
+   "key": "SuperChest",
+   "desc": "Defeating either the Fell Council or Bartuc reveals the Hoard of Greater Equipment, which contains a colossal deluge of equipment and other rewards.",
+   "seasonal": ""
+  }
+ ]
+}

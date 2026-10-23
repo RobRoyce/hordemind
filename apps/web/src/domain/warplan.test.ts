@@ -47,3 +47,18 @@ describe('Infernal Hordes War Plan tree (owner screenshots, S15)',()=>{
   for(const n of WAR_PLAN)expect(n.tooltip.length,n.id).toBeGreaterThan(20);
  });
 });
+
+import gameText from '../data/game-text.json';
+describe('War Plan tooltips agree with the game client text',()=>{
+ const KEYS:Record<string,string>={BossBoost:'Exalted Council',RuneChest:'Council Coffers',ObduciteBoost:'Forged in Flame',GemBoost:'Flawless Find',
+  SuperChest:'Infernal Hoard',LikeBargains:'Method and Madness',Order1:'Reign in Hell',EventRush:'Impending Doom',Chaos1:'Total Chaos',
+  Order2:'Pulse of Aether',Chaos2:'Bedlam',Replicator:'The Black Pact',Omens:'Cult of Annihilation',KillCommand:'Scale of Tathamet',Challenges:'Devil\'s Deal'};
+ const norm=(s:string)=>s.replace(/\s+/g,' ').trim();
+ it('covers every War Plan upgrade in the client',()=>{
+  expect(gameText.warPlan.map(w=>KEYS[w.key]).sort()).toEqual(WAR_PLAN.map(n=>n.id).sort());
+ });
+ for(const w of gameText.warPlan)it(`${KEYS[w.key]} contains the client's wording`,()=>{
+  const tooltip=norm(nodeById(KEYS[w.key]!)!.tooltip);
+  for(const part of [w.desc,w.seasonal].filter(Boolean))expect(tooltip).toContain(norm(part));
+ });
+});

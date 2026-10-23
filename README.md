@@ -59,3 +59,7 @@ All `main` deployments are built from a pinned npm lockfile and gated on TypeScr
 Participation will remain optional, and collecting community contributions is not yet enabled. We preserve all presented choices (not just selections) for later probability inference, make model assumptions visible, and distinguish unknown measurements from zero. No Battle.net credentials or game memory access.
 
 See [roadmap](docs/ROADMAP_V2.md), [GitHub issues](https://github.com/RobRoyce/hordemind/issues), and [architecture decisions](docs/adr/0001-local-first-architecture.md).
+
+## Game data
+
+Offer and War Plan names and effect text are Blizzard Entertainment's, quoted from the Diablo IV client via [DiabloTools/d4data](https://github.com/DiabloTools/d4data) for reference. HordeMind is a fan project, not affiliated with Blizzard.
