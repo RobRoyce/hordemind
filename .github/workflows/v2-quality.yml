@@ -2,10 +2,10 @@ name: V2 quality gate
 on:
   pull_request:
     paths: ['apps/web/**','supabase/**','docs/adr/**','.github/workflows/v2-quality.yml']
-  push:
-    branches: ['feature/v2-foundation']
-    paths: ['apps/web/**','supabase/**','docs/adr/**','.github/workflows/v2-quality.yml']
   workflow_dispatch:
+concurrency:
+  group: v2-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
