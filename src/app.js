@@ -56,7 +56,7 @@ function Recommendations({state}){
 
 const clean=s=>String(s||"").trim();
 function App(){
- const [lookahead,setLookahead]=useState(true),[specialForecast,setSpecialForecast]=useState(null),[forecastRunning,setForecastRunning]=useState(false),[priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
+ const [calibration,setCalibration]=useState(null),[lookahead,setLookahead]=useState(true),[specialForecast,setSpecialForecast]=useState(null),[forecastRunning,setForecastRunning]=useState(false),[priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
  const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]&&isModeled(x));const unmodeled=[...new Set(selected)].filter(x=>byName[x]&&!isModeled(x));
  useEffect(()=>{localStorage.setItem(KEY,JSON.stringify(state))},[state]);
  function compute(){
@@ -66,7 +66,7 @@ function App(){
   try{
    worker=new Worker(new URL("./worker.js",import.meta.url),{type:"module"});
    const timeout=setTimeout(()=>{worker.terminate();setFeedback("The simulation took too long. Try standard comparison or reduce samples.");setRunning(false)},25000);
-   worker.onmessage=e=>{clearTimeout(timeout);worker.terminate();setRunning(false);if(e.data?.error)setFeedback("Simulation failed: "+e.data.error);else setScores(e.data.result)};
+   worker.onmessage=e=>{clearTimeout(timeout);worker.terminate();setRunning(false);if(e.data?.error)setFeedback("Simulation failed: "+e.data.error);else {setScores(e.data.result);setCalibration(e.data.calibration)}};
    worker.onerror=e=>{clearTimeout(timeout);worker.terminate();setRunning(false);setFeedback("Web Worker error: "+e.message)};
    worker.postMessage({requestId:Date.now(),state,candidates:valid,lookahead});
   }catch(e){worker?.terminate();setRunning(false);setFeedback("Browser Worker unavailable: "+e.message)}
@@ -74,7 +74,7 @@ function App(){
  function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null);setSpecialForecast(null)}
  function link(){const url=location.origin+location.pathname+"#run="+encodeURIComponent(JSON.stringify(state));setShare(url);return url}
  async function copy(){const url=link();try{await navigator.clipboard.writeText(url);setFeedback("Share link copied.")}catch{setFeedback("Clipboard access blocked. Select and copy the URL below.")}}
- const newRun=()=>{if(!confirm("Clear this run and recorded Aether?"))return;setState(s=>({...BASE,waves:s.waves,kill:s.kill,mobility:s.mobility,specialEnabled:s.specialEnabled,warNodes:s.warNodes,warPlanNotes:s.warPlanNotes,assumptions:s.assumptions}));setScores(null);setShare("");history.replaceState(null,"",location.pathname)}
+ const newRun=()=>{if(!confirm("Clear this run and recorded Aether?"))return;setState(s=>({...BASE,waves:s.waves,kill:s.kill,mobility:s.mobility,specialEnabled:s.specialEnabled,warNodes:s.warNodes,warPlanNotes:s.warPlanNotes,assumptions:s.assumptions}));setScores(null);setCalibration(null);setShare("");history.replaceState(null,"",location.pathname)}
  const best=scores?.[0];const special=best?specialDecision(state,best):null;
  function estimateFuture(){setForecastRunning(true);setTimeout(()=>{try{setSpecialForecast(futureOpportunity(state,{scenarios:8,draws:3}));setFeedback("")}catch(e){setFeedback("Special offering forecast unavailable: "+e.message)}finally{setForecastRunning(false)}},20)}
  return h("main",null,
@@ -126,7 +126,8 @@ function App(){
      )))),
      special&&h("div",{className:"notice smallnotice"},h("strong",null,"One-time Black Pact opportunity cost"),h("p",null,special.explanation),h("p",null,"Remaining waves afterward: "+special.remaining+"."),h("button",{onClick:estimateFuture,disabled:forecastRunning},forecastRunning?"Estimating future offers…":"Estimate future option value (scenario)"),specialForecast&&h("div",null,h("p",null,"Modeled value of saving the one-use choice: ~"+Math.round(specialForecast.mean)+" Aether, under a hypothetical future-offer distribution."),h("p",{className:"hint"},specialForecast.caveat),h("p",{className:"hint"},"This is a sensitivity estimate, not a measured expected value or a calibrated recommendation."))),
     h("article",{className:"panel"},h("h2",null,"Shareable run snapshot"),h("p",{className:"hint"},"Run settings persist in this browser. Share links encode a read-only snapshot of the current run that others can load and continue independently."),h("button",{onClick:copy},"Generate & copy link"),share&&h("textarea",{rows:3,readOnly:true,value:share,onClick:e=>e.target.select(),className:"share"}),feedback&&h("p",{className:"hint",role:"status"},feedback)),
-    h("article",{className:"panel"},h("h2",null,"Aether observations"),h("p",{className:"hint"},"Save cumulative totals by wave for future calibration. They are recorded but not yet fit automatically into the model."),
+    calibration&&h("article",{className:"panel"},h("h2",null,"Calibration status"),h("p",{className:"hint"},calibration.available?"Overall yield adjustment: ×"+calibration.scale.toFixed(2)+" from "+calibration.n+" observations. This rescales modeled Aether but does not change the ranking.":calibration.reason),calibration.available&&h("p",{className:"hint"},calibration.reason)),
+    h("article",{className:"panel"},h("h2",null,"Aether observations"),h("p",{className:"hint"},"Save cumulative totals by wave. With two or more readings and matching prior offers, the app can cautiously rescale total yield estimates. This does not identify individual event spawn probabilities or prove offer effectiveness."),
      h("div",{className:"actions"},h("input",{id:"observedWave",type:"number",min:1,defaultValue:state.wave,"aria-label":"Wave number"}),h("input",{id:"observedTotal",type:"number",min:0,defaultValue:0,"aria-label":"Cumulative Aether"}),h("button",{onClick:()=>{const wave=+document.querySelector("#observedWave").value,total=+document.querySelector("#observedTotal").value;if(!Number.isFinite(total)||wave<1)return;setState(s=>({...s,observations:[...s.observations.filter(o=>o.wave!==wave),{wave,total}].sort((a,b)=>a.wave-b.wave)}))}},"Record")),
      ...state.observations.map(o=>h("div",{className:"historyitem",key:o.wave},"Wave "+o.wave+": "+o.total+" Aether")))
    )
