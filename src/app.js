@@ -2,14 +2,61 @@ import React,{useEffect,useMemo,useState} from "react";
 import {createRoot} from "react-dom/client";
 import {offers,byName,defaults} from "./catalog.js";
 import {BASE,evaluate,diagnose,specialDecision} from "./engine.js";
+import {access,nodes,groups} from "./warplans.js";
+import {strategies,analyzeSetup} from "./strategy.js";
 const h=React.createElement,KEY="hordemind-react-v1";
 function readInitial(){let raw=null;try{if(location.hash.startsWith("#run="))raw=JSON.parse(decodeURIComponent(location.hash.slice(5)));else raw=JSON.parse(localStorage.getItem(KEY)||"null")}catch{}return {...BASE,...(raw||{}),choices:[...(raw?.choices||BASE.choices)],history:[...(raw?.history||[])],observations:[...(raw?.observations||[])],assumptions:{...defaults,...(raw?.assumptions||{})}}}
 const field=(label,control)=>h("label",{className:"field"},h("span",null,label),control);
-function Selector({value,change,placeholder}){const [open,setOpen]=useState(false),[query,setQuery]=useState(value||"");useEffect(()=>setQuery(value||""),[value]);const results=offers.filter(o=>o.name.toLowerCase().includes(query.toLowerCase())).slice(0,25);return h("div",{className:"autocomplete"},h("input",{value:query,placeholder,autoComplete:"off",onChange:e=>{setQuery(e.target.value);change(e.target.value);setOpen(true)},onFocus:()=>setOpen(true),onBlur:()=>setTimeout(()=>setOpen(false),180)}),open&&results.length>0&&h("div",{className:"dropdown"},...results.map(o=>h("button",{key:o.name,type:"button",onMouseDown:e=>e.preventDefault(),onClick:()=>{setQuery(o.name);change(o.name);setOpen(false)}},o.name))))}
+function Selector({value,change,placeholder}){
+ const [open,setOpen]=useState(false),[query,setQuery]=useState(value||"");
+ useEffect(()=>setQuery(value||""),[value]);
+ const results=offers.filter(o=>(o.name+" "+o.kind+" "+o.detail).toLowerCase().includes(query.toLowerCase())).slice(0,30);
+ const picked=byName[value];
+ return h("div",{className:"offer-select"},
+  h("div",{className:"autocomplete"},
+   h("input",{value:query,placeholder,autoComplete:"off",role:"combobox","aria-expanded":open,onChange:e=>{setQuery(e.target.value);change(e.target.value);setOpen(true)},onFocus:()=>setOpen(true),onBlur:()=>setTimeout(()=>setOpen(false),180)}),
+   query&&h("button",{type:"button",className:"clear-inline",onClick:()=>{setQuery("");change("");setOpen(true)}},"×"),
+   open&&results.length>0&&h("div",{className:"dropdown"},...results.map(o=>h("button",{key:o.name,type:"button",onMouseDown:e=>e.preventDefault(),onClick:()=>{setQuery(o.name);change(o.name);setOpen(false)}},
+      h("span",null,o.name),h("small",null,o.kind+" · "+o.detail)))))
+  ,picked&&h("div",{className:"offer-description"},h("span",{className:"tag"},picked.kind),h("span",null,picked.detail),picked.approximate&&h("span",{className:"uncertain"},"Approximate mechanics")));
+}
+function WarPlanPanel({state,setState}){
+ const selected=state.warNodes||[];
+ const toggle=name=>setState(s=>({...s,warNodes:(s.warNodes||[]).includes(name)?s.warNodes.filter(n=>n!==name):[...(s.warNodes||[]),name]}));
+ return h("article",{className:"panel"},
+ h("div",{className:"sectionhead"},h("h2",null,"Infernal Hordes War Plan"),h("span",{className:"tag"},"Named nodes")),
+ h("p",{className:"hint"},access.location+". "+access.unlock),
+ h("p",{className:"hint"},access.allocation),
+ h("div",{className:"notice smallnotice"},"Nodes describe your actual allocations. Not every node changes Aether directly, and uncalibrated perks are not silently counted in simulations."),
+ ...groups.map(group=>h("details",{key:group,open:group==="Offer control"||group==="Chaos focus"?true:undefined},
+ h("summary",null,group," · ",nodes.filter(n=>n.branch===group&&selected.includes(n.name)).length," selected"),
+ ...nodes.filter(n=>n.branch===group).map(n=>h("div",{className:"node",key:n.name},
+ h("label",{className:"nodehead"},h("input",{type:"checkbox",checked:selected.includes(n.name),onChange:()=>toggle(n.name)}),h("strong",null,n.name)),
+ h("p",{className:"hint"},n.description),
+ h("p",{className:"hint"},"Strategy: "+n.impact),
+ h("span",{className:"uncertain"},n.status))))),
+ h("div",{className:"hint"},h("strong",null,"Find and configure: "),"Open the War Plans table in Temis (Skovos), select the Infernal Hordes activity tree, and inspect its connected branches. Respec point allocations in-game as needed. ",h("a",{href:access.source,target:"_blank",rel:"noopener noreferrer"},"War Plan reference ↗")));
+}
+function Recommendations({state}){
+ const advice=analyzeSetup(state);
+ return h("article",{className:"panel"},
+ h("div",{className:"sectionhead"},h("h2",null,"Strategy lab"),h("span",{className:"tag"},"Build guidance")),
+ h("p",{className:"hint"},"These are strategies to watch for, not guaranteed choices. Aether recommendations depend on which offers actually appear."),
+ ...advice.map((x,i)=>h("p",{className:"advice",key:i},x)),
+ ...strategies.map(o=>h("details",{key:o.name},h("summary",null,o.name," — ",o.tag),
+ h("p",null,o.why),
+ h("p",{className:"hint"},h("strong",null,"Look for: "),o.requires.join(" + ")),
+ h("p",{className:"hint"},h("strong",null,"Caveat: "),o.risk))),
+ h("h3",null,"Useful War Plan routes"),
+ h("p",{className:"hint"},"Chaos-oriented: Method and Madness → Total Chaos; expand with Bedlam. Consistent-offering approach: Method and Madness → Reign in Hell → Pulse of Aether. These are competing setups, not perks to stack indiscriminately."),
+ h("p",{className:"hint"},"Season 15 Splinter of Terror bonuses: Cult of Annihilation (rank 5), Impending Doom (rank 14), Council Coffers (rank 20)."),
+ h("p",{className:"hint"},"Your goal matters: maximum Aether, Obducite, Talismans, and boss loot may favor different War Plan nodes."));
+}
+
 const clean=s=>String(s||"").trim();
 function App(){
  const [state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
- const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]);const selectedNames=offers.map(o=>o.name);
+ const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]);
  useEffect(()=>{localStorage.setItem(KEY,JSON.stringify(state))},[state]);
  function compute(){if(valid.length<2){setFeedback("Select at least two known offers to compare.");return}setRunning(true);setTimeout(()=>{const s=valid.map(o=>evaluate(state,o,Number(state.assumptions.samples)||1200)).sort((a,b)=>b.mean-a.mean);setScores(s);setRunning(false);setFeedback("")},20)}
  function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null)}
@@ -35,7 +82,8 @@ function App(){
       h("p",{className:"hint"},"Unverified War Plan effects are tracked but do not silently change probabilities."),
       h("div",{className:"twocol"},...["massRate","secondsPerMass","secondsPerElite","secondsPerSpire","secondsPerLord","chaosScale","samples"].map(k=>field(k,h("input",{type:"number",step:k==="samples"?100:.1,min:0,value:state.assumptions[k],onChange:e=>setState(s=>({...s,assumptions:{...s.assumptions,[k]:+e.target.value}}))})))))
     ),
-    h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Available offers"),h("span",{className:"tag"},"Search A–Z")),h("p",{className:"hint"},"Enter the offers currently on your screen. Chaotic Offering is a single unknown-outcome option; its possible waves are not individually selectable."),
+    h(WarPlanPanel,{state,setState}),
+    h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Available offers"),h("span",{className:"tag"},"Search A–Z")),h("p",{className:"hint"},"Type a name, event type or effect. Every suggestion shows its mechanic. Chaos outcomes cannot be selected ahead of time."),
      ...state.choices.map((v,i)=>h("div",{className:"slot",key:i},field("Offer "+(i+1),h(Selector,{value:v,placeholder:"Type to filter offers…",change:name=>setState(s=>({...s,choices:s.choices.map((x,j)=>j===i?name:x)}))})))),
      state.specialEnabled&&state.specialAvailable&&h("label",{className:"special"},h("input",{type:"checkbox",checked:specialChoice,onChange:e=>setSpecialChoice(e.target.checked)})," This pick uses my one-time War Plan special offer"),
      h("div",{className:"actions"},h("button",{className:"primary",disabled:running||valid.length<2,onClick:compute},running?"Simulating…":"Compare expected Aether"),h("button",{onClick:()=>{update("choices",["","","",""]);setScores(null)}},"Clear choices")),
@@ -44,6 +92,7 @@ function App(){
     h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Previous selections"),h("button",{onClick:()=>{setState(s=>({...s,history:s.history.slice(0,-1),wave:Math.max(1,s.wave-1)}));setScores(null)},disabled:state.history.length===0},"Undo")),
      state.history.length?state.history.map((name,i)=>h("div",{className:"historyitem",key:i},h("span",{className:"number"},i+1),name)):h("p",{className:"hint"},"No previous offers yet."))),
    h("section",null,
+    h(Recommendations,{state}),
     h("article",{className:"panel"},h("h2",null,"Predicted additional Aether"),!scores?h("p",{className:"hint"},"Compare two or more offers to estimate marginal Aether over the remaining waves. Every candidate is compared to the same baseline and random seeds."):h("div",null,...scores.map((res,i)=>h("div",{className:"result "+(i===0?"winner":""),key:res.name},
       h("div",{className:"sectionhead"},h("strong",null,(i===0?"★ ":"")+res.name),h("strong",{className:"value"},(res.mean>=0?"+":"")+Math.round(res.mean)+" Aether")),
       h("p",{className:"hint"},"5–95% modeled range: "+Math.round(res.lo)+" to "+Math.round(res.hi)+" Aether"),
