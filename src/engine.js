@@ -93,7 +93,7 @@ export function diagnose(state,result){
  const comments=[];
  if(o?.effect==="exaltHell"){
   const spawners=["summonHell","ambushHell","burnHell","meteorHell","hellish"];
-  comments.push(spawners.some(has)?"Adds +1 Aether per Hellborne. Your selected offers include a Hellborne spawn source.":"No Hellborne spawner recorded. Exalted increases payout but does not create Hellborne, so immediate value can be zero; acquiring a spawner later could change this.");
+  comments.push(spawners.some(has)?"Adds +1 Aether per Hellborne. Your selected offers include a Hellborne spawn source.":"No Hellborne spawner recorded. Exalted increases payout but does not spawn Hellborne, so immediate value can be zero; acquiring a spawner later could change this.");
  }
  if(o?.effect==="anchor")comments.push("Masses can generate Soulspires, but Spires consume event-clear time and can displace more rewarding Mass kills.");
  if(o?.effect==="burst")comments.push("Adds two Masses at the start of every remaining wave, benefiting from Puffing, reform, and on-death spawn modifiers.");
