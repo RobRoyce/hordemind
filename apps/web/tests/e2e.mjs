@@ -1,7 +1,8 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
-const browser=await chromium.launch({headless:true});
+// GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
+const browser=await chromium.launch({headless:true,channel:'chrome'});
 const page=await browser.newPage({viewport:{width:1200,height:850}});
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
