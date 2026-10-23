@@ -44,7 +44,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+      - name: Verify preinstalled Chrome browser
+        run: command -v google-chrome-stable || command -v google-chrome
       - uses: actions/download-artifact@v4
         with:
           name: v2-validated-dist
