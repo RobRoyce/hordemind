@@ -19,7 +19,7 @@ export const offers = [
   {name:"The Bursting Masses",kind:"mass",effect:"burst",detail:"Two additional Masses at wave start.",approximate:false},
   {name:"The Massing Masses",kind:"mass",effect:"reform",detail:"Masses can reform after destruction.",approximate:false},
   {name:"The Puffing Masses",kind:"mass",effect:"puff",detail:"Mass Aether payout scales with your offer stack.",approximate:false},
-  {name:"The Teeming Masses",kind:"mass",effect:"teem",detail:"Mass kills can generate additional events.",approximate:true},
+  {name:"The Teeming Masses",kind:"mass",effect:"teem",detail:"Mass death can spawn an additional event (Fiend in some guides, Lord in others). Set your in-game tooltip variant under assumptions.",approximate:true},
   {name:"The Hellish Masses",kind:"mass",effect:"hellish",detail:"Mass death may summon a Hellborne.",approximate:true},
   {name:"The Exalted Masses",kind:"mass",effect:"exaltedMass",detail:"Bonus Mass Aether.",approximate:true},
   {name:"The Colossal Fiends",kind:"lord",effect:"colossal",detail:"Enhanced Aether Lord payouts.",approximate:true},
@@ -57,5 +57,5 @@ export const CHAOS_OUTCOMES = [
   {name:"Other Chaos encounter",weight:2,payout:[50,180]}
 ];
 // Chaos probabilities/payouts are placeholders, NOT published drop rates.
-export const defaults={massRate:2.5,fiendRate:2,hellRate:1,spireRate:1,lordRate:.6,secondsPerMass:1.6,secondsPerElite:2.6,secondsPerSpire:8,secondsPerLord:5,chaosScale:1,samples:1200};
+export const defaults={burstCountPerWave:2,teemingTarget:"Fiend",methodBiasMultiplier:2,chaosBiasMultiplier:3,massRate:2.5,fiendRate:2,hellRate:1,spireRate:1,lordRate:.6,secondsPerMass:1.6,secondsPerElite:2.6,secondsPerSpire:8,secondsPerLord:5,chaosScale:1,samples:1200};
 export function normalizeOffer(input){const s=String(input||"").trim();return s==="The Chaotic Offering"?"Chaotic Offering":s}
