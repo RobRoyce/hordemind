@@ -1,5 +1,5 @@
 import {byName,CHAOS_OUTCOMES,defaults} from "./catalog.js";
-export const BASE={waves:10,wave:1,history:[],choices:["","","",""],kill:"fast",mobility:"high",specialAvailable:true,specialEnabled:true,warPlanNotes:"",observations:[],assumptions:{...defaults}};
+export const BASE={waves:10,wave:1,history:[],choices:["","","",""],kill:"fast",mobility:"high",specialAvailable:true,specialEnabled:true,warNodes:[],warPlanNotes:"",observations:[],assumptions:{...defaults}};
 const count=(xs,k)=>xs.filter(x=>byName[x]?.effect===k).length;
 export function random(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 function trial(n,p,r){let hits=0;for(let i=0;i<Math.min(150,n);i++)if(r()<p)hits++;return hits}
@@ -11,29 +11,31 @@ export function simulate(state,chosen,seed) {
  const remaining=Math.max(1,Number(state.waves)-Number(state.wave)+1);
  const speed=(state.kill==="slow"?.55:state.kill==="medium"?.85:1)*(state.mobility==="low"?.82:1);
  const payoutMass=3+n("puff")*(active.length+massCount)+n("exaltedMass");
- const payoutFiend=3+n("exaltedFiend")*2;
+ const payoutFiend=4+n("exaltedFiend")*2;
  const payoutLord=6+n("colossal")*8+n("ruthless")*5;
  const payoutHell=4+n("exaltHell")+n("ambushHell")+n("summonHell");
  const payoutSpire=5+n("precious")*6+n("treasured")*5+n("coveted")*4;
  const breakdown={Mass:0,Fiend:0,Lord:0,Spire:0,Hellborne:0,Chaos:0,Other:0},events={Mass:0,Fiend:0,Lord:0,Spire:0,Hellborne:0,Chaos:0};
  let total=0; const pay=(k,v)=>{breakdown[k]+=v;total+=v;events[k]=(events[k]||0)+1};
  for(let w=0;w<remaining;w++) {
+  // Chaos changes the upcoming wave; do NOT stack an intact normal wave on top.
+  if(chosen==="Chaotic Offering"&&w===0){const co=chaosSample(r,a);pay("Chaos",co.value*speed);continue}
   let time=60*speed,remainingEvents=Math.max(1,Math.round((a.massRate+a.fiendRate+a.spireRate+a.lordRate)*(1+n("hordes")*.5)));
   let masses=2*n("burst")+Math.max(0,Math.floor(remainingEvents*.42+r()*2));
   let fiends=Math.max(0,Math.floor(remainingEvents*.3+r()*2));
   let spires=Math.max(0,Math.floor(remainingEvents*.16+r()*2))+n("rising");
   let lords=n("summonedLord")?1+Math.floor(r()*2):0;
   // Hellborne do not normally spawn unless an appropriate spawning offer is active.
-  let hells=n("summonHell")?trial(remainingEvents,.20,r):0;
+  let hells=n("summonHell")?trial(remainingEvents,1-Math.pow(.8,n("summonHell")),r):0;
   hells+=n("ambushHell")?trial(remainingEvents,.12,r):0;
-  hells+=n("burnHell")||n("meteorHell")?trial(2,.6,r):0;
+  hells+=(n("burnHell")||n("meteorHell"))?trial(2,.6,r):0;
   hells+=n("surgeHell")*hells;
   const kill=(cost)=>{if(time<cost)return false;time-=cost;return true};
   let massKills=0;
   while(masses>0&&massKills<100&&kill(a.secondsPerMass)) {
    masses--;massKills++;pay("Mass",payoutMass);
    if(n("reform")&&r()<1-Math.pow(.7,n("reform")))masses++;
-   if(n("teem")&&r()<.5){fiends++}
+   if(n("teem")&&r()<1-Math.pow(.5,n("teem"))){fiends++}
    if(n("hellish")&&r()<1-Math.pow(.5,n("hellish")))hells++;
    if(n("anchor")&&r()<.5)spires++;
   }
@@ -45,8 +47,7 @@ export function simulate(state,chosen,seed) {
   if(n("rain"))pay("Other",n("rain")*(9+r()*6));
   if(n("wrath"))pay("Other",15+r()*9);
   if(n("stalking")&&w===0)pay("Other",Math.min(1,n("stalking"))*100);
-  // The offering is selected before the random Chaos Wave outcome is revealed.
-  if(chosen==="Chaotic Offering"&&w===0){const co=chaosSample(r,a);pay("Chaos",co.value*speed)}
+
  }
  return {total,breakdown,events};
 }
