@@ -222,3 +222,29 @@ describe('mechanics from the game client text',()=>{
   expect(fiendish.assumptions.join(' ')).toMatch(/game's own offer text/);
  });
 });
+
+describe('readings of the game text are labelled as readings, not as game facts',()=>{
+ const quick={sensitivity:false,synergy:false} as const;
+ const notes=(history:string[],offer:string)=>{const a=compareScenario(state(history),[offer],100,quick).assessments[0];return a?.modeled?a.assumptions.join(' '):''};
+ it('flags values the text implies but does not state',()=>{
+  expect(notes([],'The Fiendish Masses')).toMatch(/Implied by the game text: .*every Mass/);
+  expect(notes([],'The Fiendish Spires')).toMatch(/Implied by the game text/);
+  expect(notes([],'The Colossal Fiends')).toMatch(/Implied by the game text: .*Lord/);
+  expect(notes([],'The Precious Mass')).toMatch(/Implied by the game text: .*health/);
+ });
+ it('labels the no-natural-Lords rule as a reading too',async()=>{
+  const {BASE}=await import('./mechanics');
+  expect(BASE.eventWeights.Lord.provenance).toBe('implied');
+ });
+});
+
+describe('explanations do not report simulation noise as effects',()=>{
+ it('never says Exalted Hordes lowers Aether from a category (owner report)',()=>{
+  const stacks=[[],['The Puffing Masses'],['The Anchored Masses'],['The Teeming Masses'],['The Massing Masses','The Bursting Masses'],['The Fiendish Legions']];
+  const speeds=[['fast','high'],['average','average'],['slow','low']] as const;
+  for(const hist of stacks)for(const [killSpeed,mobility] of speeds)for(const wave of [2,8,10]){
+   const a=compareScenario({history:hist,totalWaves:10,decisionWave:wave,profile:{killSpeed,mobility,warPlanNodes:[]}},['The Exalted Hordes'],150,{sensitivity:false,synergy:false}).assessments[0];
+   expect(a?.modeled&&a.reasons.join(' '),`${hist} ${killSpeed} wave ${wave}`).not.toMatch(/lowers Aether/);
+  }
+ });
+});

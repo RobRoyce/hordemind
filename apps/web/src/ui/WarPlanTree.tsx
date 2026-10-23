@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {WAR_PLAN,WAR_PLAN_POINTS,available,nodeById,unsupported,type Branch,type WarPlanNode} from '../domain/warplan';
+import {wrongInfoUrl} from './report';
 
 interface Props{learned:readonly string[];onToggle:(id:string)=>void}
 
@@ -53,6 +54,7 @@ function Detail({id,learned}:{id:string|null;learned:readonly string[]}){
   {n.exclusive&&<p className="micro">Choose one: learning it replaces {n.exclusive}.</p>}
   <p><b>In HordeMind:</b> {n.use}</p>
   <p className="micro">{status}</p>
+  <a className="report-link" href={wrongInfoUrl(n.id,`Tooltip: ${n.tooltip}\nIn HordeMind: ${n.use}`)} target="_blank" rel="noreferrer">Tooltip or effect wrong? Report it</a>
  </div>;
 }
 

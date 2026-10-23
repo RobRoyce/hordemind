@@ -3,14 +3,17 @@ import {resolveOffer} from '../catalog';
 import {Help} from './Help';
 import {familyClass,type Slot} from './OfferPicker';
 import type {RecommendationState} from './useRecommendations';
+import {wrongInfoUrl} from './report';
 
 interface Props{
  state:RecommendationState;slots:Slot[];chosen:number|null;special:number|null;remainingWaves:number;
  onChoose:(slot:number)=>void;
+ /** Run details prefilled into issue reports. */
+ reportContext:string;
 }
 const signed=(n:number)=>(n<0?'−':'+')+Math.round(Math.abs(n));
 
-function Card({item,rank,best,chosen,special,onChoose}:{item:OfferAssessment;rank:number;best:boolean;chosen:boolean;special:boolean;onChoose:()=>void}){
+function Card({item,rank,best,chosen,special,onChoose,reportContext}:{item:OfferAssessment;rank:number;best:boolean;chosen:boolean;special:boolean;onChoose:()=>void;reportContext:string}){
  const ref=resolveOffer(item.offer);
  return <article className={'recommend-card'+(best?' best':'')+(item.modeled?'':' unsupported')+(chosen?' chosen':'')}>
   <div className="recommend-head">
@@ -25,13 +28,16 @@ function Card({item,rank,best,chosen,special,onChoose}:{item:OfferAssessment;ran
     {item.modeled?<><b>{signed(item.mean)}</b><small>Aether, modeled</small></>:<><b>Not modeled</b><small>not a +0 estimate</small></>}
    </div>
   </div>
-  {item.modeled?<Details item={item}/>:<p className="offer-explanation">{item.reason}</p>}
+  {item.modeled?<Details item={item} reportContext={reportContext}/>:<>
+   <p className="offer-explanation">{item.reason}</p>
+   <a className="report-link" href={wrongInfoUrl(item.offer,'Not modeled: '+item.reason,reportContext)} target="_blank" rel="noreferrer">Know what this does? Report it</a>
+  </>}
   {ref?.danger&&<p className="danger-note">Bane: {ref.danger.why}. Danger is not counted in the estimate.</p>}
   <button type="button" className={best?'primary':''} aria-pressed={chosen} onClick={onChoose}>{chosen?'Chosen':'Choose'}</button>
  </article>;
 }
 
-function Details({item}:{item:Estimate}){
+function Details({item,reportContext}:{item:Estimate;reportContext:string}){
  return <>
   <p className="offer-explanation">{item.reasons[0]}</p>
   {item.synergies.map(s=><p key={s.offer} className="synergy">Makes a later <b>{s.offer}</b> worth {signed(s.withThis)} instead of {signed(s.without)}.</p>)}
@@ -43,6 +49,7 @@ function Details({item}:{item:Estimate}){
     {item.sensitivity.map(s=><tr key={s.name}><th scope="row">{s.name}</th><td>{signed(s.mean)}</td></tr>)}
    </tbody></table>}
    {item.assumptions.map((a,i)=><p key={i} className="micro">{a}</p>)}
+   <a className="report-link" href={wrongInfoUrl(item.offer,`Estimate ${signed(item.mean)} Aether. ${item.reasons.join(' ')} ${item.assumptions.join(' ')}`,reportContext)} target="_blank" rel="noreferrer">Something wrong? Report it</a>
   </details>
  </>;
 }
@@ -57,7 +64,7 @@ function Verdict({result}:{result:Comparison}){
   <p className="verdict close">Close call: the best offer changes under other plausible timing assumptions. Expand an offer to compare.</p>}</>;
 }
 
-export function OfferRecommendations({state,slots,chosen,special,remainingWaves,onChoose}:Props){
+export function OfferRecommendations({state,slots,chosen,special,remainingWaves,onChoose,reportContext}:Props){
  const {result,busy,error}=state;
  const slotOf=(offer:string)=>slots.findIndex(s=>s.offer===offer);
  const general=result?.warnings.filter(w=>!w.startsWith('Some offers')&&!w.startsWith('The best offer changes'))??[];
@@ -75,7 +82,7 @@ export function OfferRecommendations({state,slots,chosen,special,remainingWaves,
    {result.assessments.map((item,index)=>{
     const slot=slotOf(item.offer);
     return <Card key={item.offer} item={item} rank={index+1} best={index===0&&item.modeled}
-     chosen={slot>=0&&slot===chosen} special={slot>=0&&slot===special} onChoose={()=>slot>=0&&onChoose(slot)}/>;
+     chosen={slot>=0&&slot===chosen} special={slot>=0&&slot===special} onChoose={()=>slot>=0&&onChoose(slot)} reportContext={reportContext}/>;
    })}
    <details className="model-footnote"><summary>{result.samples} simulated runs · {result.modelVersion} · {remainingWaves} waves left</summary>
     {general.map((w,i)=><p key={i}>{w}</p>)}
