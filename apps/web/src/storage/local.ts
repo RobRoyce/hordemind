@@ -15,7 +15,8 @@ export function createLocalRepository():StateRepository{
     const parsed=LocalStateSchema.safeParse(JSON.parse(raw));
     if(parsed.success)return parsed.data;
     // Preserve invalid data in localStorage; no destructive reset.
-    console.warn('HordeMind: stored state could not be decoded. Original bytes preserved.');
+    try{localStorage.setItem(STORAGE_KEY+'-unreadable-backup',raw)}catch{}
+    console.warn('HordeMind: stored state could not be decoded. Backup retained under unreadable-backup.');
    }catch(err){console.warn('HordeMind: local state unavailable',err)}
    return structuredClone(EMPTY_STATE);
   },
