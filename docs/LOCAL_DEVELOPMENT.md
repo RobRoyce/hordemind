@@ -37,6 +37,27 @@ The v2 app runs at http://127.0.0.1:5173. The local Supabase dashboard is at htt
 ### Application persistence
 The first v2 milestone **still saves runs locally in the browser**. The PostgreSQL backend and RLS schema are ready for development and migration testing, but no cloud sync and no live data submission are enabled. This avoids building implicit collection of gameplay telemetry. Later, an authenticated repository adapter will sync opt-in runs without changing the event journal format.
 
+## Local verification — the default development loop
+
+**Do not wait for GitHub Actions while iterating.** From the repository root:
+
+```sh
+make verify        # TypeScript + unit tests + production Vite build + real-browser smoke
+make verify-fast   # Same checks without the browser (for pure domain/model changes)
+make verify-clean  # Reinstall pinned lockfile dependencies, then full checks
+make verify-db     # Add actual Docker/Postgres migration and RLS integration checks
+```
+
+`make verify` starts a local production preview at `http://127.0.0.1:4173` (not the regular Vite dev port), runs `apps/web/tests/e2e.mjs` against it, then terminates the preview. Set `HORDEMIND_TEST_PORT` to another unused port if necessary. Chrome is used by default; if Chrome isn't installed, run `npx playwright install chromium` from `apps/web` and set `E2E_BUNDLED_CHROMIUM=1`.
+
+The database is **optional for frontend development**. Use `make up` to run the complete local Supabase stack, or `make verify-db` for a focused SQL security check. The SQL test uses `BEGIN ... ROLLBACK` and does not reset your local game data.
+
+`make verify` uses your existing `node_modules` if present. `make verify-clean` runs `npm ci` from `package-lock.json` first. GitHub Actions remains the final release guard after a PR; it should not be your interactive debugging loop.
+
+### Access scope
+
+A container or terminal started in another isolated environment is **not your Mac's Docker daemon**. Run these commands in your own checkout on the machine where Docker/OrbStack is running. Do not expose development ports or Auth to the public internet.
+
 ### CI and database test
 The v2 quality workflow builds and tests the compiled app. A separate DB job runs local Supabase/Postgres in Docker, applies migrations and verifies schema/security invariants. A migration that fails there cannot be considered ready to merge.
 
