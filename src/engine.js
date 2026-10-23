@@ -32,7 +32,7 @@ export function simulate(state,chosen,seed,futureChoices=[]){
   let time=60*speed;
   const eventRateScale=1+.35*n("hordes");
   const massBase=poisson(a.massRate*eventRateScale,r);
-  let masses=massBase+2*n("burst"),fiends=poisson(a.fiendRate*eventRateScale,r),
+  let masses=massBase+(a.burstCountPerWave||2)*n("burst"),fiends=poisson(a.fiendRate*eventRateScale,r),
       spires=poisson(a.spireRate*eventRateScale,r)+n("rising");
   let lords=n("summonedLord")?poisson(a.lordRate*Math.max(1,n("summonedLord")),r):0;
   const eventsGenerated=massBase+fiends+spires+lords;
@@ -42,7 +42,7 @@ export function simulate(state,chosen,seed,futureChoices=[]){
   if(n("surgeHell"))hells*=1+n("surgeHell");
   const payoutMass=3+n("puff")*(active.length+massOffers)+n("exaltedMass");
   const payoutFiend=4+2*n("exaltedFiend");
-  const payoutLord=6+8*n("colossal")+5*n("ruthless")+3*n("summonedLord");
+  const payoutLord=6+8*n("colossal")+5*n("ruthless")+3*n("summonedLord")+(a.teemingTarget==="Lord"?3*n("teem"):0);
   const payoutHell=4+n("exaltHell")+n("ambushHell")+n("summonHell")+2*n("burnHell");
   const payoutSpire=5+6*n("precious")+5*n("treasured")+4*n("coveted")+3*n("draining");
   const kill=cost=>{if(time<cost)return false;time-=cost;return true};
@@ -50,7 +50,7 @@ export function simulate(state,chosen,seed,futureChoices=[]){
   while(masses>0&&massKills<150&&kill(a.secondsPerMass*(1+.3*n("reform")))){
    massKills++;masses--;pay("Mass",payoutMass);
    if(n("reform")&&r()<1-Math.pow(.7,n("reform")))masses++;
-   if(n("teem")&&r()<1-Math.pow(.5,n("teem")))fiends++;
+   if(n("teem")&&r()<1-Math.pow(.5,n("teem"))){if(a.teemingTarget==="Lord")lords++;else fiends++}
    if(n("hellish")&&r()<1-Math.pow(.5,n("hellish")))hells++;
    if(n("anchor")&&r()<1-Math.pow(.5,n("anchor")))spires++;
   }
@@ -96,7 +96,8 @@ export function diagnose(state,result){
   comments.push(spawners.some(has)?"Adds +1 Aether per Hellborne. Your selected offers include a Hellborne spawn source.":"No Hellborne spawner recorded. Exalted increases payout but does not spawn Hellborne, so immediate value can be zero; acquiring a spawner later could change this.");
  }
  if(o?.effect==="anchor")comments.push("Masses can generate Soulspires, but Spires consume event-clear time and can displace more rewarding Mass kills.");
- if(o?.effect==="burst")comments.push("Adds two Masses at the start of every remaining wave, benefiting from Puffing, reform, and on-death spawn modifiers.");
+ if(o?.effect==="burst")comments.push("Adds "+(state.assumptions?.burstCountPerWave||2)+" Masses at each future wave start, benefiting from Puffing, reform and on-death effects.");
+ if(o?.effect==="teem")comments.push("Teeming triggers are modeled as "+(state.assumptions?.teemingTarget||"Fiend")+" spawns. Guide tooltip variants conflict; verify in-game.");
  if(o?.effect==="chaos")comments.push("The next normal wave is replaced by one random Chaos Wave. Outcome probabilities and Aether payout ranges are modeled assumptions.");
  if(!comments.length)comments.push(o?.detail||"Unknown offer effect.");
  return comments;
