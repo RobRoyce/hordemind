@@ -16,7 +16,8 @@ export function append<T extends RunEvent['type']>(run:RunRecord,type:T,payload:
  const events=effectiveEvents(run);
  if(candidate.type==='offer_chosen'){
   const source=events.filter(x=>x.type==='offers_presented'&&x.payload.wave===candidate.payload.wave).at(-1);
-  if(!source || source.type!=='offers_presented'||!source.payload.offered.includes(candidate.payload.chosen))throw new Error('Chosen offer must be in the recorded choices');
+  if(!source || source.type!=='offers_presented'||source.payload.offered[candidate.payload.chosenIndex]!==candidate.payload.chosen)throw new Error('Chosen offer must match the recorded slot');
+  if(candidate.payload.usedSpecial!==(source.payload.specialSlotIndex===candidate.payload.chosenIndex&&source.payload.specialSlotIndex!==undefined))throw new Error('Special-choice flag must match the chosen slot');
   if(events.some(x=>x.type==='offer_chosen'&&x.payload.wave===candidate.payload.wave))throw new Error('Wave choice already recorded');
   if(candidate.payload.usedSpecial && events.some(x=>x.type==='offer_chosen'&&x.payload.usedSpecial))throw new Error('One-time special offering has already been used');
   if(candidate.payload.usedSpecial){const started=events.find(x=>x.type==='run_started');if(started?.type!=='run_started'||!started.payload.profile.specialOfferingAvailable)throw new Error('The character profile has no special offering configured');}
@@ -60,9 +61,11 @@ export function undoChoice(run:RunRecord):RunRecord {
  const associated=events.filter(x=>x.type==='offers_presented'&&x.payload.wave===selected.payload.wave||x.type==='wave_observed'&&x.payload.wave===selected.payload.wave);
  return append(run,'correction',{targetEventIds:[selected.id,...associated.map(x=>x.id)],explanation:'User corrected last recorded choice'});
 }
-export function recordDecision(run:RunRecord,offered:string[],chosen:string,usedSpecial:boolean):RunRecord{
+export function recordDecision(run:RunRecord,offered:string[],chosenIndex:number,specialSlotIndex:number|null=null):RunRecord{
  const p=project(run);
- let next=append(run,'offers_presented',{wave:p.nextWave,offered});
- next=append(next,'offer_chosen',{wave:p.nextWave,chosen,usedSpecial,followedRecommendation:null,modelVersion:null});
+ if(!Number.isInteger(chosenIndex)||chosenIndex<0||chosenIndex>=offered.length)throw Error('Choose a valid offer slot');
+ if(specialSlotIndex!==null&&(!Number.isInteger(specialSlotIndex)||specialSlotIndex<0||specialSlotIndex>=offered.length))throw Error('Invalid special slot');
+ let next=append(run,'offers_presented',{wave:p.nextWave,offered,...(specialSlotIndex!==null?{specialSlotIndex}:{})});
+ next=append(next,'offer_chosen',{wave:p.nextWave,chosen:offered[chosenIndex]??'',chosenIndex,usedSpecial:chosenIndex===specialSlotIndex,followedRecommendation:null,modelVersion:null});
  return next;
 }
