@@ -93,7 +93,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
  const filled=slots.flatMap((s,i)=>s.offer?[{i,offer:s.offer}]:[]);
  const offers=[...new Set(filled.map(x=>x.offer))];
  const scenario=useMemo(()=>deciding?scenarioFromRun(run):null,[run,deciding]);
- const rec=useRecommendations(scenario,offers);
+ const rec=useRecommendations(scenario,offers,special!==null?slots[special]?.offer??null:null);
 
  function resetForm(next:{slots?:Slot[];chosen?:number|null;special?:number|null;aether?:string;counts?:Record<string,string>}={}){
   setSlots(next.slots??freshSlots());setChosen(next.chosen??null);setSpecial(next.special??null);

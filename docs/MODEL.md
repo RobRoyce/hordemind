@@ -27,17 +27,24 @@ References:
 
 The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose whichever your S15 game tooltip says in Advanced Assumptions. The other sources and inferred interactions are not declared exact if unverified.
 
-## Decision timing (v2, `s15-montecarlo-2.2`)
+## Current engine: `s15-timeflow-3.0` (ADR 0004)
+
+- **Mechanics:** `apps/web/src/recommendation/mechanics.ts` holds every value with its provenance (`guide`, `disputed`, `assumed`).
+- **Simulation:** `simulate.ts` runs time-competitive waves. Progress-bar fills spawn Aether Events, completing events costs travel and kill time, and banes scale kill time.
+- **Comparison:** `model.ts` runs paired comparisons against an offer with no effect, three sensitivity reruns, a probability-free synergy outlook, and Black Pact break-even advice.
+- The table of guide discrepancies below shows which values v3 adopted. Spire multipliers, Lord base 5, Colossal conversion, Exalted Hordes +50%, Goblins 20%, the Butcher's +100, and Burning Rain and Wrath of Hell all now follow the guides. The Butcher appearing once per run is marked disputed.
+
+## Decision timing
 
 - Decision *k* precedes wave *k*, and the chosen offer applies from wave *k* through wave *N*.
 - The horizon is `remainingWaves = N − k + 1`, so a Chaos offer replaces wave *k*.
 - See [ADR 0003](adr/0003-run-timeline-and-observations.md) for the evidence and the open in-game check.
-- The v2 engine lives in `apps/web/src/recommendation/model.ts`. It is pure, with no domain or zod imports, and runs in a worker that receives only a `Scenario`.
-- Explanations come from the simulated component deltas. A non-Mass pick whose value comes mostly from Puffing Masses says so first, rather than leading with its own mechanic.
+- The engine is pure, with no domain or zod imports, and runs in a worker that receives only a `Scenario`.
+- Explanations come from the simulated component deltas, including losses from time displacement.
 
-## Parameter discrepancies to resolve (found 2026-10-23)
+## Parameter discrepancies (found 2026-10-23)
 
-Recent guides disagree with the v2 parameters. Check each against the S15 client before changing numbers.
+Recent guides disagreed with the v2 parameters. v3 adopts the guide values; all still need checking against the S15 client.
 
 | Parameter | v2 model | Guides |
 |---|---|---|
