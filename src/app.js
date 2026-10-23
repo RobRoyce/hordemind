@@ -87,7 +87,8 @@ function App(){
      ...state.choices.map((v,i)=>h("div",{className:"slot",key:i},field("Offer "+(i+1),h(Selector,{value:v,placeholder:"Type to filter offers…",change:name=>setState(s=>({...s,choices:s.choices.map((x,j)=>j===i?name:x)}))})))),
      state.specialEnabled&&state.specialAvailable&&h("label",{className:"special"},h("input",{type:"checkbox",checked:specialChoice,onChange:e=>setSpecialChoice(e.target.checked)})," This pick uses my one-time War Plan special offer"),
      h("div",{className:"actions"},h("button",{className:"primary",disabled:running||valid.length<2,onClick:compute},running?"Simulating…":"Compare expected Aether"),h("button",{onClick:()=>{update("choices",["","","",""]);setScores(null)}},"Clear choices")),
-     selected.filter(x=>!byName[x]).length>0&&h("p",{className:"warning"},"Unknown offer names aren't simulated: "+selected.filter(x=>!byName[x]).join(", "))
+     selected.filter(x=>!byName[x]).length>0&&h("p",{className:"warning"},"Unknown offer names aren't simulated: "+selected.filter(x=>!byName[x]).join(", ")),
+     unmodeled.length>0&&h("p",{className:"warning"},"Cataloged but not yet simulated (NOT zero value): "+unmodeled.join(", "))
     ),
     h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Previous selections"),h("button",{onClick:()=>{setState(s=>({...s,history:s.history.slice(0,-1),wave:Math.max(1,s.wave-1)}));setScores(null)},disabled:state.history.length===0},"Undo")),
      state.history.length?state.history.map((name,i)=>h("div",{className:"historyitem",key:i},h("span",{className:"number"},i+1),name)):h("p",{className:"hint"},"No previous offers yet."))),
