@@ -13,7 +13,7 @@ export function simulate(state,chosen,seed) {
  const payoutMass=3+n("puff")*(active.length+massCount)+n("exaltedMass");
  const payoutFiend=4+n("exaltedFiend")*2;
  const payoutLord=6+n("colossal")*8+n("ruthless")*5;
- const payoutHell=4+n("exaltHell")+n("ambushHell")+n("summonHell");
+ const payoutHell=4+n("exaltHell")+n("ambushHell")+n("summonHell")+2*n("burnHell");
  const payoutSpire=5+n("precious")*6+n("treasured")*5+n("coveted")*4;
  const breakdown={Mass:0,Fiend:0,Lord:0,Spire:0,Hellborne:0,Chaos:0,Other:0},events={Mass:0,Fiend:0,Lord:0,Spire:0,Hellborne:0,Chaos:0};
  let total=0; const pay=(k,v)=>{breakdown[k]+=v;total+=v;events[k]=(events[k]||0)+1};
