@@ -1,4 +1,5 @@
 import {EventSchema,type RunEvent,type RunRecord,type CharacterProfile} from './schema';
+import {SPECIAL_OFFER_NODE} from './profile';
 
 export const CLIENT_VERSION='v2-core.2';
 const now=()=>new Date().toISOString();
@@ -8,7 +9,9 @@ export function newProfile(name:string,className:CharacterProfile['className']):
 }
 export function newRun(profile:CharacterProfile,totalWaves:number):RunRecord{
  const record:RunRecord={id:crypto.randomUUID(),createdAt:now(),status:'in_progress',researchConsent:false,events:[]};
- return append(record,'run_started',{profile:structuredClone(profile),totalWaves,gamePatch:profile.gamePatch});
+ // The special offer follows The Black Pact, including for profiles saved before the two were linked.
+ const snapshot={...structuredClone(profile),specialOfferingAvailable:profile.warPlanNodes.includes(SPECIAL_OFFER_NODE)};
+ return append(record,'run_started',{profile:snapshot,totalWaves,gamePatch:profile.gamePatch});
 }
 
 type EventOf<T extends RunEvent['type']>=Extract<RunEvent,{type:T}>;

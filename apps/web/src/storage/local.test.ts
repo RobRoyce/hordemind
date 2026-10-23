@@ -27,6 +27,8 @@ describe('local repository',()=>{
   expect(result.status).toBe('unreadable');
   expect(storage.getItem(STORAGE_KEY)).toBe(raw);
   expect(result.backupKey&&storage.getItem(result.backupKey)).toBe(raw);
+  repo.load();
+  expect(storage.length).toBe(2);
  });
  it('refuses to persist invalid state',()=>{
   const storage=memoryStorage(),repo=createLocalRepository(storage);

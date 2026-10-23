@@ -1,6 +1,7 @@
 import {EMPTY_STATE,LocalStateSchema,type LocalState} from '../domain/schema';
 
 export const STORAGE_KEY='hordemind-v2-local-v1';
+export const BACKUP_KEY=STORAGE_KEY+'-unreadable-backup';
 
 /**
  * `unreadable`: stored data exists but failed validation, e.g. it was written by a
@@ -10,7 +11,10 @@ export type LoadStatus='ok'|'empty'|'unreadable'|'unavailable';
 export interface LoadResult{state:LocalState;status:LoadStatus;backupKey?:string}
 export interface StateRepository{
  load():LoadResult;
+ /** Writes only when the serialized state differs from what is stored. */
  save(next:LocalState):void;
+ /** Validates state written by another tab. */
+ parse(raw:string):LocalState|null;
  export(state:LocalState):string;
 }
 export function createLocalRepository(storage:Storage|undefined=globalThis.localStorage):StateRepository{
@@ -22,10 +26,11 @@ export function createLocalRepository(storage:Storage|undefined=globalThis.local
     let parsed;
     try{parsed=LocalStateSchema.safeParse(JSON.parse(raw))}catch{parsed=null}
     if(parsed?.success)return {state:parsed.data,status:'ok'};
-    const backupKey=`${STORAGE_KEY}-unreadable-${new Date().toISOString()}`;
-    try{storage?.setItem(backupKey,raw)}catch{}
-    console.warn('HordeMind: stored state could not be decoded; a copy is kept under',backupKey);
-    return {state:structuredClone(EMPTY_STATE),status:'unreadable',backupKey};
+    // One fixed backup slot, rewritten only when the unreadable data changes.
+    let backupKey:string|undefined=BACKUP_KEY;
+    try{if(storage?.getItem(BACKUP_KEY)!==raw)storage?.setItem(BACKUP_KEY,raw)}catch{backupKey=undefined}
+    console.warn('HordeMind: stored state could not be decoded; it is left untouched under',STORAGE_KEY);
+    return {state:structuredClone(EMPTY_STATE),status:'unreadable',...(backupKey?{backupKey}:{})};
    }catch(err){
     console.warn('HordeMind: local state unavailable',err);
     return {state:structuredClone(EMPTY_STATE),status:'unavailable'};
@@ -33,7 +38,11 @@ export function createLocalRepository(storage:Storage|undefined=globalThis.local
   },
   save(next){
    if(!storage)throw new Error('Browser storage is unavailable');
-   storage.setItem(STORAGE_KEY,JSON.stringify(LocalStateSchema.parse(next)));
+   const json=JSON.stringify(LocalStateSchema.parse(next));
+   if(storage.getItem(STORAGE_KEY)!==json)storage.setItem(STORAGE_KEY,json);
+  },
+  parse(raw){
+   try{const parsed=LocalStateSchema.safeParse(JSON.parse(raw));return parsed.success?parsed.data:null}catch{return null}
   },
   export(state){return JSON.stringify({exportedAt:new Date().toISOString(),product:'HordeMind v2',state},null,2)}
  };

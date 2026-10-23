@@ -86,6 +86,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
  const [ending,setEnding]=useState(false);
  const [error,setError]=useState('');
  const inputs=useRef<(HTMLInputElement|null)[]>([]);
+ const panelHeading=useRef<HTMLHeadingElement>(null);
  const inProgress=run.status==='in_progress';
  const deciding=inProgress&&!p.decisionsComplete;
 
@@ -129,6 +130,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
   try{
    const draft=decisionDraft(run);
    saveRun(undoChoice(run),'Last decision undone; its offers are back for editing');
+   setEnding(false);
    if(draft){
     const restored=draft.offered.map(slotFor);
     while(restored.length<3)restored.push(emptySlot());
@@ -147,7 +149,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
 
  useEffect(()=>{
   const onKey=(event:KeyboardEvent)=>{
-   if(!deciding)return;
+   if(!deciding||ending)return;
    if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();record();return}
    const target=event.target as HTMLElement|null;
    if(target&&['INPUT','TEXTAREA','SELECT'].includes(target.tagName)||event.metaKey||event.ctrlKey||event.altKey)return;
@@ -156,6 +158,14 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
   };
   window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
  });
+
+ // The panel that replaces the focused control receives focus, so keyboard and screen-reader users follow along.
+ const panel=run.status!=='in_progress'?'ended':ending?'ending':deciding?'deciding':'final';
+ const firstPanel=useRef(true);
+ useEffect(()=>{
+  if(firstPanel.current){firstPanel.current=false;return}
+  if(panel==='deciding')inputs.current[0]?.focus();else panelHeading.current?.focus();
+ },[panel]);
 
  const usedSpecial=p.chosen.find(x=>x.payload.usedSpecial);
  const bestSlot=rec.result?.recommended?slots.findIndex(s=>s.offer===rec.result?.recommended):-1;
@@ -196,7 +206,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
    {usedSpecial?`Black Pact offer used before wave ${usedSpecial.payload.wave}.`:'Black Pact offer unused. Mark it below when it appears.'}
   </p>}
 
-  {run.status!=='in_progress'?<RunEnded run={run} profile={profile} onStart={onStart} totalAether={p.lastTotalAether} decisions={p.chosen.length}/>:
+  {run.status!=='in_progress'?<RunEnded run={run} profile={profile} onStart={onStart} totalAether={p.lastTotalAether} decisions={p.chosen.length} headingRef={panelHeading}/>:
    deciding&&!ending?<div className="decision-grid">
     <section className="surface decision" aria-labelledby="decision-title">
      <h2 id="decision-title">Offers before wave {p.nextWave}</h2>
@@ -216,7 +226,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
        <OfferPicker ref={el=>{inputs.current[i]=el}} index={i} slot={slot} recent={recentOffers}
         onChange={s=>updateSlot(i,s)} onPicked={()=>focusAfter(i)}/>
        {p.specialRemaining&&<button type="button" className="pact" aria-pressed={special===i} disabled={!slot.offer}
-        title="Mark as the Black Pact special offer" onClick={()=>setSpecial(s=>s===i?null:i)}>Pact</button>}
+        aria-label={`Mark offer ${i+1} as the Black Pact offer`} title="Mark as the Black Pact offer" onClick={()=>setSpecial(s=>s===i?null:i)}>Pact</button>}
        {(i>=3||slot.text)&&<button type="button" className="clear" aria-label={i>=3?`Remove offer ${i+1}`:`Clear offer ${i+1}`}
         onClick={()=>{if(i>=3){setSlots(s=>s.filter((_,j)=>j!==i));setChosen(null);setSpecial(null)}else updateSlot(i,emptySlot())}}>×</button>}
       </div>)}
@@ -237,10 +247,10 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
    </div>:
    <section className="surface final">
     {ending?<>
-     <h2>End this run now?</h2>
+     <h2 tabIndex={-1} ref={panelHeading}>End this run now?</h2>
      <p>Use this if you died, left, or stopped recording. Everything recorded so far is kept.</p>
     </>:<>
-     <h2>All {p.totalWaves} offers recorded</h2>
+     <h2 tabIndex={-1} ref={panelHeading}>All {p.totalWaves} offers recorded</h2>
      <p>Play wave {p.totalWaves}. When it ends, enter the Aether total you finished with.</p>
     </>}
     <label className="reading">Final Aether <span className="optional">optional</span>
@@ -260,10 +270,10 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
  </div>;
 }
 
-function RunEnded({run,profile,onStart,totalAether,decisions}:{run:RunRecord;profile:CharacterProfile|null;onStart:Props['onStart'];totalAether:number|null;decisions:number}){
+function RunEnded({run,profile,onStart,totalAether,decisions,headingRef}:{run:RunRecord;profile:CharacterProfile|null;onStart:Props['onStart'];totalAether:number|null;decisions:number;headingRef:React.Ref<HTMLHeadingElement>}){
  const p=project(run);
  return <section className="surface final">
-  <h2>{run.status==='completed'?'Run complete':'Run ended'}</h2>
+  <h2 tabIndex={-1} ref={headingRef}>{run.status==='completed'?'Run complete':'Run ended'}</h2>
   <p>{decisions} of {p.totalWaves} offers recorded{totalAether!==null?`, ${totalAether} Aether`:''}. It's saved on this device; see Insights for history and export.</p>
   {profile&&<button className="primary" onClick={()=>onStart(profile,p.totalWaves)}>Start another {p.totalWaves}-wave run</button>}
  </section>;
