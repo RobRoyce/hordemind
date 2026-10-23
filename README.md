@@ -13,7 +13,7 @@ HordeMind is an open-source project for recording Infernal Hordes decisions and 
 - **Insights:** run history and a JSON export of the full append-only journal.
 - Everything is saved **in your browser**. Optional **private sync** copies runs to your own account on a local Supabase server (`make up`, then Insights → Private sync). Nothing is shared for research.
 
-**About the recommender:** Monte Carlo with paired seeds, mechanics-aware, and explained in terms of where each estimate's value comes from. Its parameters are not yet calibrated from gameplay, and it doesn't yet value future offers or the later use of the Black Pact offer. Treat it as a structured second opinion. See the [model notes](docs/MODEL.md) and [run timeline ADR](docs/adr/0003-run-timeline-and-observations.md).
+**About the recommender:** each wave is a 60-second time budget in which slow events (Soulspires, high-health banes) displace other events. Every mechanic value is tagged as guide-backed, disputed, or assumed. Each recommendation reports whether it survives other timing assumptions and what a pick unlocks later. Black Pact advice is a break-even rule, not an invented probability. None of it is calibrated against recorded runs yet. See [ADR 0004](docs/adr/0004-time-competitive-recommender.md) and the [model notes](docs/MODEL.md).
 
 ## Run locally (free)
 

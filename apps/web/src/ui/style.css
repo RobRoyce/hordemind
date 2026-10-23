@@ -165,3 +165,16 @@ p.recommend-alert{font-size:12px!important;color:#ffe1af!important}
 .offline-status.sync-error{color:#ffb3bf}
 .sync-form .form-grid{max-width:640px}
 code{font-size:12px;background:#253042;padding:1px 5px;border-radius:5px}
+
+/* Recommendation verdicts, synergy and Pact advice */
+.verdict{font-size:12px!important;margin:0 0 10px!important;padding:8px 10px;border-radius:9px}
+.verdict.robust{color:#cfe9d6!important;background:#1d3327;border:1px solid #3d6b4f}
+.verdict.close{color:#ffe1af!important;background:#3a2f22;border:1px solid #8a6a42}
+.pact-advice{margin:0 0 10px;padding:10px 12px;border-radius:10px;background:#341b23;border:1px solid #7a3446}
+.pact-advice strong{font-size:12px;color:#ffc2cc}.pact-advice p{margin:4px 0 0!important;font-size:12px!important;color:#ffdfe5!important}
+.recommendations .synergy{font-size:12px;color:#bfe0cc;margin:4px 0}
+.sensitivity{border-collapse:collapse;font-size:11px;margin:8px 0;width:100%}
+.sensitivity caption{text-align:left;color:var(--muted);padding-bottom:4px}
+.sensitivity th{text-align:left;font-weight:400;color:#c3cbd8;padding:3px 0}
+.sensitivity td{text-align:right;font-variant-numeric:tabular-nums;padding:3px 0}
+.model-footnote summary{cursor:pointer}

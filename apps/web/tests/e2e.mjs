@@ -79,6 +79,7 @@ try{
  const recText=await page.locator('.recommendations').innerText();
  assert(recText.includes('Aether, modeled'),'modeled estimates shown');
  assert(recText.includes('Chaotic Offering'));
+ assert.equal(await page.locator('.verdict').count(),1,'robustness verdict shown');
 
  step('choose with the keyboard and record');
  await page.locator('#decision-title').click();
@@ -91,8 +92,9 @@ try{
  await page.getByLabel(/Aether after wave 1/).fill('85');
  await pick(1,'burst','The Bursting Masses');
  await pick(2,'anch','The Anchored Masses');
- await page.locator('.offer-row').nth(1).getByRole('button',{name:'Pact'}).click();
+ await page.getByRole('button',{name:'Mark offer 2 as the Black Pact offer'}).click();
  await page.getByRole('button',{name:/Choose offer 2/}).click();
+ await page.locator('.pact-advice').waitFor({timeout:25000});
  await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
  await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
  assert((await page.locator('.special-status').innerText()).includes('used before wave 2'));

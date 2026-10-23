@@ -9,11 +9,11 @@ const DEBOUNCE_MS=120;
  * Runs the simulator in one long-lived worker. Each request carries an id;
  * answers to superseded requests are ignored, so fast typing never shows stale rankings.
  */
-export function useRecommendations(scenario:Scenario|null,offers:string[]):RecommendationState{
+export function useRecommendations(scenario:Scenario|null,offers:string[],specialOffer:string|null=null):RecommendationState{
  const [state,setState]=useState<RecommendationState>({result:null,busy:false,error:''});
  const worker=useRef<Worker|null>(null);
  const latest=useRef(0);
- const key=scenario&&offers.length>=2?JSON.stringify([scenario,offers]):'';
+ const key=scenario&&offers.length>=2?JSON.stringify([scenario,offers,specialOffer]):'';
 
  useEffect(()=>()=>{worker.current?.terminate();worker.current=null},[]);
  useEffect(()=>{
@@ -32,7 +32,7 @@ export function useRecommendations(scenario:Scenario|null,offers:string[]):Recom
      w.onerror=event=>{setState({result:null,busy:false,error:event.message||'The simulator stopped unexpectedly'});worker.current?.terminate();worker.current=null};
      worker.current=w;
     }
-    worker.current.postMessage({requestId,scenario,offered:offers,samples:SAMPLES});
+    worker.current.postMessage({requestId,scenario,offered:offers,samples:SAMPLES,specialOffer});
    }catch(e){setState({result:null,busy:false,error:String(e instanceof Error?e.message:e)})}
   },DEBOUNCE_MS);
   return ()=>window.clearTimeout(timer);

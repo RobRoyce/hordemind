@@ -1,0 +1,179 @@
+/**
+ * Time-competitive wave simulator. Each wave is a fixed time budget: killing demons fills
+ * the progress bar, which spawns Aether Events, and time spent completing events is time
+ * not spent filling the bar. A Spire that pays well but takes ten seconds therefore
+ * displaces other events, which is the opportunity cost a fixed-count model misses.
+ *
+ * This is a surrogate with explicit assumptions (see mechanics.ts), not Blizzard's scheduler.
+ */
+import {BASE,CHAOS_OUTCOMES,EVENT_KINDS,WAR_PLAN_EFFECTS,mechanicsFor,type EventKind,type OfferMechanics} from './mechanics';
+
+export type Breakdown=Record<EventKind,number>;
+export const emptyBreakdown=():Breakdown=>Object.fromEntries(EVENT_KINDS.map(k=>[k,0])) as Breakdown;
+
+export interface PlayerProfile{killSpeed:'fast'|'average'|'slow'|'unknown';mobility:'high'|'average'|'low'|'unknown';warPlanNodes:readonly string[]}
+
+/** Scales for sensitivity analysis; 1 everywhere is the baseline. */
+export interface Assumptions{completionScale:number;fillScale:number}
+export const BASELINE:Assumptions={completionScale:1,fillScale:1};
+
+export interface WaveSpec{
+ /** Waves since the decision; 0 is the wave the offer precedes. */
+ index:number;
+ /** Offers active this wave, in pick order. Unknown names are carried for stack size only. */
+ stack:readonly string[];
+ /** Picks after the decision that HordeMind cannot know; each counts as one offer with no effect. */
+ genericPicks:number;
+ chaos:boolean;
+ /** Offers picked at this decision; first-wave-only effects of older picks have already fired. */
+ newPicks:readonly string[];
+}
+
+/** Aggregated effects of a stack; computed once per wave. */
+interface Rules{
+ start:Map<EventKind,number>;
+ onComplete:Map<EventKind,{spawn:EventKind;chance:number}[]>;
+ withEvents:Map<EventKind,number>;
+ payoutAdd:Map<EventKind,number>;
+ payoutMult:Map<EventKind,number>;
+ weightMult:Map<EventKind,number>;
+ timeMult:Map<EventKind,number>;
+ eventRate:number;
+ convertFiendFactor:number|null;
+ groupAdd:number;
+ waveEnd:{min:number;max:number}[];
+ hellfireSources:number;
+ hellfireSpawnsPerSource:number;
+ puffing:number;
+ stackSize:number;
+ massOffers:number;
+}
+const bump=(m:Map<EventKind,number>,k:EventKind,v:number)=>m.set(k,(m.get(k)??0)+v);
+const scale=(m:Map<EventKind,number>,k:EventKind,v:number)=>m.set(k,(m.get(k)??1)*v);
+
+export function rulesFor(spec:WaveSpec):Rules{
+ const r:Rules={start:new Map(),onComplete:new Map(),withEvents:new Map(),payoutAdd:new Map(),payoutMult:new Map(),weightMult:new Map(),timeMult:new Map(),
+  eventRate:0,convertFiendFactor:null,groupAdd:0,waveEnd:[],hellfireSources:0,hellfireSpawnsPerSource:0,puffing:0,
+  stackSize:spec.stack.length+spec.genericPicks,massOffers:0};
+ const mechanics=spec.stack.map(mechanicsFor).filter((m):m is OfferMechanics=>m!==null);
+ // An offer whose wave-end bonus another active offer replaces pays nothing at wave end.
+ const replaced=new Set(mechanics.flatMap(m=>m.effects.flatMap(e=>e.kind==='waveEnd'&&e.replaces?[e.replaces]:[])));
+ const misses=new Map<EventKind,number>();
+ for(const m of mechanics){
+  if(m.category==='Masses')r.massOffers++;
+  for(const e of m.effects){
+   switch(e.kind){
+    case 'startEvents':if(!e.firstWaveOnly||spec.index===0&&spec.newPicks.includes(m.id))bump(r.start,e.event,e.count.value);break;
+    case 'onComplete':{const list=r.onComplete.get(e.from)??[];list.push({spawn:e.spawn,chance:e.chance.value});r.onComplete.set(e.from,list);break}
+    // Independent chances combine as 1 − Π(1 − p).
+    case 'withEvents':scale(misses,e.spawn,1-e.chance.value);break;
+    case 'payoutAdd':bump(r.payoutAdd,e.event,e.amount.value);break;
+    case 'payoutMult':scale(r.payoutMult,e.event,e.factor.value);break;
+    case 'weightMult':scale(r.weightMult,e.event,e.factor.value);break;
+    case 'timeMult':scale(r.timeMult,e.event,e.factor.value);break;
+    case 'eventRate':r.eventRate+=e.add.value;break;
+    case 'convert':r.convertFiendFactor=Math.max(r.convertFiendFactor??0,e.payoutFactor.value);break;
+    case 'groupAdd':r.groupAdd+=e.count.value;break;
+    case 'waveEnd':if(!replaced.has(m.id))r.waveEnd.push({min:e.min.value,max:e.max.value});break;
+    case 'hellfireSource':r.hellfireSources+=e.amount.value;break;
+    case 'hellfireSpawns':r.hellfireSpawnsPerSource+=e.perSource.value;break;
+    case 'puffing':r.puffing++;break;
+    case 'chaos':break;
+   }
+  }
+ }
+ for(const [k,miss] of misses)r.withEvents.set(k,1-miss);
+ return r;
+}
+
+export function random(seed:number){
+ let s=seed|0;
+ return ()=>{s=(s+0x6D2B79F5)|0;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296};
+}
+export const hash=(s:number)=>{let x=s|0;x^=x>>>16;x=Math.imul(x,0x7feb352d);x^=x>>>15;x=Math.imul(x,0x846ca68b);return (x^(x>>>16))>>>0};
+
+interface Pending{kind:EventKind;/** Spawned where the player already is, e.g. a reformed Mass. */local:boolean;lord?:boolean}
+
+/**
+ * Simulates one wave. Separate random streams for event types, on-completion rolls and
+ * extra spawns keep paired comparisons aligned when one stack does more than another.
+ */
+export function simulateWave(spec:WaveSpec,profile:PlayerProfile,seed:number,assumptions:Assumptions=BASELINE):Breakdown{
+ const out=emptyBreakdown();
+ const streams={types:random(hash(seed^0x51)),rolls:random(hash(seed^0xa3)),extras:random(hash(seed^0xc7)),chaos:random(hash(seed^0xe9))};
+ const speed=BASE.clearTime[profile.killSpeed==='unknown'?'average':profile.killSpeed].value;
+ if(spec.chaos){
+  const total=CHAOS_OUTCOMES.reduce((a,o)=>a+o.weight.value,0);
+  let x=streams.chaos()*total,outcome=CHAOS_OUTCOMES[0]!;
+  for(const o of CHAOS_OUTCOMES){x-=o.weight.value;if(x<=0){outcome=o;break}}
+  // Faster builds clear more of a Chaos Wave; assumed square-root scaling.
+  out.Chaos+=(outcome.low+(outcome.high-outcome.low)*streams.chaos())/Math.sqrt(speed);
+  if(profile.warPlanNodes.includes('Bedlam'))out.Chaos+=WAR_PLAN_EFFECTS.Bedlam.value;
+  return out;
+ }
+ const r=rulesFor(spec);
+ const travel=BASE.travel[profile.mobility==='unknown'?'average':profile.mobility].value;
+ const fill=BASE.fillSeconds.value*assumptions.fillScale*speed/(1+r.eventRate);
+ const weights=(['Mass','Fiend','Spire','Lord'] as const).map(k=>[k,BASE.eventWeights[k].value*(r.weightMult.get(k)??1)] as const);
+ const weightTotal=weights.reduce((a,[,w])=>a+w,0);
+ const group=BASE.hellborneGroup.value+r.groupAdd;
+
+ const pay=(kind:EventKind,lord=false)=>{
+  let base=kind==='Lord'&&lord&&r.convertFiendFactor?BASE.aether.Lord.value*r.convertFiendFactor:kind==='Hellborne'?0:kind in BASE.aether?BASE.aether[kind as keyof typeof BASE.aether].value:0;
+  if(kind==='Hellborne')base=group*(BASE.aether.Hellborne.value+(r.payoutAdd.get('Hellborne')??0));
+  else base+=r.payoutAdd.get(kind)??0;
+  if(kind==='Mass'&&r.puffing)base+=r.puffing*(r.stackSize+r.massOffers);
+  out[kind]+=base*(r.payoutMult.get(kind)??1);
+ };
+ const cost=(e:Pending)=>{
+  const completion=BASE.completion[e.kind as keyof typeof BASE.completion]?.value??3;
+  const groupScale=e.kind==='Hellborne'?group/BASE.hellborneGroup.value:1;
+  return (e.local?0:travel)+completion*groupScale*speed*assumptions.completionScale*(r.timeMult.get(e.kind)??1);
+ };
+ const spawnFromProgress=(queue:Pending[])=>{
+  let x=streams.types()*weightTotal,kind:EventKind='Mass';
+  for(const [k,w] of weights){x-=w;if(x<=0){kind=k;break}}
+  queue.push(kind==='Fiend'&&r.convertFiendFactor?{kind:'Lord',local:false,lord:true}:{kind,local:false});
+  for(const [extra,chance] of r.withEvents)if(streams.extras()<chance)queue.push({kind:extra,local:false});
+ };
+
+ const queue:Pending[]=[];
+ for(const [kind,n] of r.start)for(let i=0;i<Math.round(n);i++)queue.push({kind,local:false});
+ const hellfireGroups=r.hellfireSpawnsPerSource*(BASE.ambientHellfire.value+r.hellfireSources);
+ for(let i=0;i<Math.floor(hellfireGroups)+(streams.extras()<hellfireGroups%1?1:0);i++)queue.push({kind:'Hellborne',local:false});
+
+ let time=0,progress=0,guard=0;
+ const T=BASE.waveSeconds.value;
+ while(time<T&&guard++<400){
+  const next=queue.shift();
+  if(!next){
+   time+=(1-progress)*fill;progress=0;
+   if(time<T)spawnFromProgress(queue);
+   continue;
+  }
+  const c=cost(next);
+  if(time+c>T)continue;
+  time+=c;
+  pay(next.kind,next.lord);
+  progress+=c*BASE.progressWhileBusy.value/fill;
+  while(progress>=1){progress-=1;spawnFromProgress(queue)}
+  // Follow-ups spawn on the spot and are handled first.
+  for(const {spawn,chance} of r.onComplete.get(next.kind)??[])
+   if(streams.rolls()<chance)queue.unshift({kind:spawn,local:spawn==='Mass'});
+ }
+ for(const {min,max} of r.waveEnd)out.Hellfire+=min+(max-min)*streams.extras();
+ return out;
+}
+
+/** Aether over the remaining waves; the decision's offer applies from the first. */
+export function simulateRun(history:readonly string[],extra:string|null,remaining:number,profile:PlayerProfile,seed:number,assumptions:Assumptions=BASELINE):Breakdown{
+ const total=emptyBreakdown();
+ const chaosNow=extra!==null&&mechanicsFor(extra)?.category==='Chaos';
+ for(let w=0;w<remaining;w++){
+  // Every wave's pick is either the candidate or an offer with no effect, so stacks stay the same size.
+  const stack=[...history,...(extra!==null?[extra]:[])];
+  const wave=simulateWave({index:w,stack,newPicks:extra!==null?[extra]:[],genericPicks:w+(extra===null?1:0),chaos:chaosNow&&w===0},profile,hash(seed+Math.imul(w+1,0x9e3779b1)),assumptions);
+  for(const k of EVENT_KINDS)total[k]+=wave[k];
+ }
+ return total;
+}
