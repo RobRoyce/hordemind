@@ -1,0 +1,11 @@
+import {strict as assert} from "node:assert";
+import {BASE} from "../src/engine.js";
+import {fitCalibration,applyCalibration} from "../src/calibration.js";
+assert.equal(fitCalibration(BASE).available,false);
+const s={...BASE,history:["The Bursting Masses","The Puffing Masses"],observations:[{wave:1,total:70},{wave:2,total:165}]};
+const fit=fitCalibration(s,{seeds:5});
+assert.equal(fit.available,true);
+assert(Number.isFinite(fit.scale));
+const scaled=applyCalibration([{name:"test",mean:50,lo:10,hi:100,parts:{Mass:20}}],fit)[0];
+assert.equal(scaled.mean,50*fit.scale);
+console.log("Calibration regression passed",fit.scale);
