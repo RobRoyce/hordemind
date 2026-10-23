@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useState} from "react";
 import {createRoot} from "react-dom/client";
 import {offers,byName,defaults,isModeled} from "./catalog.js";
 import {BASE,evaluate,diagnose,specialDecision} from "./engine.js";
-import {access,nodes,groups} from "./warplans.js";
+import {access,nodes,groups,mutuallyExclusive} from "./warplans.js";
 import {strategies,analyzeSetup} from "./strategy.js";
 import {futureOpportunity} from "./policy.js";
 const h=React.createElement,KEY="hordemind-react-v1";
@@ -23,7 +23,7 @@ function Selector({value,change,placeholder}){
 }
 function WarPlanPanel({state,setState}){
  const selected=state.warNodes||[];
- const toggle=name=>setState(s=>({...s,warNodes:(s.warNodes||[]).includes(name)?s.warNodes.filter(n=>n!==name):[...(s.warNodes||[]),name]}));
+ const toggle=name=>setState(s=>{const old=s.warNodes||[];if(old.includes(name))return {...s,warNodes:old.filter(n=>n!==name)};const blocked=mutuallyExclusive.filter(pair=>pair.includes(name)).flat().filter(n=>n!==name);return {...s,warNodes:[...old.filter(n=>!blocked.includes(n)),name]}});
  return h("article",{className:"panel"},
  h("div",{className:"sectionhead"},h("h2",null,"Infernal Hordes War Plan"),h("span",{className:"tag"},"Named nodes")),
  h("p",{className:"hint"},access.location+". "+access.unlock),
@@ -74,7 +74,7 @@ function App(){
  function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null);setSpecialForecast(null)}
  function link(){const url=location.origin+location.pathname+"#run="+encodeURIComponent(JSON.stringify(state));setShare(url);return url}
  async function copy(){const url=link();try{await navigator.clipboard.writeText(url);setFeedback("Share link copied.")}catch{setFeedback("Clipboard access blocked. Select and copy the URL below.")}}
- const newRun=()=>{if(!confirm("Clear this run and recorded Aether?"))return;setState(s=>({...BASE,waves:s.waves,kill:s.kill,mobility:s.mobility,specialEnabled:s.specialEnabled,warPlanNotes:s.warPlanNotes,assumptions:s.assumptions}));setScores(null);setShare("");history.replaceState(null,"",location.pathname)}
+ const newRun=()=>{if(!confirm("Clear this run and recorded Aether?"))return;setState(s=>({...BASE,waves:s.waves,kill:s.kill,mobility:s.mobility,specialEnabled:s.specialEnabled,warNodes:s.warNodes,warPlanNotes:s.warPlanNotes,assumptions:s.assumptions}));setScores(null);setShare("");history.replaceState(null,"",location.pathname)}
  const best=scores?.[0];const special=best?specialDecision(state,best):null;
  function estimateFuture(){setForecastRunning(true);setTimeout(()=>{try{setSpecialForecast(futureOpportunity(state,{scenarios:8,draws:3}));setFeedback("")}catch(e){setFeedback("Special offering forecast unavailable: "+e.message)}finally{setForecastRunning(false)}},20)}
  return h("main",null,
@@ -93,7 +93,9 @@ function App(){
       h("div",{className:"setting"},h("label",null,h("input",{type:"checkbox",checked:state.specialAvailable,onChange:e=>update("specialAvailable",e.target.checked),disabled:!state.specialEnabled})," Special offer still unused")),
       field("Exact War Plan perks / notes",h("input",{value:state.warPlanNotes,onChange:e=>update("warPlanNotes",e.target.value),placeholder:"Note perk names and ranks"})),
       h("p",{className:"hint"},"Unverified War Plan effects are tracked but do not silently change probabilities."),
-      h("div",{className:"twocol"},...["massRate","secondsPerMass","secondsPerElite","secondsPerSpire","secondsPerLord","chaosScale","samples"].map(k=>field(k,h("input",{type:"number",step:k==="samples"?100:.1,min:0,value:state.assumptions[k],onChange:e=>setState(s=>({...s,assumptions:{...s.assumptions,[k]:+e.target.value}}))})))))
+      field("Teeming Masses — what does your in-game tooltip spawn?",h("select",{value:state.assumptions.teemingTarget||"Fiend",onChange:e=>setState(s=>({...s,assumptions:{...s.assumptions,teemingTarget:e.target.value}}))},h("option",{value:"Fiend"},"Aether Fiend"),h("option",{value:"Lord"},"Aether Lord"))),
+      h("p",{className:"hint"},"Some published descriptions conflict across patches. The variant selected here changes simulation mechanics; confirm against your tooltip."),
+      h("div",{className:"twocol"},...["massRate","burstCountPerWave","methodBiasMultiplier","chaosBiasMultiplier","secondsPerMass","secondsPerElite","secondsPerSpire","secondsPerLord","chaosScale","samples"].map(k=>field(({massRate:"Base Mass events / wave",burstCountPerWave:"Bursting: Masses per wave",methodBiasMultiplier:"Method and Madness bias (assumed)",chaosBiasMultiplier:"Total Chaos bias (assumed)",secondsPerMass:"Seconds per Mass",secondsPerElite:"Seconds per Elite",secondsPerSpire:"Seconds per Spire",secondsPerLord:"Seconds per Lord",chaosScale:"Chaos payout multiplier",samples:"Simulation samples"})[k],h("input",{type:"number",step:k==="samples"?100:.1,min:0,value:state.assumptions[k],onChange:e=>setState(s=>({...s,assumptions:{...s.assumptions,[k]:+e.target.value}}))})))))
     ),
     h(WarPlanPanel,{state,setState}),
     h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Available offers"),h("span",{className:"tag"},"Search A–Z")),h("p",{className:"hint"},"Type a name, event type or effect. Every suggestion shows its mechanic. Chaos outcomes cannot be selected ahead of time."),
