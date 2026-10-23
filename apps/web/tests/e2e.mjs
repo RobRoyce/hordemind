@@ -2,12 +2,17 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 
 // GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
-const browser=await chromium.launch({headless:true,channel:'chrome'});
+const browser=await chromium.launch({
+ headless:true,
+ ...(process.env.E2E_CHROMIUM_EXECUTABLE
+   ? {executablePath:process.env.E2E_CHROMIUM_EXECUTABLE}
+   : process.env.E2E_BUNDLED_CHROMIUM==='1' ? {} : {channel:'chrome'})
+});
 const page=await browser.newPage({viewport:{width:1200,height:850}});
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 try{
- await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
+ await page.goto(process.env.E2E_BASE_URL||'http://127.0.0.1:5173/',{waitUntil:'domcontentloaded'});
  await page.getByRole('heading',{name:'Strategy Lab'}).waitFor({timeout:15000}).catch(async()=>{
   await page.getByRole('button',{name:/Strategy Lab/}).click();
   await page.getByRole('heading',{name:'Strategy Lab'}).waitFor();
