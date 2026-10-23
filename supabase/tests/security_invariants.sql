@@ -52,6 +52,9 @@ $$;
 -- Authenticated owner may insert an event into their own run.
 INSERT INTO public.run_events(run_id,client_event_id,sequence_no,event_type,event_payload,recorded_at,client_version)
 VALUES ('11111111-cccc-4ccc-8ccc-111111111111','11111111-eeee-4eee-8eee-111111111111',0,'run_started','{}'::jsonb,now(),'ci-test');
+-- Observation events written by the current client are accepted.
+INSERT INTO public.run_events(run_id,client_event_id,sequence_no,event_type,event_payload,recorded_at,client_version)
+VALUES ('11111111-cccc-4ccc-8ccc-111111111111','11111111-ffff-4fff-8fff-111111111111',1,'aether_observed','{"afterWave":1,"totalAether":40}'::jsonb,now(),'ci-test');
 -- Owner may not insert an event into a different user's run.
 DO $$
 DECLARE blocked boolean := false;

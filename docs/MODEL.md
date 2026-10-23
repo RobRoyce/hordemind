@@ -27,6 +27,33 @@ References:
 
 The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose whichever your S15 game tooltip says in Advanced Assumptions. The other sources and inferred interactions are not declared exact if unverified.
 
+## Decision timing (v2, `s15-montecarlo-2.2`)
+
+- Decision *k* precedes wave *k*, and the chosen offer applies from wave *k* through wave *N*.
+- The horizon is `remainingWaves = N − k + 1`, so a Chaos offer replaces wave *k*.
+- See [ADR 0003](adr/0003-run-timeline-and-observations.md) for the evidence and the open in-game check.
+- The v2 engine lives in `apps/web/src/recommendation/model.ts`. It is pure, with no domain or zod imports, and runs in a worker that receives only a `Scenario`.
+- Explanations come from the simulated component deltas. A non-Mass pick whose value comes mostly from Puffing Masses says so first, rather than leading with its own mechanic.
+
+## Parameter discrepancies to resolve (found 2026-10-23)
+
+Recent guides disagree with the v2 parameters. Check each against the S15 client before changing numbers.
+
+| Parameter | v2 model | Guides |
+|---|---|---|
+| Aether Lord base | 6 | 5 ([Warcraft Tavern](https://www.warcrafttavern.com/d4/infernal-hordes/)) |
+| Hellborne | 4 per kill | 2 per Hellborne, spawned in groups of 3 |
+| Colossal Fiends | +8 per Lord | Fiends spawn as Lords and drop 3× Aether |
+| Spire boons | additive +6/+5/+4 | 2.5× / 2.25× / 2×, each with a spawn-rate bane (75% as often) |
+| Draining Spires | missing | +3 per Spire |
+| Exalted Hordes | +30% event rate | Aether Events spawn 50% faster, stacking additively |
+| Aether Goblins | 15, chance 50% | 20% per Aether Event, 20–25 per Goblin |
+| Stalking Devil | 80 in first wave | +100 for killing the Burning Butcher |
+| Burning Rain / Wrath of Hell | missing in v2 | 9–15 / 15–24 per wave end |
+| Wave time budget | 60 s × speed factors | 60 s waves; v2 budget rarely binds, so Spire time cost seldom matters |
+
+Some catalog names (The Exalted Masses, The Summoned Lords, The Burning Hellborne) do not appear in these lists. They may be new in S15 or wrong.
+
 ## Forward simulation
 
 For each wave `w`, initialize independent seeded stochastic event pools:

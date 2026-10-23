@@ -1,73 +1,120 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import type {LocalState,CharacterProfile,RunRecord} from '../domain/schema';
-import {newRun} from '../domain/run';
-import {createLocalRepository} from '../storage/local';
+import {newProfile,newRun} from '../domain/run';
+import {validateProfile} from '../domain/profile';
+import {createLocalRepository,downloadExport} from '../storage/local';
 import {StrategyLab} from './StrategyLab';
 import {LiveRun} from './LiveRun';
 import {Insights} from './Insights';
 
 export type View='strategy'|'run'|'insights';
 const repository=createLocalRepository();
-function initialView():View{
+const RECENT_LIMIT=8;
+
+function viewFromHash():View{
  const v=window.location.hash.replace('#','');
  return v==='run'||v==='insights'||v==='strategy'?v:'run';
 }
+const runProfileId=(run:RunRecord|undefined)=>{
+ const started=run?.events.find(e=>e.type==='run_started');
+ return started?.type==='run_started'?started.payload.profile.id:null;
+};
+/** Most recently presented offers across all runs, newest first. */
+function recentOffers(runs:RunRecord[]):string[]{
+ const seen=new Set<string>();
+ const events=runs.flatMap(r=>r.events).filter(e=>e.type==='offers_presented').sort((a,b)=>b.at.localeCompare(a.at));
+ for(const e of events){if(e.type==='offers_presented')for(const o of e.payload.offered)seen.add(o);if(seen.size>=RECENT_LIMIT)break}
+ return [...seen].slice(0,RECENT_LIMIT);
+}
+
 export function App(){
- const [data,setData]=useState<LocalState>(()=>repository.load());
- const [view,setView]=useState<View>(initialView);
+ const [initial]=useState(()=>repository.load());
+ const [data,setData]=useState<LocalState>(initial.state);
+ // Unreadable stored data is never overwritten until the user chooses to start fresh.
+ const [blocked,setBlocked]=useState(initial.status==='unreadable');
+ const [saveError,setSaveError]=useState('');
+ const [view,setView]=useState<View>(viewFromHash);
  const [notice,setNotice]=useState('');
+ const noticeTimer=useRef<number|undefined>(undefined);
  const selectedProfile=useMemo(()=>data.profiles.find(x=>x.id===data.activeProfileId)??null,[data]);
  const activeRun=useMemo(()=>data.runs.find(x=>x.id===data.activeRunId)??null,[data]);
+ const recent=useMemo(()=>recentOffers(data.runs),[data.runs]);
+
  useEffect(()=>{
-  try{repository.save(data)}catch(err){setNotice('Could not save locally: '+String(err))}
- },[data]);
+  if(blocked)return;
+  try{repository.save(data);setSaveError('')}
+  catch(err){setSaveError(err instanceof Error?err.message:String(err))}
+ },[data,blocked]);
  useEffect(()=>{
-  const onHash=()=>setView(initialView());
+  const onHash=()=>setView(viewFromHash());
   window.addEventListener('hashchange',onHash);
   return()=>window.removeEventListener('hashchange',onHash);
  },[]);
+
+ function say(text:string){
+  setNotice(text);
+  window.clearTimeout(noticeTimer.current);
+  noticeTimer.current=window.setTimeout(()=>setNotice(''),2600);
+ }
  function navigate(tab:View){setView(tab);history.replaceState(null,'','#'+tab)}
- const belongsToProfile=(run:RunRecord|undefined,id:string)=>run?.events.some(e=>e.type==='run_started'&&e.payload.profile.id===id)??false;
- function saveProfile(profile:CharacterProfile){
-  setData(old=>{
-   const profiles=old.profiles.filter(p=>p.id!==profile.id).concat(profile);
-   return {...old,profiles,activeProfileId:profile.id,activeRunId:belongsToProfile(old.runs.find(r=>r.id===old.activeRunId),profile.id)?old.activeRunId:null};
-  });setNotice('Profile saved on this device.');
+ function selectProfile(id:string){
+  setData(s=>({...s,activeProfileId:id,activeRunId:runProfileId(s.runs.find(r=>r.id===s.activeRunId))===id?s.activeRunId:null}));
+ }
+ function updateProfile(profile:CharacterProfile):string|null{
+  const result=validateProfile(profile);
+  if('error' in result)return result.error;
+  setData(old=>({...old,profiles:old.profiles.map(p=>p.id===profile.id?result.profile:p)}));
+  say('Saved');
+  return null;
+ }
+ function createProfile(name:string,className:CharacterProfile['className']){
+  const profile=newProfile(name,className);
+  setData(old=>({...old,profiles:[...old.profiles,profile],activeProfileId:profile.id,activeRunId:null}));
+  say(`${name} created`);
  }
  function start(profile:CharacterProfile,waves:number){
   const run=newRun(profile,waves);
-  setData(old=>({...old,activeRunId:run.id,runs:[run,...old.runs]}));
+  setData(old=>({...old,activeRunId:run.id,activeProfileId:profile.id,runs:[run,...old.runs]}));
   navigate('run');
-  setNotice('Run started. You can record choices without signing in.');
+  say('Run started');
  }
- function saveRun(run:RunRecord){
+ function saveRun(run:RunRecord,message:string){
   setData(old=>({...old,runs:old.runs.map(x=>x.id===run.id?run:x)}));
-  setNotice('Saved locally.');
+  say(message);
  }
+
  return <div className="shell">
   <header className="topbar">
-   <div className="brand" role="banner"><span className="brandicon" aria-hidden="true">✦</span><span>Horde<strong>Mind</strong></span><span className="edition">v2 preview</span></div>
-   <div className="topright"><span className="offline-status">● Local-first</span><a href="https://github.com/RobRoyce/hordemind" target="_blank" rel="noreferrer">Source ↗</a></div>
+   <div className="brand"><span className="brandicon" aria-hidden="true">✦</span><span>Horde<strong>Mind</strong></span><span className="edition">v2 preview</span></div>
+   <div className="topright"><span className="offline-status">Saved on this device</span><a href="https://github.com/RobRoyce/hordemind" target="_blank" rel="noreferrer">Source ↗</a></div>
   </header>
+  {blocked&&<div className="banner" role="alert">
+   <p><strong>Saved data on this device couldn't be read.</strong> It may come from a newer version of HordeMind. A copy is kept in browser storage, and nothing will be saved until you choose what to do.</p>
+   <div className="actions">
+    <button onClick={()=>downloadExport(localStorage.getItem(initial.backupKey??'')??'')}>Download the unreadable data</button>
+    <button onClick={()=>setBlocked(false)}>Start fresh on this device</button>
+   </div>
+  </div>}
+  {saveError&&<div className="banner" role="alert"><p><strong>Couldn't save on this device:</strong> {saveError}. Recent changes exist only in this tab. Export from Insights to keep them.</p></div>}
   <div className="app-grid">
    <nav className="sidebar" aria-label="Main navigation">
     {([
-     ['strategy','◈','Strategy Lab','Character & War Plans'],
-     ['run','▶','Live Run','Fast decision recording'],
-     ['insights','▤','Insights','History & export']
+     ['strategy','◈','Strategy Lab','Character and War Plans'],
+     ['run','▶','Live Run','Offers and recommendations'],
+     ['insights','▤','Insights','History and export']
     ] as const).map(([tab,icon,title,subtitle])=>
      <button className={'navitem '+(view===tab?'active':'')} aria-current={view===tab?'page':undefined} key={tab} onClick={()=>navigate(tab)}>
       <span className="navicon" aria-hidden="true">{icon}</span><span><b>{title}</b><small>{subtitle}</small></span>
      </button>
     )}
-    <div className="nav-foot"><p>SEASON 15 · EXPERIMENTAL</p><span>Configuration and run recording are active. The simulator adapter and community syncing are not yet enabled in this preview.</span></div>
+    <div className="nav-foot"><p>Season 15 · experimental</p><span>Recommendations come from an uncalibrated simulator. Runs stay in this browser; nothing is uploaded.</span></div>
    </nav>
    <main className="workspace">
-    {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} saveProfile={saveProfile} selectProfile={id=>setData(s=>({...s,activeProfileId:id,activeRunId:belongsToProfile(s.runs.find(r=>r.id===s.activeRunId),id)?s.activeRunId:null}))} onStart={start}/>}
-    {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} saveRun={saveRun} onStart={start} onGoStrategy={()=>navigate('strategy')}/>}
-    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(s=>({...s,activeRunId:id}));navigate('run')}} onExport={()=>repository.export()} />}
+    {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
+    {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoStrategy={()=>navigate('strategy')}/>}
+    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(s=>({...s,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)}/>}
    </main>
   </div>
-  <div className="status" role="status" aria-live="polite">{notice}</div>
- </div>
+  <div className={'status'+(notice?' visible':'')} role="status" aria-live="polite">{notice}</div>
+ </div>;
 }

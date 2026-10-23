@@ -51,4 +51,42 @@ export const WAR_PLAN_NODES=[
  {id:'Forged in Flame',path:'Materials',hint:'Obducite-focused path.'},
  {id:'Flawless Finds',path:'Materials',hint:'Gem-focused alternative.'}
 ] as const;
+/** Infernal Hordes compass wave caps (Warcraft Tavern, Season 15). */
+export const COMPASSES=[[10,'Legendary compass'],[8,'Rare compass'],[6,'Magic compass'],[4,'Fleeting compass']] as const;
 export const WAR_PLAN_HOME='War Plans table in Temis, Skovos → Infernal Hordes activity tree';
+
+const fold=(s:string)=>s.toLowerCase().replace(/^the\s+/,'').trim();
+const byLabel=new Map(OFFERS.map(o=>[o.label.toLowerCase(),o]));
+
+/** Exact catalog entry for typed text, ignoring case and a leading "The". */
+export function resolveOffer(text:string):OfferRef|null{
+ const key=text.trim().toLowerCase();
+ return byLabel.get(key)??OFFERS.find(o=>fold(o.label)===fold(key))??null;
+}
+
+/**
+ * Ranks offers for the picker. Every query word must match the name, family or
+ * description; name matches outrank description matches. An empty query lists
+ * recent offers first, then the catalog alphabetically.
+ */
+export function searchOffers(query:string,recent:readonly string[]=[]):OfferRef[]{
+ const words=query.toLowerCase().split(/\s+/).filter(w=>w&&w!=='the');
+ if(!words.length){
+  const recentRefs=recent.map(resolveOffer).filter((o):o is OfferRef=>o!==null);
+  return [...new Set([...recentRefs,...OFFERS])];
+ }
+ const scored=OFFERS.map(offer=>{
+  const name=fold(offer.label),nameWords=name.split(/\s+/),family=offer.family.toLowerCase(),hint=offer.hint.toLowerCase();
+  let score=0;
+  for(const w of words){
+   if(name.startsWith(w))score+=100;
+   else if(nameWords.some(x=>x.startsWith(w)))score+=80;
+   else if(name.includes(w))score+=60;
+   else if(family.includes(w))score+=40;
+   else if(hint.includes(w))score+=20;
+   else return {offer,score:0};
+  }
+  return {offer,score:score+(recent.includes(offer.label)?5:0)};
+ });
+ return scored.filter(x=>x.score>0).sort((a,b)=>b.score-a.score||a.offer.label.localeCompare(b.offer.label)).map(x=>x.offer);
+}
