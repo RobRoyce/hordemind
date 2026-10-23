@@ -1,8 +1,12 @@
 SHELL := /usr/bin/env bash
-.PHONY: up down status reset web dev check verify verify-clean verify-fast verify-db migrate types
+.PHONY: up down status reset web dev env check verify verify-clean verify-fast verify-db migrate types
 
 up:
 	bash scripts/local-up.sh
+
+# Point the dev app at a running local Supabase API (make up does this too).
+env:
+	bash scripts/write-env.sh
 
 down:
 	bash scripts/supabase.sh stop

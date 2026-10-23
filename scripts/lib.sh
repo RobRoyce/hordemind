@@ -3,6 +3,9 @@
 
 HORDEMIND_NETWORK=hordemind-local
 
+# Services private sync and its tests don't need: Postgres, Auth, PostgREST and Kong remain.
+SUPABASE_API_ONLY_EXCLUDES=realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
 require_docker() {
   command -v docker >/dev/null 2>&1 || { echo >&2 'Docker-compatible CLI missing. Install Docker Desktop or OrbStack first.'; exit 1; }
   docker info >/dev/null 2>&1 || { echo >&2 'Docker engine is not running. Start Docker Desktop or OrbStack.'; exit 1; }

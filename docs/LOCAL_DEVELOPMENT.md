@@ -32,8 +32,14 @@ The v2 app runs at http://127.0.0.1:5173. The local Supabase dashboard is at htt
 - `make check`: web typechecks, unit tests and production build.
 - `psql -h 127.0.0.1 -p 54322 -U postgres -d postgres`: local DB; default local dev password is typically `postgres`. Check `supabase status` if that changes.
 
-### Application persistence
-The first v2 milestone **still saves runs locally in the browser**. The PostgreSQL backend and RLS schema are ready for development and migration testing, but no cloud sync and no live data submission are enabled. This avoids building implicit collection of gameplay telemetry. Later, an authenticated repository adapter will sync opt-in runs without changing the event journal format.
+### Application persistence and private sync
+The browser journal is the source of truth. **Private sync** to the local Supabase stack is opt-in ([ADR 0005](adr/0005-private-sync.md)):
+
+1. `make up` starts the stack and writes `apps/web/.env.local` (gitignored) with the local API URL and publishable key. If the stack is already running, `make env` does just this step.
+2. `make dev`, then open Insights → Private sync → Create account. Local Auth needs no email confirmation.
+3. Sync pulls, merges and pushes. Clearing the browser and signing in again restores your runs.
+
+Builds without that env, including the public Pages site, show sync as unavailable and stay browser-only. Private sync never writes community research data.
 
 ## Local verification — the default development loop
 
@@ -48,7 +54,7 @@ make verify-db     # Add actual Docker/Postgres migration and RLS integration ch
 
 `make verify` starts a local production preview at `http://127.0.0.1:4173` (not the regular Vite dev port), runs `apps/web/tests/e2e.mjs` against it, then terminates the preview. Set `HORDEMIND_TEST_PORT` to another unused port if necessary. Chrome is used by default; if Chrome isn't installed, run `npx playwright install chromium` from `apps/web` and set `E2E_BUNDLED_CHROMIUM=1`.
 
-The database is **optional for frontend development**. Use `make up` to run the complete local Supabase stack, or `make verify-db` for a focused SQL security check. The SQL test uses `BEGIN ... ROLLBACK` and does not reset your local game data. If the database was not already running, `make verify-db` stops it again afterwards.
+The database is **optional for frontend development**. Use `make up` to run the complete local Supabase stack, or `make verify-db` for a focused SQL security check. The SQL test uses `BEGIN ... ROLLBACK` and does not reset your local game data. `make verify-db` starts Postgres, Auth, PostgREST and Kong (no Studio). It then runs the SQL invariants, the live private-sync integration tests, and a check that synced records survive a Postgres restart. If the stack was not already running, it stops it again afterwards.
 
 `make verify` reuses `node_modules` unless `package-lock.json` is newer than the last install, in which case it runs `npm ci` first. `make verify-clean` always reinstalls. GitHub Actions remains the final release guard after a PR; it should not be your interactive debugging loop.
 

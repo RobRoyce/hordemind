@@ -25,6 +25,11 @@ enabled = true
 site_url = "http://127.0.0.1:5173"
 additional_redirect_urls = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
+# Local accounts for private sync: email + password, no confirmation mail.
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
 [studio]
 enabled = true
 port = 54323
