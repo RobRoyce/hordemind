@@ -2,14 +2,19 @@ import { z } from 'zod';
 
 export const GAME_CLASSES = ['Barbarian','Druid','Necromancer','Rogue','Sorcerer','Spiritborn','Paladin','Warlock'] as const;
 export const CharacterClassSchema = z.enum(GAME_CLASSES);
+export const REALMS = ['Season 15','Eternal'] as const;
+export const RealmSchema = z.enum(REALMS);
+export const DIFFICULTIES = ['Unknown','Normal','Hard','Expert','Penitent','Torment I','Torment II','Torment III','Torment IV','Torment V','Torment VI','Torment VII','Torment VIII','Torment IX','Torment X','Torment XI','Torment XII'] as const;
+export const DifficultySchema = z.enum(DIFFICULTIES);
 export const OriginSchema = z.enum(['manual','imported','observed','unknown']);
 export const CharacterProfileSchema = z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(80),
   className: CharacterClassSchema,
+  realm: RealmSchema.default('Season 15'),
   buildName: z.string().max(100).default(''),
   buildUrl: z.union([z.url(),z.literal('')]).default(''),
-  difficulty: z.enum(['Unknown','Torment I','Torment II','Torment III','Torment IV']).default('Unknown'),
+  difficulty: DifficultySchema.default('Unknown'),
   gamePatch: z.string().trim().min(1).max(80).default('S15-unverified'),
   warPlanNodes: z.array(z.string().max(100)).default([]),
   specialOfferingAvailable: z.boolean().default(false),

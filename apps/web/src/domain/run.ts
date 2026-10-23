@@ -3,7 +3,7 @@ import {EventSchema,type RunEvent,type RunRecord,type CharacterProfile} from './
 export const CLIENT_VERSION='v2-foundation.1';
 const now=()=>new Date().toISOString();
 export function newProfile(name:string,className:CharacterProfile['className']):CharacterProfile{
- return {id:crypto.randomUUID(),name,className,buildName:'',buildUrl:'',difficulty:'Unknown',gamePatch:'S15-unverified',warPlanNodes:[],specialOfferingAvailable:false,killSpeed:'unknown',mobility:'unknown',provenance:'manual',updatedAt:now()};
+ return {id:crypto.randomUUID(),name,className,realm:'Season 15',buildName:'',buildUrl:'',difficulty:'Unknown',gamePatch:'S15-unverified',warPlanNodes:[],specialOfferingAvailable:false,killSpeed:'unknown',mobility:'unknown',provenance:'manual',updatedAt:now()};
 }
 export function newRun(profile:CharacterProfile,totalWaves:number):RunRecord{
  const record:RunRecord={id:crypto.randomUUID(),createdAt:now(),status:'in_progress',researchConsent:false,events:[]};
