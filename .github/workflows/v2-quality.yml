@@ -53,3 +53,26 @@ jobs:
           echo $! > /tmp/hordemind-v2-vite.pid
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
       - run: node tests/e2e.mjs
+
+  database:
+    name: Postgres migrations and RLS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.84.2
+      - name: Start local Dockerized Postgres with Supabase schemas
+        run: supabase db start
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+      - name: Validate RLS, permissions and owner isolation
+        env:
+          PGPASSWORD: postgres
+        run: psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 54322 -U postgres -d postgres -f supabase/tests/security_invariants.sql
+      - name: Stop local containers
+        if: always()
+        run: supabase stop || true
