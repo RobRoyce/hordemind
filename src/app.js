@@ -4,6 +4,7 @@ import {offers,byName,defaults,isModeled} from "./catalog.js";
 import {BASE,evaluate,diagnose,specialDecision} from "./engine.js";
 import {access,nodes,groups} from "./warplans.js";
 import {strategies,analyzeSetup} from "./strategy.js";
+import {futureOpportunity} from "./policy.js";
 const h=React.createElement,KEY="hordemind-react-v1";
 function readInitial(){let raw=null;try{if(location.hash.startsWith("#run="))raw=JSON.parse(decodeURIComponent(location.hash.slice(5)));else raw=JSON.parse(localStorage.getItem(KEY)||"null")}catch{}return {...BASE,...(raw||{}),choices:[...(raw?.choices||BASE.choices)],history:[...(raw?.history||[])],observations:[...(raw?.observations||[])],assumptions:{...defaults,...(raw?.assumptions||{})}}}
 const field=(label,control)=>h("label",{className:"field"},h("span",null,label),control);
@@ -55,15 +56,16 @@ function Recommendations({state}){
 
 const clean=s=>String(s||"").trim();
 function App(){
- const [priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
+ const [specialForecast,setSpecialForecast]=useState(null),[forecastRunning,setForecastRunning]=useState(false),[priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
  const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]&&isModeled(x));const unmodeled=[...new Set(selected)].filter(x=>byName[x]&&!isModeled(x));
  useEffect(()=>{localStorage.setItem(KEY,JSON.stringify(state))},[state]);
  function compute(){if(valid.length<2){setFeedback("Need two model-supported offers to compare. Unmodeled offers are identified separately; they are not falsely scored as +0.");return}setRunning(true);setTimeout(()=>{const s=valid.map(o=>evaluate(state,o,Number(state.assumptions.samples)||1200)).sort((a,b)=>b.mean-a.mean);setScores(s);setRunning(false);setFeedback("")},20)}
- function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null)}
+ function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null);setSpecialForecast(null)}
  function link(){const url=location.origin+location.pathname+"#run="+encodeURIComponent(JSON.stringify(state));setShare(url);return url}
  async function copy(){const url=link();try{await navigator.clipboard.writeText(url);setFeedback("Share link copied.")}catch{setFeedback("Clipboard access blocked. Select and copy the URL below.")}}
  const newRun=()=>{if(!confirm("Clear this run and recorded Aether?"))return;setState(s=>({...BASE,waves:s.waves,kill:s.kill,mobility:s.mobility,specialEnabled:s.specialEnabled,warPlanNotes:s.warPlanNotes,assumptions:s.assumptions}));setScores(null);setShare("");history.replaceState(null,"",location.pathname)}
  const best=scores?.[0];const special=best?specialDecision(state,best):null;
+ function estimateFuture(){setForecastRunning(true);setTimeout(()=>{try{setSpecialForecast(futureOpportunity(state,{scenarios:8,draws:3}));setFeedback("")}catch(e){setFeedback("Special offering forecast unavailable: "+e.message)}finally{setForecastRunning(false)}},20)}
  return h("main",null,
   h("header",{className:"mast"},h("div",null,h("div",{className:"eyebrow"},"DIABLO IV · SEASON 15"),h("h1",null,"Horde",h("em",null,"Mind")),h("p",null,"Expected-Aether decision support for Infernal Hordes")),h("div",{className:"actions"},h("button",{onClick:newRun},"New run"),h("button",{className:"primary",onClick:copy},"Share run"))),
   h("div",{className:"notice"},"Experimental simulator. Aether predictions depend on provisional spawn rates, clear times and Chaos probabilities. Results are not measured Season 15 yields; the engine does not yet optimize future offers."),
@@ -105,7 +107,7 @@ function App(){
       h("details",null,h("summary",null,"Event contribution breakdown"),...Object.entries(res.parts).filter(([,x])=>Math.abs(x)>.1).sort((a,b)=>b[1]-a[1]).map(([k,v])=>h("div",{className:"part",key:k},h("span",null,k),h("span",null,(v>=0?"+":"")+v.toFixed(1))))),
       h("button",{onClick:()=>choose(res.name),className:i===0?"primary":""},"Choose "+res.name)
      )))),
-     special&&h("div",{className:"notice smallnotice"},h("strong",null,"One-time special opportunity cost"),h("p",null,special.explanation),h("p",null,"Remaining waves afterward: "+special.remaining+". Future option value is unknown and is NOT included in the Aether ranking.")),
+     special&&h("div",{className:"notice smallnotice"},h("strong",null,"One-time Black Pact opportunity cost"),h("p",null,special.explanation),h("p",null,"Remaining waves afterward: "+special.remaining+"."),h("button",{onClick:estimateFuture,disabled:forecastRunning},forecastRunning?"Estimating future offers…":"Estimate future option value (scenario)"),specialForecast&&h("div",null,h("p",null,"Modeled value of saving the one-use choice: ~"+Math.round(specialForecast.mean)+" Aether, under a hypothetical future-offer distribution."),h("p",{className:"hint"},specialForecast.caveat),h("p",{className:"hint"},"This is a sensitivity estimate, not a measured expected value or a calibrated recommendation."))),
     h("article",{className:"panel"},h("h2",null,"Shareable run snapshot"),h("p",{className:"hint"},"Run settings persist in this browser. Share links encode a read-only snapshot of the current run that others can load and continue independently."),h("button",{onClick:copy},"Generate & copy link"),share&&h("textarea",{rows:3,readOnly:true,value:share,onClick:e=>e.target.select(),className:"share"}),feedback&&h("p",{className:"hint",role:"status"},feedback)),
     h("article",{className:"panel"},h("h2",null,"Aether observations"),h("p",{className:"hint"},"Save cumulative totals by wave for future calibration. They are recorded but not yet fit automatically into the model."),
      h("div",{className:"actions"},h("input",{id:"observedWave",type:"number",min:1,defaultValue:state.wave,"aria-label":"Wave number"}),h("input",{id:"observedTotal",type:"number",min:0,defaultValue:0,"aria-label":"Cumulative Aether"}),h("button",{onClick:()=>{const wave=+document.querySelector("#observedWave").value,total=+document.querySelector("#observedTotal").value;if(!Number.isFinite(total)||wave<1)return;setState(s=>({...s,observations:[...s.observations.filter(o=>o.wave!==wave),{wave,total}].sort((a,b)=>a.wave-b.wave)}))}},"Record")),
