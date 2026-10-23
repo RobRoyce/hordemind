@@ -1,5 +1,8 @@
 name: V2 quality gate
 on:
+  push:
+    branches: [main]
+    paths: ['apps/web/**','supabase/**','.github/workflows/v2-quality.yml']
   pull_request:
     paths: ['apps/web/**','supabase/**','docs/adr/**','.github/workflows/v2-quality.yml']
   workflow_dispatch:
@@ -75,3 +78,31 @@ jobs:
       - name: Stop local containers
         if: always()
         run: supabase stop || true
+
+  deploy:
+    name: Deploy validated v2 build to Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality, browser, database]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: hordemind-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: v2-validated-dist
+          path: apps/web/dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: apps/web/dist
+      - name: Publish v2 only after all test and database gates pass
+        id: deployment
+        uses: actions/deploy-pages@v4
