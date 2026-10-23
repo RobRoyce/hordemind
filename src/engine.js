@@ -104,5 +104,5 @@ export function diagnose(state,result){
 export function specialDecision(state,result){
  if(!state.specialEnabled||!state.specialAvailable)return null;
  const remaining=Math.max(0,Number(state.waves)-Number(state.wave));
- return {remaining,knownNow:result?.mean??null,status:remaining>0?"Uncalibrated future option cost":"No later opportunities",explanation:remaining>0?"The Black Pact's one-time selection can be kept for a later wave. The lookahead tool estimates the cost of spending it now under an explicitly hypothetical future-offer distribution.":"No future waves remain, so saving the one-time selection cannot help this run."};
+ return {remaining,knownNow:result?.mean??null,status:remaining>0?"Unquantified future option cost (scenario estimates only)":"No later opportunities",explanation:remaining>0?"The Black Pact's one-time selection can be kept for a later wave. The lookahead tool estimates the cost of spending it now under an explicitly hypothetical future-offer distribution.":"No future waves remain, so saving the one-time selection cannot help this run."};
 }
