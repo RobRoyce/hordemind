@@ -2,7 +2,8 @@ import {useEffect,useMemo,useRef,useState} from 'react';
 import type {LocalState,CharacterProfile,RunRecord} from '../domain/schema';
 import {newProfile,newRun} from '../domain/run';
 import {validateProfile} from '../domain/profile';
-import {createLocalRepository,downloadExport} from '../storage/local';
+import {createLocalRepository,downloadExport,STORAGE_KEY} from '../storage/local';
+import {mergeStates} from '../domain/merge';
 import {StrategyLab} from './StrategyLab';
 import {LiveRun} from './LiveRun';
 import {Insights} from './Insights';
@@ -45,6 +46,17 @@ export function App(){
   try{repository.save(data);setSaveError('')}
   catch(err){setSaveError(err instanceof Error?err.message:String(err))}
  },[data,blocked]);
+ // Another tab saved: fold its runs and edits in, so this tab never writes over them.
+ useEffect(()=>{
+  const onStorage=(event:StorageEvent)=>{
+   if(event.key!==STORAGE_KEY||!event.newValue)return;
+   const theirs=repository.parse(event.newValue);
+   if(!theirs)return;
+   setData(old=>{const merged=mergeStates(old,theirs);return JSON.stringify(merged)===JSON.stringify(old)?old:merged});
+  };
+  window.addEventListener('storage',onStorage);
+  return()=>window.removeEventListener('storage',onStorage);
+ },[]);
  useEffect(()=>{
   const onHash=()=>setView(viewFromHash());
   window.addEventListener('hashchange',onHash);
@@ -91,7 +103,7 @@ export function App(){
   {blocked&&<div className="banner" role="alert">
    <p><strong>Saved data on this device couldn't be read.</strong> It may come from a newer version of HordeMind. A copy is kept in browser storage, and nothing will be saved until you choose what to do.</p>
    <div className="actions">
-    <button onClick={()=>downloadExport(localStorage.getItem(initial.backupKey??'')??'')}>Download the unreadable data</button>
+    <button onClick={()=>downloadExport(localStorage.getItem(STORAGE_KEY)??'')}>Download the unreadable data</button>
     <button onClick={()=>setBlocked(false)}>Start fresh on this device</button>
    </div>
   </div>}
