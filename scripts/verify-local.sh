@@ -22,7 +22,9 @@ command -v node >/dev/null || { echo 'Node.js 22+ is required' >&2; exit 1; }
 command -v npm >/dev/null || { echo 'npm is required' >&2; exit 1; }
 if (( $(node -p 'parseInt(process.versions.node, 10)') < 22 )); then echo 'Node.js 22+ is required' >&2; exit 1; fi
 cd "$WEB"
-if [[ "$INSTALL" == 1 || ! -d node_modules ]]; then
+
+# npm ci writes node_modules/.package-lock.json; a newer lockfile means a stale install.
+if [[ "$INSTALL" == 1 || ! -d node_modules || package-lock.json -nt node_modules/.package-lock.json ]]; then
   say 'Install pinned dependencies (npm ci)'
   npm ci --no-audit --no-fund
 fi
@@ -52,15 +54,22 @@ if (( WITH_BROWSER )); then
 fi
 if (( WITH_DB )); then
   say 'Test Dockerized Supabase/Postgres migrations and owner isolation'
-  command -v docker >/dev/null || { echo 'Docker CLI is required for --with-db' >&2; exit 1; }
-  docker info >/dev/null || { echo 'Start Docker Desktop or OrbStack first' >&2; exit 1; }
-  command -v supabase >/dev/null || { echo 'Install the Supabase CLI first' >&2; exit 1; }
   cd "$ROOT"
-  supabase db start
-  container_name="$(docker ps --format '{{.Names}}' | grep -E '^supabase_db_hordemind$' | head -n 1)"
-  if [[ -z "$container_name" ]]; then
-    echo 'Cannot find supabase_db_hordemind; inspect docker ps and supabase status.' >&2; exit 1
+  source scripts/lib.sh
+  require_docker
+  ensure_network
+
+  # Leave the stack as we found it: stop the database only if this script started it.
+  db_was_running=0
+  docker ps --format '{{.Names}}' | grep -qx supabase_db_hordemind && db_was_running=1
+  bash scripts/supabase.sh db start --network-id "$HORDEMIND_NETWORK"
+  if (( ! db_was_running )); then
+    trap 'bash "$ROOT/scripts/supabase.sh" stop >/dev/null 2>&1 || true' EXIT
+  else
+    warn_if_exposed
   fi
-  docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$ROOT/supabase/tests/security_invariants.sql"
+  docker ps --format '{{.Names}}' | grep -qx supabase_db_hordemind \
+    || { echo 'Cannot find supabase_db_hordemind; inspect docker ps and make status.' >&2; exit 1; }
+  docker exec -i supabase_db_hordemind psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$ROOT/supabase/tests/security_invariants.sql"
 fi
 say 'LOCAL VERIFICATION PASSED — ready to commit / push'

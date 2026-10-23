@@ -8,4 +8,4 @@ if [[ "$confirmation" != "RESET" ]]; then
   echo 'Cancelled.'
   exit 1
 fi
-supabase db reset
+bash scripts/supabase.sh db reset

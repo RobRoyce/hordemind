@@ -63,6 +63,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      # Keep in sync with SUPABASE_VERSION in scripts/supabase.sh.
       - uses: supabase/setup-cli@v3
         with:
           version: 2.84.2

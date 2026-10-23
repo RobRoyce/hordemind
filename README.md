@@ -17,18 +17,14 @@ HordeMind is an open-source project for recording Infernal Hordes decisions and 
 
 ## Run locally (free)
 
-Prerequisites: Node.js 22+, Docker-compatible runtime (Docker Desktop or OrbStack), Supabase CLI.
+Prerequisites: Node.js 22+. For the optional local database, a Docker-compatible runtime (Docker Desktop or OrbStack). The Supabase CLI is fetched at the CI-pinned version if not installed.
 
 ```bash
 git clone https://github.com/RobRoyce/hordemind.git
 cd hordemind
 
-# Start Dockerized PostgreSQL and local Supabase Auth/Studio
-make up
-
-cd apps/web
-npm ci
-npm run dev
+make up    # optional: Dockerized PostgreSQL, local Supabase Auth and Studio
+make dev   # Vite dev server; installs pinned npm dependencies on first run
 ```
 
 Open http://127.0.0.1:5173. Local Postgres is on 127.0.0.1:54322 and Studio is http://127.0.0.1:54323. No hosted Supabase account is needed. **The frontend currently uses local browser storage even when Postgres is running**; backend sync is a later milestone.
