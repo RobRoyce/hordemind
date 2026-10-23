@@ -61,11 +61,18 @@ try{
  const other=await context.newPage();
  await other.goto(base+'#strategy',{waitUntil:'domcontentloaded'});
  await other.getByLabel('Build',{exact:true}).waitFor();
+ // Chrome throttles an unfocused tab's timers, which delays the recommender's debounce by seconds.
+ await page.bringToFront();
 
  step('start a run: the first offer comes before wave 1');
  await page.getByRole('button',{name:'Start live run'}).click();
  await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
  assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
+
+ step('an empty picker lists the whole catalog, not a first page');
+ await offer(1).click();
+ assert((await page.getByRole('option').count())>40,'all offers are browsable before wave 1');
+ await offer(1).press('Escape');
 
  step('search offers by name and mechanic; partial text never reaches the recommender');
  await offer(1).fill('puff');
