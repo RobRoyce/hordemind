@@ -3,17 +3,18 @@ import {evaluate,simulate,random} from "./engine.js";
 
 // This is a scenario-based *planning* model, NOT a measured probability model.
 // Unknown probabilities are exposed and the optimizer reports sensitivity.
-const pool=offers.filter(x=>!x.effect.startsWith("unknown")&&x.effect!=="chaos"&&x.kind!=="hazard");
-function offerWeight(name,history,warNodes){
+const pool=offers.filter(x=>!x.effect.startsWith("unknown")&&x.kind!=="hazard");
+function offerWeight(name,history,warNodes,assumptions={}){
  const o=byName[name],last=byName[history.at(-1)];
  let w=1;
- if((warNodes||[]).includes("Method and Madness")&&o?.kind===last?.kind)w*=2;
+ if((warNodes||[]).includes("Method and Madness")&&o?.kind===last?.kind)w*=assumptions.methodBiasMultiplier||2;
+ if((warNodes||[]).includes("Total Chaos")&&o?.effect==="chaos")w*=assumptions.chaosBiasMultiplier||3;
  return w;
 }
-export function sampleOffer(history,warNodes,r,kind=null){
- const candidates=pool.filter(o=>!kind||o.kind===kind);
+export function sampleOffer(history,warNodes,r,kind=null,assumptions={}){
+ const candidates=pool.filter(o=>(!kind||o.kind===kind)&&!((warNodes||[]).includes("Reign in Hell")&&o.effect==="chaos"));
  if(!candidates.length)return null;
- const weights=candidates.map(o=>offerWeight(o.name,history,warNodes));
+ const weights=candidates.map(o=>offerWeight(o.name,history,warNodes,assumptions));
  let v=r()*weights.reduce((a,b)=>a+b,0);
  for(let i=0;i<candidates.length;i++){v-=weights[i];if(v<=0)return candidates[i].name}
  return candidates.at(-1).name;
@@ -31,10 +32,11 @@ export function futureOpportunity(state,{scenarios=36,draws=3}={}){
   for(let j=0;j<remaining;j++){
    const futureWave=Number(state.wave)+j+1;
    const future={...state,wave:futureWave,history};
-   const regular=Array.from({length:draws},()=>sampleOffer(history,state.warNodes,r)).filter(Boolean);
+   const slots=(state.warNodes||[]).includes("Reign in Hell")?4:(state.warNodes||[]).includes("Total Chaos")?2:draws;
+   const regular=Array.from({length:slots},()=>sampleOffer(history,state.warNodes,r,null,state.assumptions)).filter(Boolean);
    const last=byName[history.at(-1)];
    // A Black Pact selection is drawn from the last selected offering category.
-   const special=sampleOffer(history,state.warNodes,r,last?.kind||null);
+   const special=sampleOffer(history,state.warNodes,r,last?.kind||null,state.assumptions);
    const all=[...new Set([...regular,special])];
    // Small samples are adequate for a sensitivity model but not for gameplay precision.
    const value=Object.fromEntries(all.map(name=>[name,evaluate(future,name,80).mean]));
@@ -71,7 +73,8 @@ export function evaluateWithLookahead(state,candidates,{scenarios=8,depth=2}={})
   const rng=random(scenarioSeed);
   for(let j=0;j<maxRounds;j++){
    const future={...state,wave:Number(state.wave)+j+1,history:[...history]};
-   const available=[...new Set(Array.from({length:3},()=>sampleOffer(history,state.warNodes,rng)))].filter(Boolean);
+   const slots=(state.warNodes||[]).includes("Reign in Hell")?4:(state.warNodes||[]).includes("Total Chaos")?2:3;
+   const available=[...new Set(Array.from({length:slots},()=>sampleOffer(history,state.warNodes,rng,null,state.assumptions)))].filter(Boolean);
    if(!available.length)break;
    const scored=available.map(name=>({name,value:evaluate(future,name,100).mean})).sort((a,b)=>b.value-a.value);
    choices.push(scored[0].name);
