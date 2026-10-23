@@ -1,0 +1,25 @@
+// Run in Node 18+: node tests/engine.test.mjs
+import {strict as assert} from "node:assert";
+import {BASE,evaluate,simulate,diagnose,specialDecision} from "../src/engine.js";
+import {offers} from "../src/catalog.js";
+const s=(history=[])=>({...BASE,waves:10,wave:4,history});
+assert.equal(offers.filter(x=>x.name==="Chaotic Offering").length,1);
+assert.equal(offers.filter(x=>x.name.startsWith("Chaos:")).length,0);
+assert(offers.some(x=>x.name==="The Hellish Masses"));
+const noSpawner=evaluate(s(),"The Exalted Hellborne",300);
+assert.equal(noSpawner.mean,0,"Exalted Hellborne adds no Aether without Hellborne spawn sources");
+assert(diagnose(s(),noSpawner).some(x=>x.includes("does not spawn")));
+const spawned=evaluate(s(["The Hellish Masses"]),"The Exalted Hellborne",400);
+assert(spawned.mean>0,"Exalted Hellborne should add value when Hellish Masses summons Hellborne");
+const massStack=s(["The Puffing Masses","The Massing Masses","The Teeming Masses","The Bursting Masses"]);
+const bursting=evaluate(massStack,"The Bursting Masses",400);
+const anchored=evaluate(massStack,"The Anchored Masses",400);
+assert(bursting.mean>anchored.mean,"Mass engine should prefer more recurring Masses over slow incidental Spires under default assumptions");
+const chaos=evaluate(massStack,"Chaotic Offering",400);
+assert(chaos.mean>0,"Chaotic Offering must be randomized with positive expected payout");
+const uses=specialDecision({...s(),specialEnabled:true,specialAvailable:true},chaos);
+assert(uses.remaining>0&&uses.status.includes("Unquantified"));
+const one=simulate(massStack,"The Exalted Hellborne",10);
+const two=simulate(massStack,"The Exalted Hellborne",10);
+assert.deepEqual(one,two,"Simulations must be seeded and reproducible");
+console.log("HordeMind regression tests passed", {noSpawner:noSpawner.mean,spawned:spawned.mean,bursting:bursting.mean,anchored:anchored.mean,chaos:chaos.mean});
