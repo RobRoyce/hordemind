@@ -1,46 +1,45 @@
-# HordeMind — Season 15 Infernal Hordes advisor
+# HordeMind — Infernal Hordes Season 15
 
-A client-side React 18 web app for comparing Infernal Offers using a seeded Monte Carlo model.
+A free, open-source, persistent web app for Diablo IV Infernal Offer decisions. No API keys or ChatGPT credits are needed.
 
-**Live site (once Pages is enabled):** https://robroyce.github.io/hordemind/
+**Live:** https://robroyce.github.io/hordemind/
 
-## Architecture
-- `src/catalog.js` — offering definitions and explicit known / approximate effects
-- `src/engine.js` — seeded event simulator, estimated marginal Aether, diagnostic explanations and one-time War Plan opportunity-cost notice
-- `src/app.js` — React interface, searchable offerings, saved runs, URL snapshot sharing, observations
-- `styles.css` — responsive presentation
-- `tests/engine.test.mjs` — seeded regression tests, including Hellborne spawn prerequisites and Mass-heavy decisions
+## How to use
 
-## Important modeling caveats
-- The Aether predictions are *estimates under uncalibrated assumptions*, not verified game yields.
-- The specific Chaos Wave **cannot** be selected beforehand; only Chaotic Offering is shown. Outcome mix and yields are provisional assumptions.
-- Exalted Hellborne adds +1 Aether to Hellborne kills, but does not create Hellborne. Without a spawn effect, its immediate estimated contribution can correctly be zero.
-- The one-time extra War Plan offering is tracked and consumed when checked. We explicitly disclose its unquantified future opportunity cost rather than invent a probability distribution.
-- Detailed future-option policy search and calibration of future offering frequencies are not yet implemented.
-- Existing runs are saved in browser localStorage. Shared links encode a snapshot in the URL fragment; no database sync.
-- React is loaded from esm.sh; after page load, simulations execute entirely in the browser and do not call the OpenAI API.
+1. Set your run length, wave, kill speed, and the Infernal Hordes War Plan nodes you actually have.
+2. Add previous offers (search by name or effect).
+3. Enter the three offers on your screen, plus a Chaos / special fourth option if present.
+4. Enable the experimental future-offer lookahead if you want hypothetical long-term synergy analysis.
+5. Compare predicted additional Burning Aether and read the exact reasoning, assumptions, warnings, and event contributions.
+6. Choose the offer and keep playing. Runs are saved in browser storage. Share Run generates a link encoding your current setup.
+7. Optionally record cumulative wave-end Aether and previous offers for coarse yield calibration.
+
+The one-time Black Pact extra choice is tracked; a scenario tool estimates future opportunity cost without pretending future offering probabilities are known.
+
+## Modules
+
+- `src/catalog.js` — names, effects, metadata, uncertain and unsupported offer catalog entries
+- `src/engine.js` — seeded, 60-second wave-by-wave Monte Carlo simulation
+- `src/policy.js` — future offer draws, receding-horizon scenarios, and one-time Black Pact stopping approximation
+- `src/warplans.js` — named activity-tree nodes and mutually exclusive paths
+- `src/strategy.js` — synergy archetypes, contextual advice and perk recommendations
+- `src/calibration.js` — cautious total-Aether based rescaling (not causal learning)
+- `src/worker.js` — worker-thread simulation so offer selection remains responsive
+- `src/app.js`, `styles.css` — responsive React interface and styling
+- `tests/` — regression tests and Playwright browser smoke test
+
+## Scientific honesty
+
+The modeled future probabilities and many offer payout/throughput assumptions are **not experimentally verified**. This is an experimental decision aid—not guaranteed-optimal gameplay advice. We deliberately label unsupported mechanics instead of displaying them as +0 Aether. The 5–95% bands are scenario ranges, not confidence intervals.
+
+See [MODEL.md](docs/MODEL.md) for formulas, references, exact limitations and validation roadmap.
 
 ## Deploy
-Repository Settings → Pages → Build and deployment → Deploy from a branch → `main`, `/(root)`. Every push to main then triggers GitHub Pages.
-Run tests with `node tests/engine.test.mjs`. 
 
-## Model transparency and limitations (October 2026)
+GitHub Pages deploys from the repository `main` branch root, and each push triggers a deployment. The React client is loaded as browser modules using a pinned esm.sh import map. Simulations run locally in a Web Worker.
 
-This is an **experimental simulator**, not an optimized Markov decision process and not a complete implementation of every Season 15 offer. In particular:
-- It uses seeded common random numbers for paired candidate-vs-baseline runs (currently 1,200 samples by default).
-- It estimates incremental reward `mean(simulate(state + offer) - simulate(state))` and empirical 5–95 percentile intervals. Those percentiles represent **modeled outcome variability**, not a calibrated statistical confidence interval.
-- The scenario includes a 60-second wave effort budget, Mass reform / kill cascades, Hellborne spawn prerequisites, event opportunity costs, and a random unknown Chaos Wave outcome.
-- The exact event arrival process, Monster Power, spawn mechanics and payouts are uncalibrated. Many offering entries only have descriptive guidance.
-- Explicitly *unmodeled* offerings are not scored as zero. The catalog can contain entries without a validated simulator mechanic.
-- It does not presently model future offering arrival probabilities or solve optimal saving of The Black Pact's single special choice. Opportunity cost is flagged, not predicted.
-- Run observations are saved locally but are not currently used to fit simulation parameters.
-- Some War Plan node effects are taken from community guides and must be verified against the in-game tooltip before they are used as numeric coefficients.
+To run unit tests locally on Node 22+: `node tests/engine.test.mjs && node tests/policy.test.mjs && node tests/calibration.test.mjs`.
 
-### War Plan guide
-Find the War Plans table in Temis (Skovos), then the Infernal Hordes activity tree. Active trees require unlocking War Plans through the Lord of Hatred campaign. The in-app tree names include Method and Madness, The Black Pact, Total Chaos, Bedlam, Reign in Hell, Pulse of Aether, Cult of Annihilation, Impending Doom and Council Coffers. Distinct play styles favor distinct allocations.
+The browser smoke workflow runs headless Chromium against a local HTTP server and verifies selection, comparison and sharing.
 
-Helpful references:
-- https://www.icy-veins.com/d4/guides/infernal-hordes-guide/
-- https://www.icy-veins.com/d4/guides/war-plans-overview/
-- https://consolepulse.com/multiplatform/diablo/guides/diablo-4-season-15-war-plans-guide
-- https://d4guides.gg/en/guides/endgame/war-plans-best-skill-setups-for-every-activity
+No paid services, backend, accounts or subscription credentials are involved.
