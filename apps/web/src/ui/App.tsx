@@ -27,10 +27,11 @@ export function App(){
   return()=>window.removeEventListener('hashchange',onHash);
  },[]);
  function navigate(tab:View){setView(tab);history.replaceState(null,'','#'+tab)}
+ const belongsToProfile=(run:RunRecord|undefined,id:string)=>run?.events.some(e=>e.type==='run_started'&&e.payload.profile.id===id)??false;
  function saveProfile(profile:CharacterProfile){
   setData(old=>{
    const profiles=old.profiles.filter(p=>p.id!==profile.id).concat(profile);
-   return {...old,profiles,activeProfileId:profile.id};
+   return {...old,profiles,activeProfileId:profile.id,activeRunId:belongsToProfile(old.runs.find(r=>r.id===old.activeRunId),profile.id)?old.activeRunId:null};
   });setNotice('Profile saved on this device.');
  }
  function start(profile:CharacterProfile,waves:number){
@@ -62,7 +63,7 @@ export function App(){
     <div className="nav-foot"><p>SEASON 15 · EXPERIMENTAL</p><span>Configuration and run recording are active. The simulator adapter and community syncing are not yet enabled in this preview.</span></div>
    </nav>
    <main className="workspace">
-    {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} saveProfile={saveProfile} selectProfile={id=>setData(s=>({...s,activeProfileId:id}))} onStart={start}/>}
+    {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} saveProfile={saveProfile} selectProfile={id=>setData(s=>({...s,activeProfileId:id,activeRunId:belongsToProfile(s.runs.find(r=>r.id===s.activeRunId),id)?s.activeRunId:null}))} onStart={start}/>}
     {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} saveRun={saveRun} onStart={start} onGoStrategy={()=>navigate('strategy')}/>}
     {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(s=>({...s,activeRunId:id}));navigate('run')}} onExport={()=>repository.export()} />}
    </main>
