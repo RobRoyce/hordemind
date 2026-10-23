@@ -1,5 +1,5 @@
 import {offers,byName} from "./catalog.js";
-import {evaluate,random} from "./engine.js";
+import {evaluate,simulate,random} from "./engine.js";
 
 // This is a scenario-based *planning* model, NOT a measured probability model.
 // Unknown probabilities are exposed and the optimizer reports sensitivity.
@@ -52,4 +52,52 @@ export function futureOpportunity(state,{scenarios=36,draws=3}={}){
  for(let j=remaining-1;j>=0;j--)values[j]=premiumByWave[j].reduce((sum,gain)=>sum+Math.max(gain,values[j+1]),0)/premiumByWave[j].length;
  const ranges=premiumByWave.flat().sort((a,b)=>a-b);
  return {remaining,mean:values[0],lo:ranges[Math.floor(ranges.length*.1)]||0,hi:Math.max(values[0],ranges[Math.floor(ranges.length*.9)]||0),premiums:expectations,method:"scenario-optimal-stopping",caveat:"Scenario estimate only: assumes sampled regular choices and category-matched bonus offers, unknown real frequencies, no exact compounding of future selections. Not a calibrated expected value."};
+}
+
+/**
+ * Receding-horizon scenario planning. Unknown future choices are sampled from
+ * the *catalog*, not claimed as actual in-game offering frequencies.
+ * For each sampled choice set, the policy greedily chooses the candidate with
+ * the best simulated downstream yield. Chosen future offers activate only
+ * on subsequent waves in simulate().
+ */
+export function evaluateWithLookahead(state,candidates,{scenarios=8,depth=2}={}){
+ const maxRounds=Math.max(0,Math.min(Number(state.waves)-Number(state.wave),depth));
+ if(!maxRounds)return candidates.map(name=>({...evaluate(state,name,Math.min(600,state.assumptions?.samples||600)),lookahead:false}));
+ const trialCount=Math.max(2,Math.min(24,scenarios));
+ function futureSequence(first,scenarioSeed){
+  const choices=[],history=[...(state.history||[])];
+  if(first)history.push(first);
+  const rng=random(scenarioSeed);
+  for(let j=0;j<maxRounds;j++){
+   const future={...state,wave:Number(state.wave)+j+1,history:[...history]};
+   const available=[...new Set(Array.from({length:3},()=>sampleOffer(history,state.warNodes,rng)))].filter(Boolean);
+   if(!available.length)break;
+   const scored=available.map(name=>({name,value:evaluate(future,name,100).mean})).sort((a,b)=>b.value-a.value);
+   choices.push(scored[0].name);
+   history.push(scored[0].name);
+  }
+  return choices;
+ }
+ const result=candidates.map(name=>({name,gains:[],followups:{}}));
+ for(let k=0;k<trialCount;k++){
+  const sseed=0x61f3ed8+(k*41947);
+  const baselineChoices=futureSequence(null,sseed);
+  // A paired world seed ensures event randomness is comparable across choices.
+  const worldSeed=0xf213b6+k*3571;
+  const baseline=simulate(state,null,worldSeed,baselineChoices).total;
+  for(const item of result){
+   const future=futureSequence(item.name,sseed);
+   const withOffer=simulate(state,item.name,worldSeed,future).total;
+   item.gains.push(withOffer-baseline);
+   for(const offer of future)item.followups[offer]=(item.followups[offer]||0)+1;
+  }
+ }
+ return result.map(item=>{
+  const values=item.gains.sort((a,b)=>a-b),mean=values.reduce((a,b)=>a+b,0)/values.length;
+  const sorted=Object.entries(item.followups).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]);
+  const immediate=evaluate(state,item.name,Math.min(300,state.assumptions?.samples||300));
+  return {...immediate,name:item.name,mean,lo:values[Math.floor(values.length*.05)],hi:values[Math.floor(values.length*.95)],lookahead:true,planningDepth:maxRounds,scenarios:trialCount,followupExamples:sorted,
+    note:"Lookahead uses synthetic future offer pools and greedy decisions; intervals reflect hypothetical scenarios, not measured game probabilities."};
+ }).sort((a,b)=>b.mean-a.mean);
 }
