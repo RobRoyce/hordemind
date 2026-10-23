@@ -11,7 +11,7 @@ HordeMind is an open-source project for recording Infernal Hordes decisions and 
 - **Strategy Lab:** character profiles that save as you edit. Covers class, realm, difficulty up to Torment XII, clear speed, mobility, a build-planner bookmark, and War Plan nodes. Selecting The Black Pact enables the one-use special offer.
 - **Live Run:** one screen per wave. Search the offers on your screen by name or mechanic, see a ranked recommendation, and record your choice by click or keyboard. An optional Aether reading for the previous wave goes on the same screen. Includes undo with prefill, end run early, and a Black Pact slot marker.
 - **Insights:** run history and a JSON export of the full append-only journal.
-- Everything is saved **in your browser only**. No account, hosting, or upload is involved.
+- Everything is saved **in your browser**. Optional **private sync** copies runs to your own account on a local Supabase server (`make up`, then Insights → Private sync). Nothing is shared for research.
 
 **About the recommender:** Monte Carlo with paired seeds, mechanics-aware, and explained in terms of where each estimate's value comes from. Its parameters are not yet calibrated from gameplay, and it doesn't yet value future offers or the later use of the Black Pact offer. Treat it as a structured second opinion. See the [model notes](docs/MODEL.md) and [run timeline ADR](docs/adr/0003-run-timeline-and-observations.md).
 
@@ -27,7 +27,7 @@ make up    # optional: Dockerized PostgreSQL, local Supabase Auth and Studio
 make dev   # Vite dev server; installs pinned npm dependencies on first run
 ```
 
-Open http://127.0.0.1:5173. Local Postgres is on 127.0.0.1:54322 and Studio is http://127.0.0.1:54323. No hosted Supabase account is needed. **The frontend currently uses local browser storage even when Postgres is running**; backend sync is a later milestone.
+Open http://127.0.0.1:5173. Local Postgres is on 127.0.0.1:54322 and Studio is http://127.0.0.1:54323. No hosted Supabase account is needed. `make up` also points the dev app at the local API, so private sync works locally.
 
 Before pushing changes, run the full verification **locally**:
 

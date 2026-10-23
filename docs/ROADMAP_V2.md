@@ -40,6 +40,12 @@ When actively playing, enter the 3–4 offers presented, compare explainable rec
 **Exit:** simulation determinism, confidence calibration tests, no unsupported +0 values; explainable per-offer decisions.
 
 ### M3 — opt-in synchronized runs
+Local stack done ([ADR 0005](adr/0005-private-sync.md)):
+- [x] Email/password Auth with guest mode by default; sync off until sign-in
+- [x] Idempotent pull/merge/push with `client_event_id`; pagination; conflict detection
+- [x] Integration tests: round trip, idempotency, second device, owner isolation, immutable events, DB restart
+
+Still open:
 - Provision Supabase, apply migrations and RLS, Auth with clear guest/no-account mode
 - Service-backed ingest endpoint, schema validation, per-user quotas and abuse controls
 - Idempotent uploads, replay safe `client_event_id`, consent & deletion UX

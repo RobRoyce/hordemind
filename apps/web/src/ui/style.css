@@ -159,3 +159,9 @@ p.recommend-alert{font-size:12px!important;color:#ffe1af!important}
 .rec-inline b{color:#f6d39b}
 @media(min-width:1180px){.rec-inline{display:none}}
 @media(hover:none){.record-bar .micro{display:none}}
+
+/* Private sync */
+.sync-status{font-size:13px!important}
+.offline-status.sync-error{color:#ffb3bf}
+.sync-form .form-grid{max-width:640px}
+code{font-size:12px;background:#253042;padding:1px 5px;border-radius:5px}

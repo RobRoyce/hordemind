@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import type {LocalState,CharacterProfile,RunRecord} from '../domain/schema';
 import {newProfile,newRun} from '../domain/run';
 import {validateProfile} from '../domain/profile';
@@ -7,6 +7,7 @@ import {mergeStates} from '../domain/merge';
 import {StrategyLab} from './StrategyLab';
 import {LiveRun} from './LiveRun';
 import {Insights} from './Insights';
+import {useSync,type SyncState} from './useSync';
 
 export type View='strategy'|'run'|'insights';
 const repository=createLocalRepository();
@@ -26,6 +27,11 @@ function recentOffers(runs:RunRecord[]):string[]{
  const events=runs.flatMap(r=>r.events).filter(e=>e.type==='offers_presented').sort((a,b)=>b.at.localeCompare(a.at));
  for(const e of events){if(e.type==='offers_presented')for(const o of e.payload.offered)seen.add(o);if(seen.size>=RECENT_LIMIT)break}
  return [...seen].slice(0,RECENT_LIMIT);
+}
+
+function syncLabel(s:SyncState){
+ if(!s.user)return 'Saved on this device';
+ return s.phase==='syncing'?'Syncing…':s.phase==='error'?'Sync failed: see Insights':s.last?'Saved here and synced':'Saved on this device';
 }
 
 export function App(){
@@ -63,6 +69,14 @@ export function App(){
   return()=>window.removeEventListener('hashchange',onHash);
  },[]);
 
+ const adopt=useCallback((remote:LocalState)=>setData(old=>{
+  const merged=mergeStates(old,remote);
+  // A restored device has no active character yet; pick the most recently edited one.
+  if(!merged.activeProfileId&&merged.profiles.length)merged.activeProfileId=[...merged.profiles].sort((x,y)=>y.updatedAt.localeCompare(x.updatedAt))[0]!.id;
+  return JSON.stringify(merged)===JSON.stringify(old)?old:merged;
+ }),[]);
+ const [sync,syncControls]=useSync(data,adopt,!blocked);
+
  function say(text:string){
   setNotice(text);
   window.clearTimeout(noticeTimer.current);
@@ -98,7 +112,7 @@ export function App(){
  return <div className="shell">
   <header className="topbar">
    <div className="brand"><span className="brandicon" aria-hidden="true">✦</span><span>Horde<strong>Mind</strong></span><span className="edition">v2 preview</span></div>
-   <div className="topright"><span className="offline-status">Saved on this device</span><a href="https://github.com/RobRoyce/hordemind" target="_blank" rel="noreferrer">Source ↗</a></div>
+   <div className="topright"><span className={'offline-status'+(sync.phase==='error'?' sync-error':'')}>{syncLabel(sync)}</span><a href="https://github.com/RobRoyce/hordemind" target="_blank" rel="noreferrer">Source ↗</a></div>
   </header>
   {blocked&&<div className="banner" role="alert">
    <p><strong>Saved data on this device couldn't be read.</strong> It may come from a newer version of HordeMind. A copy is kept in browser storage, and nothing will be saved until you choose what to do.</p>
@@ -124,7 +138,7 @@ export function App(){
    <main className="workspace">
     {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
     {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoStrategy={()=>navigate('strategy')}/>}
-    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(s=>({...s,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)}/>}
+    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(s=>({...s,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
    </main>
   </div>
   <div className={'status'+(notice?' visible':'')} role="status" aria-live="polite">{notice}</div>
