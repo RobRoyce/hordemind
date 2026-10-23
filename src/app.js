@@ -56,10 +56,21 @@ function Recommendations({state}){
 
 const clean=s=>String(s||"").trim();
 function App(){
- const [specialForecast,setSpecialForecast]=useState(null),[forecastRunning,setForecastRunning]=useState(false),[priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
+ const [lookahead,setLookahead]=useState(true),[specialForecast,setSpecialForecast]=useState(null),[forecastRunning,setForecastRunning]=useState(false),[priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
  const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]&&isModeled(x));const unmodeled=[...new Set(selected)].filter(x=>byName[x]&&!isModeled(x));
  useEffect(()=>{localStorage.setItem(KEY,JSON.stringify(state))},[state]);
- function compute(){if(valid.length<2){setFeedback("Need two model-supported offers to compare. Unmodeled offers are identified separately; they are not falsely scored as +0.");return}setRunning(true);setTimeout(()=>{const s=valid.map(o=>evaluate(state,o,Number(state.assumptions.samples)||1200)).sort((a,b)=>b.mean-a.mean);setScores(s);setRunning(false);setFeedback("")},20)}
+ function compute(){
+  if(valid.length<2){setFeedback("Need two model-supported offers; unsupported mechanics are not assigned a fake value of zero.");return}
+  setRunning(true);setFeedback("");
+  let worker;
+  try{
+   worker=new Worker(new URL("./worker.js",import.meta.url),{type:"module"});
+   const timeout=setTimeout(()=>{worker.terminate();setFeedback("The simulation took too long. Try standard comparison or reduce samples.");setRunning(false)},25000);
+   worker.onmessage=e=>{clearTimeout(timeout);worker.terminate();setRunning(false);if(e.data?.error)setFeedback("Simulation failed: "+e.data.error);else setScores(e.data.result)};
+   worker.onerror=e=>{clearTimeout(timeout);worker.terminate();setRunning(false);setFeedback("Web Worker error: "+e.message)};
+   worker.postMessage({requestId:Date.now(),state,candidates:valid,lookahead});
+  }catch(e){worker?.terminate();setRunning(false);setFeedback("Browser Worker unavailable: "+e.message)}
+ }
  function choose(name){setState(s=>({...s,history:[...s.history,name],choices:["","","",""],wave:Math.min(Number(s.waves),Number(s.wave)+1),specialAvailable:specialAvailable&&!specialChoice}));setSpecialChoice(false);setScores(null);setSpecialForecast(null)}
  function link(){const url=location.origin+location.pathname+"#run="+encodeURIComponent(JSON.stringify(state));setShare(url);return url}
  async function copy(){const url=link();try{await navigator.clipboard.writeText(url);setFeedback("Share link copied.")}catch{setFeedback("Clipboard access blocked. Select and copy the URL below.")}}
@@ -88,6 +99,7 @@ function App(){
     h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Available offers"),h("span",{className:"tag"},"Search A–Z")),h("p",{className:"hint"},"Type a name, event type or effect. Every suggestion shows its mechanic. Chaos outcomes cannot be selected ahead of time."),
      ...state.choices.map((v,i)=>h("div",{className:"slot",key:i},field("Offer "+(i+1),h(Selector,{value:v,placeholder:"Type to filter offers…",change:name=>setState(s=>({...s,choices:s.choices.map((x,j)=>j===i?name:x)}))})))),
      state.specialEnabled&&state.specialAvailable&&h("label",{className:"special"},h("input",{type:"checkbox",checked:specialChoice,onChange:e=>setSpecialChoice(e.target.checked)})," This pick uses my one-time War Plan special offer"),
+     h("label",{className:"special"},h("input",{type:"checkbox",checked:lookahead,onChange:e=>{setLookahead(e.target.checked);setScores(null)}})," Future-offer scenario lookahead (slower, experimental)"),
      h("div",{className:"actions"},h("button",{className:"primary",disabled:running||valid.length<2,onClick:compute},running?"Simulating…":"Compare expected Aether"),h("button",{onClick:()=>{update("choices",["","","",""]);setScores(null)}},"Clear choices")),
      selected.filter(x=>!byName[x]).length>0&&h("p",{className:"warning"},"Unknown offer names aren't simulated: "+selected.filter(x=>!byName[x]).join(", ")),
      unmodeled.length>0&&h("p",{className:"warning"},"Cataloged but not yet simulated (NOT zero value): "+unmodeled.join(", "))
@@ -99,9 +111,12 @@ function App(){
      state.history.length?state.history.map((name,i)=>h("div",{className:"historyitem",key:i},h("span",{className:"number"},i+1),name)):h("p",{className:"hint"},"No previous offers yet."))),
    h("section",null,
     h(Recommendations,{state}),
-    h("article",{className:"panel"},h("h2",null,"Predicted additional Aether"),!scores?h("p",{className:"hint"},"Compare two or more offers to estimate marginal Aether over the remaining waves. Every candidate is compared to the same baseline and random seeds."):h("div",null,...scores.map((res,i)=>h("div",{className:"result "+(i===0?"winner":""),key:res.name},
+    h("article",{className:"panel"},h("h2",null,"Predicted additional Aether"),!scores?h("p",{className:"hint"},"Compare two or more offers to estimate marginal Aether over the remaining waves. Candidate choices use paired randomized wave conditions. Lookahead also samples hypothetical future offerings and greedily adapts the run."):h("div",null,...scores.map((res,i)=>h("div",{className:"result "+(i===0?"winner":""),key:res.name},
       h("div",{className:"sectionhead"},h("strong",null,(i===0?"★ ":"")+res.name),h("strong",{className:"value"},(res.mean>=0?"+":"")+Math.round(res.mean)+" Aether")),
-      h("p",{className:"hint"},"5–95% modeled range: "+Math.round(res.lo)+" to "+Math.round(res.hi)+" Aether"),
+      h("p",{className:"hint"},"5–95% modeled scenario range: "+Math.round(res.lo)+" to "+Math.round(res.hi)+" Aether"),
+      res.lookahead&&h("p",{className:"hint"},"Future-choice lookahead: "+res.planningDepth+" wave(s), "+res.scenarios+" hypothetical offering scenarios. Ranking includes modeled follow-up choices, not only the immediate effect."),
+      res.followupExamples?.length>0&&h("p",{className:"hint"},"Illustrative future picks: "+res.followupExamples.join(" · ")),
+      res.note&&h("p",{className:"uncertain"},res.note),
       h("div",{className:"bar"},h("div",{style:{width:Math.max(0,Math.min(100,res.mean/Math.max(1,scores[0].mean)*100))+"%"}})),
       ...diagnose(state,res).map((s,j)=>h("p",{className:"explanation",key:j},s)),
       h("details",null,h("summary",null,"Event contribution breakdown"),...Object.entries(res.parts).filter(([,x])=>Math.abs(x)>.1).sort((a,b)=>b[1]-a[1]).map(([k,v])=>h("div",{className:"part",key:k},h("span",null,k),h("span",null,(v>=0?"+":"")+v.toFixed(1))))),
