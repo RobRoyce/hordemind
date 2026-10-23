@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {OFFERS,resolveOffer,searchOffers} from './catalog';
+import {DANGER,OFFERS,resolveOffer,searchOffers} from './catalog';
 
 describe('offer search',()=>{
  it('resolves typed names regardless of case or a missing "The"',()=>{
@@ -42,5 +42,26 @@ describe('offer search',()=>{
   const list=searchOffers('',['The Rising Spires','Unknown thing']);
   expect(list[0]?.label).toBe('The Rising Spires');
   expect(new Set(list.map(o=>o.label)).size).toBe(list.length);
+ });
+});
+
+describe('bane danger flags',()=>{
+ it('flags hazards aimed at the player as high danger',()=>{
+  for(const name of ['The Burning Rain','The Wrath of Hell','The Stalking Devil','The Ambushing Hellborne','The Draining Spires'])
+   expect(resolveOffer(name)?.danger?.level,name).toBe('high');
+ });
+ it('flags damage boosts as some danger',()=>{
+  for(const name of ['The Puffing Masses','The Bursting Masses','The Exalted Hordes','The Exalted Hellborne'])
+   expect(resolveOffer(name)?.danger?.level,name).toBe('some');
+ });
+ it('leaves banes that only cost time unflagged, since the simulator prices those',()=>{
+  for(const name of ['The Massing Masses','The Exalted Fiends','The Surging Hellborne','The Precious Spires'])
+   expect(resolveOffer(name)?.danger,name).toBeUndefined();
+ });
+ it('names only offers that exist in the catalog',()=>{
+  for(const name of Object.keys(DANGER))expect(resolveOffer(name)?.label,name).toBe(name);
+ });
+ it('explains every flag',()=>{
+  for(const o of OFFERS)if(o.danger)expect(o.danger.why.length,o.label).toBeGreaterThan(10);
  });
 });

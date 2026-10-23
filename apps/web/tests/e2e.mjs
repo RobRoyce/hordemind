@@ -87,6 +87,7 @@ try{
  assert(recText.includes('Aether, modeled'),'modeled estimates shown');
  assert(recText.includes('Chaotic Offering'));
  assert.equal(await page.locator('.verdict').count(),1,'robustness verdict shown');
+ assert((await page.locator('.recommendations .danger').count())>0,'dangerous banes are flagged');
 
  step('choose with the keyboard and record');
  await page.locator('#decision-title').click();

@@ -1,7 +1,13 @@
 // Offer reference for the picker. Descriptions follow Warcraft Tavern and Maxroll where they
 // agree; they are not verified Season 15 client tooltips.
 export type OfferFamily='Masses'|'Hellborne'|'Lords & Fiends'|'Spires'|'Chaos'|'Other';
-export interface OfferRef{ id:string;label:string;family:OfferFamily;hint:string;confidence:'documented'|'provisional'|'unknown'; }
+/**
+ * A bane that threatens the player rather than costing time. HordeMind flags danger and
+ * never prices it: dying carries no penalty (owner, S15), and time-costing banes are
+ * already simulated.
+ */
+export interface Danger{level:'high'|'some';why:string}
+export interface OfferRef{ id:string;label:string;family:OfferFamily;hint:string;confidence:'documented'|'provisional'|'unknown';danger?:Danger; }
 const offer=(label:string,family:OfferFamily,hint:string,confidence:OfferRef['confidence']='provisional'):OfferRef=>({id:label,label,family,hint,confidence});
 export const OFFERS:OfferRef[]=[
  offer('The Puffing Masses','Masses','+1 Aether per Mass for every offer you hold; Mass offers count twice. Bane: Mass damage applies Vulnerable.'),
@@ -50,6 +56,32 @@ export const OFFERS:OfferRef[]=[
  offer('The Withered Wanderer','Other','Wanderer offer; effect not described in current guides.','unknown'),
  offer('The Aether Rush','Other','Aether Event offer; effect not described in current guides.','unknown')
 ].sort((a,b)=>a.label.localeCompare(b.label));
+
+// HordeMind's reading of each documented bane, not a measurement.
+// High: hazards aimed at you. Some: more incoming damage or stronger enemies.
+export const DANGER:Readonly<Record<string,Danger>>={
+ 'The Burning Rain':{level:'high',why:'Hellfire rains down on you'},
+ 'The Wrath of Hell':{level:'high',why:'Hellfire intensifies around you'},
+ 'The Stalking Devil':{level:'high',why:'The Burning Butcher hunts you'},
+ 'The Ambushing Hellborne':{level:'high',why:'Hellborne can ambush you'},
+ 'The Draining Spires':{level:'high',why:'Soulspires drain your life'},
+ 'The Colossal Fiends':{level:'high',why:'Lords erupt Hellfire around them'},
+ 'The Puffing Masses':{level:'some',why:'Mass damage applies Vulnerable'},
+ 'The Bursting Masses':{level:'some',why:'Mass damage is unavoidable'},
+ 'The Hellish Masses':{level:'some',why:'Masses explode on death'},
+ 'The Anchored Masses':{level:'some',why:'Masses attack much faster'},
+ 'The Ruthless Lords':{level:'some',why:'Lords gain damage each time they spawn'},
+ 'The Fiendish Legions':{level:'some',why:'Elite and Fiend damage +25%'},
+ 'The Exalted Hellborne':{level:'some',why:'Hellborne damage +25%'},
+ 'The Meteoric Hellborne':{level:'some',why:'Hellborne damage +25%'},
+ 'The Rising Spires':{level:'some',why:'Soulspires empower nearby enemies'},
+ 'The Exalted Hordes':{level:'some',why:'Normal monster damage +25%'},
+ 'The Aether Goblins':{level:'some',why:'Monsters are tougher (guides differ: +25% damage or +100% health)'},
+ 'Chaotic Offering':{level:'some',why:'Chaos Waves are harder than normal waves'},
+ 'The Corrupting Spires':{level:'some',why:'Soulspires empower nearby enemies'},
+ 'The Bursting Fiends':{level:'some',why:'Aether Fiends explode when killed'}
+};
+for(const o of OFFERS){const d=DANGER[o.label];if(d)o.danger=d}
 
 export const WAR_PLAN_NODES=[
  {id:'Method and Madness',path:'Offer control',hint:'Affects which offerings may be presented in later waves; exact probability is uncertain.'},

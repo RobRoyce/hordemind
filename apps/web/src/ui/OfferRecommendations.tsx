@@ -18,6 +18,7 @@ function Card({item,rank,best,chosen,special,onChoose}:{item:OfferAssessment;ran
     <span className="recommend-rank">{best?'Best':`#${rank}`}</span>
     <strong>{item.offer}</strong>
     <span className={familyClass(ref)}>{ref?.family??'Unlisted'}</span>
+    {ref?.danger&&<span className={'danger danger-'+ref.danger.level} title={ref.danger.why}>{ref.danger.level==='high'?'High danger':'Some danger'}</span>}
     {special&&<span className="pact-tag">Pact · one use</span>}
    </div>
    <div className="recommend-metric">
@@ -25,6 +26,7 @@ function Card({item,rank,best,chosen,special,onChoose}:{item:OfferAssessment;ran
    </div>
   </div>
   {item.modeled?<Details item={item}/>:<p className="offer-explanation">{item.reason}</p>}
+  {ref?.danger&&<p className="danger-note">Bane: {ref.danger.why}. Danger is not counted in the estimate.</p>}
   <button type="button" className={best?'primary':''} aria-pressed={chosen} onClick={onChoose}>{chosen?'Chosen':'Choose'}</button>
  </article>;
 }
@@ -46,10 +48,13 @@ function Details({item}:{item:Estimate}){
 }
 
 function Verdict({result}:{result:Comparison}){
- if(result.robust===null||!result.recommended)return null;
- return result.robust?
+ if(!result.recommended)return null;
+ const danger=resolveOffer(result.recommended)?.danger;
+ const warning=danger?.level==='high'&&<p className="verdict close">{result.recommended} has a dangerous bane: {danger.why}. The estimate ignores danger, so weigh it yourself.</p>;
+ if(result.robust===null)return warning||null;
+ return <>{warning}{result.robust?
   <p className="verdict robust">{result.recommended} stays best under every timing assumption tested.</p>:
-  <p className="verdict close">Close call: the best offer changes under other plausible timing assumptions. Expand an offer to compare.</p>;
+  <p className="verdict close">Close call: the best offer changes under other plausible timing assumptions. Expand an offer to compare.</p>}</>;
 }
 
 export function OfferRecommendations({state,slots,chosen,special,remainingWaves,onChoose}:Props){
