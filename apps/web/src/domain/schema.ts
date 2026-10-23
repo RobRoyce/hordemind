@@ -43,6 +43,7 @@ export const EventSchema = z.discriminatedUnion('type', [
   EventBase.extend({type:z.literal('offer_chosen'),payload:z.object({
     wave:z.number().int().min(1).max(20),
     chosen:Identifier,
+    chosenIndex:z.number().int().min(0).max(3),
     usedSpecial:z.boolean(),
     followedRecommendation:z.boolean().nullable().default(null),
     modelVersion:z.string().max(100).nullable().default(null)
