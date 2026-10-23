@@ -53,26 +53,38 @@ if (( WITH_BROWSER )); then
   trap - EXIT
 fi
 if (( WITH_DB )); then
-  say 'Test Dockerized Supabase/Postgres migrations and owner isolation'
+  say 'Test Dockerized Supabase: migrations, RLS, private sync'
   cd "$ROOT"
   source scripts/lib.sh
   require_docker
   ensure_network
 
-  # Leave the stack as we found it: stop the database only if this script started it.
-  db_was_running=0
-  docker ps --format '{{.Names}}' | grep -qx supabase_db_hordemind && db_was_running=1
-  bash scripts/supabase.sh db start --network-id "$HORDEMIND_NETWORK"
-  if (( ! db_was_running )); then
-    trap 'bash "$ROOT/scripts/supabase.sh" stop >/dev/null 2>&1 || true' EXIT
-  else
+  # Leave the stack as we found it: stop it only if this script started it.
+  if docker ps --format '{{.Names}}' | grep -qx supabase_kong_hordemind; then
     warn_if_exposed
+  else
+    trap 'bash "$ROOT/scripts/supabase.sh" stop >/dev/null 2>&1 || true' EXIT
+    bash scripts/supabase.sh start --network-id "$HORDEMIND_NETWORK" -x "$SUPABASE_API_ONLY_EXCLUDES"
   fi
-  docker ps --format '{{.Names}}' | grep -qx supabase_db_hordemind \
-    || { echo 'Cannot find supabase_db_hordemind; inspect docker ps and make status.' >&2; exit 1; }
 
   # An existing volume keeps its schema; apply migrations added since, without resetting data.
   bash scripts/supabase.sh migration up --local
   docker exec -i supabase_db_hordemind psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$ROOT/supabase/tests/security_invariants.sql"
+
+  eval "$(bash scripts/supabase.sh status -o env 2>/dev/null | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
+  export HORDEMIND_SUPABASE_URL="$API_URL" HORDEMIND_SUPABASE_KEY="$PUBLISHABLE_KEY"
+  cd "$WEB"
+  say 'Private sync against the live local API'
+  npx vitest run src/sync
+
+  say 'Synced records survive a database restart'
+  export HORDEMIND_RESTART_RUN="$(node -e 'console.log(crypto.randomUUID())')"
+  HORDEMIND_RESTART_PHASE=write npx vitest run src/sync/supabase.integration.test.ts
+  docker restart supabase_db_hordemind >/dev/null
+  for _ in $(seq 1 60); do
+    [[ "$(docker inspect -f '{{.State.Health.Status}}' supabase_db_hordemind)" == healthy ]] && break
+    sleep 1
+  done
+  HORDEMIND_RESTART_PHASE=read npx vitest run src/sync/supabase.integration.test.ts
 fi
 say 'LOCAL VERIFICATION PASSED — ready to commit / push'

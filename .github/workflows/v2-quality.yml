@@ -58,17 +58,19 @@ jobs:
       - run: node tests/e2e.mjs
 
   database:
-    name: Postgres migrations and RLS
+    name: Postgres migrations, RLS and private sync
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
       # Keep in sync with SUPABASE_VERSION in scripts/supabase.sh.
       - uses: supabase/setup-cli@v3
         with:
           version: 2.84.2
-      - name: Start local Dockerized Postgres with Supabase schemas
-        run: supabase db start
+      - name: Start local Supabase (Postgres, Auth, PostgREST, Kong)
+        run: supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update -qq
@@ -77,6 +79,19 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 54322 -U postgres -d postgres -f supabase/tests/security_invariants.sql
+      - run: npm ci --no-audit --no-fund
+        working-directory: apps/web
+      - name: Private sync against the live API, then across a database restart
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
+          export HORDEMIND_SUPABASE_URL="$API_URL" HORDEMIND_SUPABASE_KEY="$PUBLISHABLE_KEY"
+          export HORDEMIND_RESTART_RUN="$(node -e 'console.log(crypto.randomUUID())')"
+          cd apps/web
+          npx vitest run src/sync
+          HORDEMIND_RESTART_PHASE=write npx vitest run src/sync/supabase.integration.test.ts
+          docker restart supabase_db_hordemind
+          for i in $(seq 1 60); do [ "$(docker inspect -f '{{.State.Health.Status}}' supabase_db_hordemind)" = healthy ] && break; sleep 1; done
+          HORDEMIND_RESTART_PHASE=read npx vitest run src/sync/supabase.integration.test.ts
       - name: Stop local containers
         if: always()
         run: supabase stop || true

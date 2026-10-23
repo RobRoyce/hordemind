@@ -1,10 +1,12 @@
 import type {RunRecord} from '../domain/schema';
 import {effectiveEvents,project} from '../domain/run';
 import {downloadExport} from '../storage/local';
+import {SyncPanel} from './SyncPanel';
+import type {SyncControls,SyncState} from './useSync';
 
-interface Props{runs:RunRecord[];selectRun:(id:string)=>void;onExport:()=>string}
+interface Props{runs:RunRecord[];selectRun:(id:string)=>void;onExport:()=>string;sync:SyncState;syncControls:SyncControls}
 const STATUS={in_progress:'In progress',completed:'Completed',abandoned:'Ended early'} as const;
-export function Insights({runs,selectRun,onExport}:Props){
+export function Insights({runs,selectRun,onExport,sync,syncControls}:Props){
  const totalDecisions=runs.reduce((n,r)=>n+effectiveEvents(r).filter(x=>x.type==='offer_chosen').length,0);
  const counted=runs.reduce((n,r)=>n+effectiveEvents(r).filter(x=>(x.type==='wave_observed'||x.type==='aether_observed')&&x.payload.eventCounts&&Object.keys(x.payload.eventCounts).length).length,0);
  return <div className="content">
@@ -20,7 +22,8 @@ export function Insights({runs,selectRun,onExport}:Props){
     <span className="session-right"><b>{p.chosen.length} / {p.totalWaves} choices</b><small>{p.lastTotalAether===null?'Aether not recorded':p.lastTotalAether+' Aether'} · {STATUS[r.status]}</small></span>
    </button>})}</div>}
   </section>
-  <section className="surface"><h2>Community research</h2><div className="notice"><strong>Private by default</strong><p>Nothing in this preview submits your builds, account details, or run observations to a server. Future participation will require an explicit opt-in and an account, with a clear deletion and withdrawal policy.</p></div>
+  <SyncPanel sync={sync} controls={syncControls}/>
+  <section className="surface"><h2>Community research</h2><div className="notice"><strong>Private by default</strong><p>Nothing is shared for community research yet. Private sync, above, copies data only to your own account and only after you sign in. Contributing to research will be a separate opt-in with a clear deletion and withdrawal policy.</p></div>
    <h3>What would help the model learn?</h3><p>Choice sets, selected options, War Plan nodes, patch number, and cumulative Aether are especially valuable. Optional counts of Mass, Fiend, Hellborne and Spire events provide stronger evidence for trigger probabilities.</p>
    <p className="micro">We must control for selection bias. More users alone doesn't imply that comparisons are causal.</p>
   </section>
