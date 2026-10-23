@@ -70,6 +70,9 @@ if (( WITH_DB )); then
   fi
   docker ps --format '{{.Names}}' | grep -qx supabase_db_hordemind \
     || { echo 'Cannot find supabase_db_hordemind; inspect docker ps and make status.' >&2; exit 1; }
+
+  # An existing volume keeps its schema; apply migrations added since, without resetting data.
+  bash scripts/supabase.sh migration up --local
   docker exec -i supabase_db_hordemind psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$ROOT/supabase/tests/security_invariants.sql"
 fi
 say 'LOCAL VERIFICATION PASSED — ready to commit / push'

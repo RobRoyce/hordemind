@@ -1,65 +1,114 @@
-import {useEffect,useState} from 'react';
+import {useState} from 'react';
 import {GAME_CLASSES,DIFFICULTIES,REALMS,type CharacterProfile} from '../domain/schema';
+import {normalizeBuildUrl,toggleWarPlanNode,SPECIAL_OFFER_NODE} from '../domain/profile';
+import {COMPASSES,WAR_PLAN_NODES,WAR_PLAN_HOME} from '../catalog';
 import {Help} from './Help';
-import {newProfile} from '../domain/run';
-import {WAR_PLAN_NODES,WAR_PLAN_HOME} from '../catalog';
 
 interface Props{
  profiles:CharacterProfile[];selectedProfile:CharacterProfile|null;
- saveProfile:(p:CharacterProfile)=>void;selectProfile:(id:string)=>void;
+ /** Persists a change immediately; returns an error message when the change is rejected. */
+ onUpdate:(p:CharacterProfile)=>string|null;
+ onCreate:(name:string,className:CharacterProfile['className'])=>void;
+ onSelect:(id:string)=>void;
  onStart:(p:CharacterProfile,waves:number)=>void;
 }
-export function StrategyLab({profiles,selectedProfile,saveProfile,selectProfile,onStart}:Props){
- const [draft,setDraft]=useState<CharacterProfile>(()=>selectedProfile?structuredClone(selectedProfile):newProfile('My character','Paladin'));
- const [waves,setWaves]=useState(10);
- useEffect(()=>{if(selectedProfile)setDraft(structuredClone(selectedProfile))},[selectedProfile?.id]);
- const edit=<K extends keyof CharacterProfile>(key:K,value:CharacterProfile[K])=>setDraft(p=>({...p,[key]:value}));
- const save=()=>saveProfile({...draft,name:draft.name.trim()||'My character',updatedAt:new Date().toISOString()});
- const routes=[...new Set(WAR_PLAN_NODES.map(x=>x.path))];
- const tips={
-  name:'A label for this saved character. You can have separate profiles for different builds.',
-  class:'The character class you are playing. Different classes affect clear speed and event throughput.',
-  archetype:'Optional shorthand for the build or skills you use. This is descriptive, not automatically analyzed yet.',
-  difficulty:'The in-game world difficulty. Includes Normal through Torment XII (T12). Pick the tier actually selected in game.',
-  realm:'Season 15 or Eternal. This is the realm you are playing on, not a software build number; patch version remains separate internally.',
-  url:'Optional link to a build planner (Maxroll, D4Builds, Icy Veins, etc.). Today it is only a bookmark/reference. It does NOT import stats, skills, items or affect recommendations. Build import is planned.',
-  kill:'How quickly you usually kill an Aether Lord / elite on this difficulty. Fast: nearly instant; average: a few seconds; slow: substantial time or danger. Event throughput matters more than paper DPS.',
-  mobility:'How easily you travel between Masses, Spires and encounters. High: reach distant events almost instantly; average: some travel delay; low: significant time crossing the arena. Choose based on how you actually play, not movement-speed stat alone.',
-  bonus:'If a War Plan grants a one-use special offer, mark it here. Choosing that special slot consumes its future opportunity.',
- } as const;
- const labelWithHelp=(label:string,msg:string)=><span className="field-label">{label} <Help message={msg}/></span>;
- const mobilityHint={high:'High — near-instant access to distant events',average:'Average — modest arena traversal delay',low:'Low — significant time moving between objectives',unknown:'Unknown — not measured'}[draft.mobility];
- const killHint={fast:'Fast — Lords/elites die almost instantly',average:'Average — several seconds per major target',slow:'Slow — major targets meaningfully reduce event throughput',unknown:'Unknown — not measured'}[draft.killSpeed];
- function toggleNode(id:string){
-  edit('warPlanNodes',draft.warPlanNodes.includes(id)?draft.warPlanNodes.filter(x=>x!==id):[...draft.warPlanNodes.filter(x=>!(id==='Total Chaos'&&x==='Reign in Hell'||id==='Reign in Hell'&&x==='Total Chaos')),id]);
- }
+const TIPS={
+ name:'A label for this character. Keep separate profiles for different builds.',
+ class:'The class you are playing.',
+ archetype:'A short description of the build. Saved for your reference; it does not change recommendations yet.',
+ difficulty:'The world difficulty you run Infernal Hordes on, from Normal up to Torment XII.',
+ realm:'Season 15 or Eternal. This is the realm you play on, separate from the game patch the data is tagged with.',
+ url:'A link to your build in a planner such as Maxroll, D4Builds or Icy Veins. Saved as a bookmark only: it does not import gear or skills or affect recommendations.',
+ kill:'How long a major target such as an Aether Lord takes at this difficulty. Fast: nearly instant. Average: a few seconds. Slow: long enough to cost you other events. The simulator gives faster builds more event time per wave.',
+ mobility:'How quickly you reach events spread across the arena, not your movement-speed stat. High: distant events are almost instant. Low: crossing the arena takes real time. The simulator scales available event time by this.'
+} as const;
+const KILL_HINT={fast:'Lords and elites die almost instantly',average:'Several seconds per major target',slow:'Major targets cost noticeable wave time',unknown:'Treated as average'} as const;
+const MOBILITY_HINT={high:'Distant events are almost instant',average:'Some travel between events',low:'Crossing the arena takes real time',unknown:'Treated as average'} as const;
+const SPEED_OPTIONS=[['unknown','Not sure'],['fast','Fast'],['average','Average'],['slow','Slow']] as const;
+const MOBILITY_OPTIONS=[['unknown','Not sure'],['high','High'],['average','Average'],['low','Low']] as const;
+
+const Label=({text,tip}:{text:string;tip:string})=><span className="field-label">{text} <Help message={tip}/></span>;
+
+export function StrategyLab({profiles,selectedProfile,onUpdate,onCreate,onSelect,onStart}:Props){
  return <div className="content">
-  <div className="section-intro"><span className="eyebrow">01 / BEFORE YOU PLAY</span><h1>Strategy Lab</h1><p>Choose a profile once. Active War Plans and build characteristics are snapshotted at run start so results remain comparable later.</p></div>
-  <section className="surface">
-   <div className="section-header"><div><h2>Character</h2><p>Save multiple characters; your run automatically uses the active one. Switching views does not clear this setup.</p></div><span className="chip">{profiles.length} saved</span></div>
-   {profiles.length>0&&<div className="profile-row" aria-label="Saved profiles">{profiles.map(p=><button key={p.id} onClick={()=>selectProfile(p.id)} className={'profile-chip '+(selectedProfile?.id===p.id?'selected':'')}>{p.className} · {p.name}</button>)}<button onClick={()=>setDraft(newProfile('New character','Paladin'))}>+ New</button></div>}
+  <div className="section-intro"><h1>Strategy Lab</h1><p>Set up your character once. Changes save as you make them, and each run keeps a copy of the setup it started with.</p></div>
+  {profiles.length>0&&<div className="profile-row" role="group" aria-label="Saved characters">
+   {profiles.map(p=><button key={p.id} onClick={()=>onSelect(p.id)} aria-pressed={selectedProfile?.id===p.id} className="profile-chip">{p.name} <small>{p.className}</small></button>)}
+   <button className="profile-chip add" onClick={()=>onCreate('New character','Paladin')}>New character</button>
+  </div>}
+  {selectedProfile?<ProfileEditor key={selectedProfile.id} profile={selectedProfile} onUpdate={onUpdate} onStart={onStart}/>:<CreateFirst onCreate={onCreate}/>}
+ </div>;
+}
+
+function CreateFirst({onCreate}:Pick<Props,'onCreate'>){
+ const [name,setName]=useState('');
+ const [className,setClassName]=useState<CharacterProfile['className']>('Paladin');
+ return <form className="surface create-first" onSubmit={e=>{e.preventDefault();onCreate(name.trim()||'My character',className)}}>
+  <h2>Create your character</h2>
+  <div className="form-grid">
+   <label><Label text="Character name" tip={TIPS.name}/><input aria-label="Character name" value={name} maxLength={80} onChange={e=>setName(e.target.value)} placeholder="e.g. Blessed Shield Paladin"/></label>
+   <label><Label text="Class" tip={TIPS.class}/><select aria-label="Class" value={className} onChange={e=>setClassName(e.target.value as CharacterProfile['className'])}>{GAME_CLASSES.map(x=><option key={x}>{x}</option>)}</select></label>
+  </div>
+  <div className="actions"><button className="primary" type="submit">Create character</button></div>
+ </form>;
+}
+
+function ProfileEditor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pick<Props,'onUpdate'|'onStart'>){
+ const [name,setName]=useState(profile.name);
+ const [url,setUrl]=useState(profile.buildUrl);
+ const [urlError,setUrlError]=useState('');
+ const [waves,setWaves]=useState(10);
+ const update=(patch:Partial<CharacterProfile>)=>onUpdate({...profile,...patch});
+ const routes=[...new Set(WAR_PLAN_NODES.map(x=>x.path))];
+
+ function editName(text:string){
+  setName(text);
+  if(text.trim())update({name:text.trim()});
+ }
+ function editUrl(text:string){
+  setUrl(text);
+  const result=normalizeBuildUrl(text);
+  if('error' in result){setUrlError(result.error);return}
+  setUrlError('');
+  if(result.value!==profile.buildUrl)update({buildUrl:result.value});
+ }
+
+ return <>
+  <section className="surface" aria-labelledby="character-title">
+   <div className="section-header"><h2 id="character-title">Character</h2><span className="chip">Saved on this device</span></div>
    <div className="form-grid">
-    <label>{labelWithHelp('Character name',tips.name)}<input aria-label="Character name" value={draft.name} onChange={e=>edit('name',e.target.value)} placeholder="e.g. Mass-clearing Paladin"/></label>
-    <label>{labelWithHelp('Class',tips.class)}<select aria-label="Class" value={draft.className} onChange={e=>edit('className',e.target.value as CharacterProfile['className'])}>{GAME_CLASSES.map(x=><option key={x}>{x}</option>)}</select></label>
-    <label>{labelWithHelp('Build / archetype',tips.archetype)}<input aria-label="Build / archetype" value={draft.buildName} onChange={e=>edit('buildName',e.target.value)} placeholder="e.g. Shield of Retribution"/></label>
-    <label>{labelWithHelp('Difficulty',tips.difficulty)}<select aria-label="Difficulty" value={draft.difficulty} onChange={e=>edit('difficulty',e.target.value as CharacterProfile['difficulty'])}>{DIFFICULTIES.map(x=><option key={x} value={x}>{x}</option>)}</select></label>
-    <label>{labelWithHelp('Realm / game mode',tips.realm)}<select aria-label="Realm / game mode" value={draft.realm} onChange={e=>setDraft(p=>({...p,realm:e.target.value as CharacterProfile['realm'],gamePatch:e.target.value==='Eternal'?'Eternal-unverified':'S15-unverified'}))}>{REALMS.map(x=><option key={x}>{x}</option>)}</select></label>
-    <label>{labelWithHelp('Build planner URL',tips.url)}<input aria-label="Build planner URL" type="url" value={draft.buildUrl} onChange={e=>edit('buildUrl',e.target.value)} placeholder="https://maxroll.gg/d4/planner/…"/></label>
-    <label>{labelWithHelp('Elite / Lord clear speed',tips.kill)}<select aria-label="Elite / Lord clear speed" value={draft.killSpeed} onChange={e=>edit('killSpeed',e.target.value as CharacterProfile['killSpeed'])}>{['unknown','fast','average','slow'].map(x=><option key={x}>{x}</option>)}</select><span className="field-choice-hint">{killHint}</span></label>
-    <label>{labelWithHelp('Mobility',tips.mobility)}<select aria-label="Mobility" value={draft.mobility} onChange={e=>edit('mobility',e.target.value as CharacterProfile['mobility'])}>{['unknown','high','average','low'].map(x=><option key={x}>{x}</option>)}</select><span className="field-choice-hint">{mobilityHint}</span></label>
+    <label><Label text="Character name" tip={TIPS.name}/><input aria-label="Character name" value={name} maxLength={80} onChange={e=>editName(e.target.value)} onBlur={()=>{if(!name.trim())setName(profile.name)}}/></label>
+    <label><Label text="Class" tip={TIPS.class}/><select aria-label="Class" value={profile.className} onChange={e=>update({className:e.target.value as CharacterProfile['className']})}>{GAME_CLASSES.map(x=><option key={x}>{x}</option>)}</select></label>
+    <label><Label text="Build" tip={TIPS.archetype}/><input aria-label="Build" value={profile.buildName} maxLength={100} onChange={e=>update({buildName:e.target.value})} placeholder="e.g. Blessed Shield"/></label>
+    <label><Label text="Difficulty" tip={TIPS.difficulty}/><select aria-label="Difficulty" value={profile.difficulty} onChange={e=>update({difficulty:e.target.value as CharacterProfile['difficulty']})}>{DIFFICULTIES.map(x=><option key={x} value={x}>{x==='Unknown'?'Not set':x}</option>)}</select></label>
+    <label><Label text="Realm" tip={TIPS.realm}/><select aria-label="Realm" value={profile.realm} onChange={e=>{const realm=e.target.value as CharacterProfile['realm'];update({realm,gamePatch:realm==='Eternal'?'Eternal-unverified':'S15-unverified'})}}>{REALMS.map(x=><option key={x}>{x}</option>)}</select></label>
+    <label><Label text="Build planner link" tip={TIPS.url}/>
+     <input aria-label="Build planner link" inputMode="url" value={url} onChange={e=>editUrl(e.target.value)} placeholder="maxroll.gg/d4/planner/…"
+      aria-invalid={urlError?true:undefined} aria-describedby={urlError?'url-error':undefined}/>
+     {urlError?<span className="field-error" id="url-error">{urlError}. The last valid link is still saved.</span>:
+      profile.buildUrl&&<a className="field-choice-hint" href={profile.buildUrl} target="_blank" rel="noreferrer">Open saved link ↗</a>}
+    </label>
+    <label><Label text="Elite / Lord clear speed" tip={TIPS.kill}/><select aria-label="Elite / Lord clear speed" value={profile.killSpeed} onChange={e=>update({killSpeed:e.target.value as CharacterProfile['killSpeed']})}>{SPEED_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select><span className="field-choice-hint">{KILL_HINT[profile.killSpeed]}</span></label>
+    <label><Label text="Mobility" tip={TIPS.mobility}/><select aria-label="Mobility" value={profile.mobility} onChange={e=>update({mobility:e.target.value as CharacterProfile['mobility']})}>{MOBILITY_OPTIONS.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select><span className="field-choice-hint">{MOBILITY_HINT[profile.mobility]}</span></label>
    </div>
-   <p className="micro"><b>Build URL:</b> only saved as a reference for now. It does not import or overwrite your configuration. Hover or focus the question-mark icons for the meaning of each field.</p>
-   <div className="actions"><button className="primary" onClick={save}>Save character</button><button onClick={()=>setDraft(newProfile('New character','Paladin'))}>Create another profile</button></div>
   </section>
-  <section className="surface">
-   <div className="section-header"><div><h2>Infernal Hordes War Plan</h2><p>{WAR_PLAN_HOME}</p></div><span className="chip">S15 · verify in-game</span></div>
-   <div className="special-switch"><label><input type="checkbox" checked={draft.specialOfferingAvailable} onChange={e=>edit('specialOfferingAvailable',e.target.checked)}/> One-use bonus offering available in this run <Help message={tips.bonus}/></label><p>When spent, the special option is not available later. The optimizer must account for this opportunity cost.</p></div>
-   {routes.map(route=><details key={route} className="node-group" open={route==='Offer control'?true:undefined}><summary>{route}</summary><div className="node-list">{WAR_PLAN_NODES.filter(n=>n.path===route).map(node=><label key={node.id} className="node-card"><input type="checkbox" checked={draft.warPlanNodes.includes(node.id)} onChange={()=>toggleNode(node.id)}/><span><b>{node.id}</b><small>{node.hint}</small></span></label>)}</div></details>)}
-   <div className="actions"><button className="primary" onClick={save}>Save configuration</button></div>
+  <section className="surface" aria-labelledby="warplan-title">
+   <div className="section-header"><div><h2 id="warplan-title">Infernal Hordes War Plan</h2><p>{WAR_PLAN_HOME}. Node names follow community guides; check them against your in-game tree.</p></div></div>
+   {routes.map(route=><fieldset key={route} className="node-group"><legend>{route}</legend><div className="node-list">
+    {WAR_PLAN_NODES.filter(n=>n.path===route).map(node=><label key={node.id} className="node-card">
+     <input type="checkbox" checked={profile.warPlanNodes.includes(node.id)} onChange={()=>onUpdate(toggleWarPlanNode(profile,node.id))}/>
+     <span><b>{node.id}</b><small>{node.hint}</small>
+      {node.id===SPECIAL_OFFER_NODE&&<small className="node-note">Live Run tracks this as a one-use special offer. Guides disagree on exactly how it works, so check the in-game tooltip.</small>}
+     </span>
+    </label>)}
+   </div></fieldset>)}
   </section>
   <section className="surface launch">
-   <div><h2>Ready to enter the Hordes?</h2><p>Save the profile and open a streamlined live-run recorder. You can skip optional observations during the run.</p></div>
-   <div className="launch-actions"><label>Waves<select value={waves} onChange={e=>setWaves(Number(e.target.value))}>{[6,8,10].map(n=><option key={n}>{n}</option>)}</select></label><button className="primary" onClick={()=>{const p={...draft,name:draft.name.trim()||'My character',updatedAt:new Date().toISOString()};saveProfile(p);onStart(p,waves)}}>Start live run →</button></div>
+   <div><h2>Ready for the Hordes?</h2><p>Start a run with this character. You'll enter each wave's offers and get a recommendation.</p></div>
+   <div className="launch-actions">
+    <label>Waves<select value={waves} onChange={e=>setWaves(Number(e.target.value))}>{COMPASSES.map(([n,name])=><option key={n} value={n}>{n} · {name}</option>)}</select></label>
+    <button className="primary" onClick={()=>onStart(profile,waves)}>Start live run</button>
+   </div>
   </section>
- </div>
+ </>;
 }

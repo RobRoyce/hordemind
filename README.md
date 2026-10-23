@@ -8,12 +8,12 @@ HordeMind is an open-source project for recording Infernal Hordes decisions and 
 
 ## Current application
 
-- **Strategy Lab:** character profiles, build reference URLs, War Plan branches and clear-speed settings.
-- **Live Run:** record each presented offer, the option selected, the one-time special slot and optional wave Aether/event counts.
-- **Insights:** locally saved run history and exportable JSON.
-- Runs are currently saved **in your browser only**. No account, paid hosting or community data upload is required.
+- **Strategy Lab:** character profiles that save as you edit. Covers class, realm, difficulty up to Torment XII, clear speed, mobility, a build-planner bookmark, and War Plan nodes. Selecting The Black Pact enables the one-use special offer.
+- **Live Run:** one screen per wave. Search the offers on your screen by name or mechanic, see a ranked recommendation, and record your choice by click or keyboard. An optional Aether reading for the previous wave goes on the same screen. Includes undo with prefill, end run early, and a Black Pact slot marker.
+- **Insights:** run history and a JSON export of the full append-only journal.
+- Everything is saved **in your browser only**. No account, hosting, or upload is involved.
 
-**Recommendations are back:** Live Run now uses an experimental, typed, Monte Carlo offering comparison with explicit synergy explanations and warnings for unmodeled choices. This is a working recommender, but its parameters are not yet calibrated from gameplay evidence and its Black Pact future opportunity cost is not included in the main ranking. See [M2 tracking issue](https://github.com/RobRoyce/hordemind/issues/3).
+**About the recommender:** Monte Carlo with paired seeds, mechanics-aware, and explained in terms of where each estimate's value comes from. Its parameters are not yet calibrated from gameplay, and it doesn't yet value future offers or the later use of the Black Pact offer. Treat it as a structured second opinion. See the [model notes](docs/MODEL.md) and [run timeline ADR](docs/adr/0003-run-timeline-and-observations.md).
 
 ## Run locally (free)
 

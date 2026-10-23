@@ -5,10 +5,9 @@
  * Assumptions are intentionally visible and should eventually be learned from
  * event-level observations. This is NOT a verified in-game spawn scheduler.
  */
-import type {CharacterProfile,RunRecord} from '../domain/schema';
-import {project} from '../domain/run';
+import type {CharacterProfile} from '../domain/schema';
 
-export const RECOMMENDER_VERSION = 's15-montecarlo-2.1-experimental';
+export const RECOMMENDER_VERSION = 's15-montecarlo-2.2-experimental';
 
 type EventKind = 'Mass'|'Fiend'|'Hellborne'|'Lord'|'Spire'|'Chaos'|'Other';
 type Reward = Record<EventKind,number>;
@@ -41,7 +40,12 @@ export interface Estimate{
 export interface Unsupported{offer:string;modeled:false;reason:string}
 export type OfferAssessment=Estimate|Unsupported;
 export interface Comparison{assessments:OfferAssessment[]; recommended:string|null; conditional:boolean; samples:number;modelVersion:string;warnings:string[]}
-export interface Scenario{history:string[];totalWaves:number;chosenAfterWave:number;profile:CharacterProfile}
+/** `decisionWave` is the wave the offer precedes; the chosen offer applies from that wave on. */
+export interface Scenario{
+ history:string[];totalWaves:number;decisionWave:number;
+ profile:Pick<CharacterProfile,'killSpeed'|'mobility'|'warPlanNodes'>;
+}
+export const remainingWaves=(s:Pick<Scenario,'totalWaves'|'decisionWave'>)=>Math.max(0,s.totalWaves-s.decisionWave+1);
 
 const hash=(s:number)=>{let x=s|0;x^=x>>>16;x=Math.imul(x,0x7feb352d);x^=x>>>15;x=Math.imul(x,0x846ca68b);return (x^(x>>>16))>>>0};
 function random(seed:number){
@@ -62,7 +66,7 @@ function simulate(scenario:Scenario,extra:string|null,seed:number):Reward{
  const killFactor=scenario.profile.killSpeed==='fast'?1.3:scenario.profile.killSpeed==='slow'?.63:1;
  const travelFactor=scenario.profile.mobility==='high'?1.1:scenario.profile.mobility==='low'?.7:1;
  const effort=60*killFactor*travelFactor;
- const remaining=Math.max(0,scenario.totalWaves-scenario.chosenAfterWave);
+ const remaining=remainingWaves(scenario);
  for(let w=0;w<remaining;w++){
   const r=random(hash(seed+Math.imul(w+1,0x9e3779b1)));
   // Chaos is a RANDOM replacement of the first future wave, never a chosen Chaos subtype.
@@ -115,23 +119,26 @@ function simulate(scenario:Scenario,extra:string|null,seed:number):Reward{
 const sum=(r:Reward)=>Object.values(r).reduce((a,b)=>a+b,0);
 function explain(name:string,s:Scenario,gain:number,parts:Reward):string[]{
  const earlier=s.history,has=(n:string)=>earlier.includes(n);
- const effect=MECHANICS[clean(name)],remain=Math.max(0,s.totalWaves-s.chosenAfterWave);
+ const effect=MECHANICS[clean(name)],remain=remainingWaves(s);
  let reasons:string[]=[];
  switch(effect){
-  case 'burst':reasons.push('Creates two additional starting Masses per remaining wave ('+remain+' modeled waves).');if(has('The Puffing Masses'))reasons.push('Your Puffing Masses boosts Aether from each new Mass.');if(has('The Massing Masses'))reasons.push('Massing Masses can reform those Masses for further payouts.');if(has('The Hellish Masses')||has('The Teeming Masses'))reasons.push('More Mass deaths trigger your existing secondary spawns.');break;
+  case 'burst':reasons.push('Creates two additional starting Masses in each of the '+remain+' remaining waves.');if(has('The Puffing Masses'))reasons.push('Your Puffing Masses boosts Aether from each new Mass.');if(has('The Massing Masses'))reasons.push('Massing Masses can reform those Masses for further payouts.');if(has('The Hellish Masses')||has('The Teeming Masses'))reasons.push('More Mass deaths trigger your existing secondary spawns.');break;
   case 'anchor':reasons.push('Mass deaths may generate Spires, but completing them competes for limited wave time.');if(has('The Puffing Masses'))reasons.push('As another Mass-category offer, Anchored also increases your Puffing payout per Mass.');break;
   case 'exaltHell':reasons.push('Adds modeled Aether per Hellborne killed; it does not spawn any Hellborne.');if(!earlier.some(x=>['The Hellish Masses','The Summoned Hellborne','The Burning Hellborne','The Meteoric Hellborne'].includes(x)))reasons.push('No existing Hellborne-spawning offer recorded, so direct value may be zero until you acquire one.');break;
   case 'hellish':reasons.push('Mass deaths can produce Hellborne, pairing well with Mass proliferation and Hellborne payout bonuses.');break;
   case 'teem':reasons.push('Mass kills generate additional Fiend events in this provisional variant; verify your in-game tooltip.');break;
   case 'puff':reasons.push('Increases the payout of destroyed Masses based on your accumulated offering stack, double-counting Mass-category choices.');break;
   case 'reform':reasons.push('Destroyed Masses may reform, creating repeated payouts and additional on-death triggers.');break;
-  case 'chaos':reasons.push('Replaces the next ordinary wave with one UNKNOWN random Chaos outcome; it is not extra free Aether.');if(s.profile.warPlanNodes.includes('Bedlam'))reasons.push('Your Bedlam War Plan was included as a provisional Chaos reward.');break;
+  case 'chaos':reasons.push('Replaces the upcoming wave with one UNKNOWN random Chaos outcome; it is not extra free Aether.');if(s.profile.warPlanNodes.includes('Bedlam'))reasons.push('Your Bedlam War Plan was included as a provisional Chaos reward.');break;
   case 'colossal':case 'ruthless':case 'legions':case 'summonLord':reasons.push('Improves a Lord-focused engine; performance depends on killing Lords quickly.');break;
   default:reasons.push('Estimated using event spawns, payouts and available wave-clear time under uncalibrated assumptions.');
  }
  const lead=Object.entries(parts).sort((a,b)=>b[1]-a[1]).filter(([,v])=>v>3).slice(0,2);
  if(lead.length)reasons.push('Largest modeled contributions: '+lead.map(([kind,value])=>kind+' '+(value>=0?'+':'')+Math.round(value)).join(', ')+' Aether.');
- if(remain===0)reasons.push('No future waves remain after this selection; persistent effects have no modeled future payoff.');
+ if(remain===0)reasons.push('No waves remain after this selection; persistent effects have no modeled payoff.');
+ const puffing=earlier.some(x=>MECHANICS[clean(x)]==='puff');
+ if(puffing&&!clean(name).toLowerCase().includes('mass')&&parts.Mass>0&&parts.Mass>=gain/2)
+  reasons.unshift('Most of this value comes from your Puffing Masses, which pays +1 Aether per Mass for every offering in your stack. Any pick adds about '+Math.round(parts.Mass)+' Mass Aether.');
  if(gain<0)reasons.push('This option has a negative modeled marginal return in the remaining wave-time budget.');
  return reasons;
 }
@@ -165,11 +172,4 @@ export function compareScenario(s:Scenario,candidates:string[],samples=420):Comp
    ...(unknown.length?['Some options have unmodeled mechanics; a modeled winner is provisional and may not actually be best.']:[]),
    'Expected Aether gains are experimental approximations, not verified gameplay results.'
   ]};
-}
-export function scenarioFromRun(run:RunRecord):Scenario{
- const p=project(run);
- return {history:p.chosen.map(o=>o.payload.chosen),totalWaves:p.totalWaves,chosenAfterWave:p.nextWave,profile:p.profile};
-}
-export function compareRun(run:RunRecord,offered:string[],samples=420):Comparison{
- return compareScenario(scenarioFromRun(run),offered,samples);
 }

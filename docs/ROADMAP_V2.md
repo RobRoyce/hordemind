@@ -19,11 +19,14 @@ When actively playing, enter the 3–4 offers presented, compare explainable rec
 **Exit:** v2 build passes CI; browser can create profile, record a full run, reload, export JSON; old site untouched.
 
 ### M1 — ergonomic gameplay
-- Searchable offer picker with description, aliases, keyboard 1–4 and recently selected suggestions
-- Fix keyboard focus, thumb-friendly buttons, compact mode and undo/correction events
-- One-step start with selected profile, War Plan review; no configuration while playing
-- Show choice rationale, unmodeled mechanic notices and Black Pact save/use decision
-- Per-wave optional Aether and event counts; offline works
+- [x] Searchable offer picker (name, family, mechanic), keyboard 1–5, recent offers first
+- [x] Focus handling, 44 px targets, compact phone layout, undo with prefill, end run early
+- [x] One-step start from the selected character; no configuration while playing
+- [x] Choice rationale, unmodeled-offer notices, Black Pact slot marking and spend warning
+- [x] Optional per-wave Aether and event counts on the offer screen ([ADR 0003](adr/0003-run-timeline-and-observations.md))
+- [x] Strategy Lab autosaves; invalid fields never reach storage; unreadable saves are never overwritten
+- [ ] Measured ten-wave mock run under two minutes on laptop and phone
+- [ ] Offline support (service worker)
 
 **Exit:** ten-wave mock run in under two minutes without entering settings, on laptop and phone.
 

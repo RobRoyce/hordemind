@@ -1,30 +1,41 @@
 import {EMPTY_STATE,LocalStateSchema,type LocalState} from '../domain/schema';
 
 export const STORAGE_KEY='hordemind-v2-local-v1';
+
+/**
+ * `unreadable`: stored data exists but failed validation, e.g. it was written by a
+ * newer app version. The caller must not save over it without the user's consent.
+ */
+export type LoadStatus='ok'|'empty'|'unreadable'|'unavailable';
+export interface LoadResult{state:LocalState;status:LoadStatus;backupKey?:string}
 export interface StateRepository{
- load():LocalState;
+ load():LoadResult;
  save(next:LocalState):void;
- export():string;
+ export(state:LocalState):string;
 }
-export function createLocalRepository():StateRepository{
+export function createLocalRepository(storage:Storage|undefined=globalThis.localStorage):StateRepository{
  return {
   load(){
    try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw)return structuredClone(EMPTY_STATE);
-    const parsed=LocalStateSchema.safeParse(JSON.parse(raw));
-    if(parsed.success)return parsed.data;
-    // Preserve invalid data in localStorage; no destructive reset.
-    try{localStorage.setItem(STORAGE_KEY+'-unreadable-backup',raw)}catch{}
-    console.warn('HordeMind: stored state could not be decoded. Backup retained under unreadable-backup.');
-   }catch(err){console.warn('HordeMind: local state unavailable',err)}
-   return structuredClone(EMPTY_STATE);
+    const raw=storage?.getItem(STORAGE_KEY);
+    if(!raw)return {state:structuredClone(EMPTY_STATE),status:'empty'};
+    let parsed;
+    try{parsed=LocalStateSchema.safeParse(JSON.parse(raw))}catch{parsed=null}
+    if(parsed?.success)return {state:parsed.data,status:'ok'};
+    const backupKey=`${STORAGE_KEY}-unreadable-${new Date().toISOString()}`;
+    try{storage?.setItem(backupKey,raw)}catch{}
+    console.warn('HordeMind: stored state could not be decoded; a copy is kept under',backupKey);
+    return {state:structuredClone(EMPTY_STATE),status:'unreadable',backupKey};
+   }catch(err){
+    console.warn('HordeMind: local state unavailable',err);
+    return {state:structuredClone(EMPTY_STATE),status:'unavailable'};
+   }
   },
   save(next){
-   const valid=LocalStateSchema.parse(next);
-   localStorage.setItem(STORAGE_KEY,JSON.stringify(valid));
+   if(!storage)throw new Error('Browser storage is unavailable');
+   storage.setItem(STORAGE_KEY,JSON.stringify(LocalStateSchema.parse(next)));
   },
-  export(){return JSON.stringify({exportedAt:new Date().toISOString(),product:'HordeMind v2',state:this.load()},null,2)}
+  export(state){return JSON.stringify({exportedAt:new Date().toISOString(),product:'HordeMind v2',state},null,2)}
  };
 }
 export function downloadExport(json:string){
