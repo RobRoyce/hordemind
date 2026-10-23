@@ -140,9 +140,10 @@ function provenanceNotes(offer:string):string[]{
  if(!m.nameConfirmed)notes.push('This offer name is not in current guides; its effect is a guess.');
  if(m.category==='Chaos')notes.push('Chaos Wave types follow Maxroll; their odds and payouts are placeholders, not measurements.');
  const params=m.effects.flatMap(e=>Object.values(e).filter((v):v is Param=>typeof v==='object'&&v!==null&&'provenance' in v));
- const doubtful=params.filter(p=>p.provenance!=='guide');
- if(doubtful.length)notes.push(...doubtful.map(p=>`${p.provenance==='disputed'?'Disputed':'Assumed'}: ${p.note??p.value}.`));
- else if(params.length)notes.push('Effect values match current guides but are not verified in game.');
+ const label={observed:'Observed in game',disputed:'Disputed',assumed:'Assumed'} as const;
+ const flagged=params.filter((p):p is Param&{provenance:keyof typeof label}=>p.provenance!=='guide');
+ notes.push(...flagged.map(p=>`${label[p.provenance]}: ${p.note??p.value}.`));
+ if(params.some(p=>p.provenance==='guide'))notes.push('Other effect values match current guides but are not verified in game.');
  return notes;
 }
 const GLOBAL_ASSUMPTIONS=[
@@ -178,7 +179,7 @@ function pactAdvice(special:string,modeled:Estimate[],unknown:Unsupported[],s:Sc
  const premium=pact.mean-regular.mean;
  const advice=remaining===0?'No waves remain.':remaining===1?'This is the last wave, so the Pact has no later use. Take its offer if it is your best option.':
   premium<=0?`${regular.offer} is worth at least as much here, so keep the Pact for a later wave.`:
-  `Using the Pact here gains about +${Math.round(premium)} over your best regular offer (${regular.offer}). Save it only if you expect a later Pact offer to beat that wave's best regular offer by more, with fewer waves left to pay off. Guides say Pact offers match the category of your previous pick.`;
+  `Using the Pact here gains about +${Math.round(premium)} over your best regular offer (${regular.offer}). Save it only if you expect a later Pact offer to beat that wave's best regular offer by more, with fewer waves left to pay off. A Pact offer always synergizes with your most recent pick, so its later value depends on what you take next.`;
  return {offer:special,premium,bestRegular:regular.offer,remaining,advice};
 }
 

@@ -98,7 +98,7 @@ function ProfileEditor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pic
     {WAR_PLAN_NODES.filter(n=>n.path===route).map(node=><label key={node.id} className="node-card">
      <input type="checkbox" checked={profile.warPlanNodes.includes(node.id)} onChange={()=>onUpdate(toggleWarPlanNode(profile,node.id))}/>
      <span><b>{node.id}</b><small>{node.hint}</small>
-      {node.id===SPECIAL_OFFER_NODE&&<small className="node-note">Live Run tracks this as a one-use special offer. Guides disagree on exactly how it works, so check the in-game tooltip.</small>}
+      {node.id===SPECIAL_OFFER_NODE&&<small className="node-note">Adds one extra offer that synergizes with your most recent pick. You can take it instead of the regular offers; once taken it does not come back. Live Run lets you mark it.</small>}
      </span>
     </label>)}
    </div></fieldset>)}

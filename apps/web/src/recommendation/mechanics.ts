@@ -1,15 +1,16 @@
 /**
  * Infernal Hordes mechanics as data, each value tagged with where it comes from.
  *
+ * `observed`: reported from Season 15 play by the project owner.
  * `guide`: Warcraft Tavern and Maxroll agree. `disputed`: sources disagree.
  * `assumed`: no public source; a modeling choice to be inferred from recorded runs.
- * Nothing here is verified against the Season 15 client yet.
  */
-export type Provenance='guide'|'disputed'|'assumed';
+export type Provenance='observed'|'guide'|'disputed'|'assumed';
 export type EventKind='Mass'|'Fiend'|'Lord'|'Spire'|'Hellborne'|'Goblin'|'Butcher'|'Hellfire'|'Chaos';
 export const EVENT_KINDS:readonly EventKind[]=['Mass','Fiend','Lord','Spire','Hellborne','Goblin','Butcher','Hellfire','Chaos'];
 
 export interface Param{value:number;provenance:Provenance;note?:string}
+const observed=(value:number,note:string):Param=>({value,provenance:'observed',note});
 const guide=(value:number,note?:string):Param=>({value,provenance:'guide',...(note?{note}:{})});
 const disputed=(value:number,note:string):Param=>({value,provenance:'disputed',note});
 const assumed=(value:number,note:string):Param=>({value,provenance:'assumed',note});
@@ -133,7 +134,7 @@ export const MECHANICS:readonly OfferMechanics[]=[
  o('The Rising Spires','Spires',[{kind:'startEvents',event:'Spire',count:guide(1)}],['The Precious Spires','The Treasured Spires','The Coveted Spires']),
  o('The Exalted Hordes','Other',[{kind:'eventRate',add:guide(0.5,'Aether Events spawn 50% faster')}],MASS_ENGINE),
  o('The Aether Goblins','Other',[{kind:'withEvents',spawn:'Goblin',chance:guide(0.2)}]),
- o('The Stalking Devil','Other',[{kind:'startEvents',event:'Butcher',firstWaveOnly:true,count:disputed(1,'Assumes one Butcher per run; if he returns every wave this offer is worth far more')}]),
+ o('The Stalking Devil','Other',[{kind:'startEvents',event:'Butcher',firstWaveOnly:true,count:observed(1,'One Burning Butcher per run, not one per wave')}]),
  o('The Burning Rain','Other',[{kind:'waveEnd',min:guide(9),max:guide(15)},{kind:'hellfireSource',amount:guide(1,'Hellfire rains down')}],['The Meteoric Hellborne']),
  o('The Wrath of Hell','Other',[{kind:'waveEnd',min:guide(15),max:guide(24),replaces:'The Burning Rain'},{kind:'hellfireSource',amount:guide(1,'Hellfire intensifies')}],['The Meteoric Hellborne']),
  o('Chaotic Offering','Chaos',[{kind:'chaos'}])
