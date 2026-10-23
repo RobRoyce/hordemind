@@ -15,6 +15,7 @@ export const offers = [
   {name:"The Summoned Lords",kind:"lord",effect:"summonedLord",detail:"More Lord spawns.",approximate:true},
   {name:"The Enduring Lords",kind:"lord",effect:"enduring",detail:"Tougher Lords; possible throughput penalty.",approximate:true},
   {name:"The Burning Hellborne",kind:"hell",effect:"burnHell",detail:"Additional Hellborne and Aether.",approximate:true},
+  {name:"The Meteoric Hellborne",kind:"hell",effect:"meteorHell",detail:"Hellfire spawns Hellborne.",approximate:true},
   {name:"The Summoned Hellborne",kind:"hell",effect:"summonHell",detail:"Additional Hellborne.",approximate:true},
   {name:"The Surging Hellborne",kind:"hell",effect:"surgeHell",detail:"Additional Hellborne.",approximate:true},
   {name:"The Ambushing Hellborne",kind:"hell",effect:"ambushHell",detail:"Additional Hellborne payout.",approximate:true},
