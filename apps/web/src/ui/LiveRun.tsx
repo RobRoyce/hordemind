@@ -8,23 +8,25 @@ type CountKey='mass'|'fiend'|'hellborne'|'lord'|'spire';
 const OBSERVABLES:[CountKey,string][]=[['mass','Masses killed'],['fiend','Fiends killed'],['hellborne','Hellborne killed'],['lord','Lords killed'],['spire','Spires completed']];
 export function LiveRun({run,profile,saveRun,onStart,onGoStrategy}:Props){
  const [offered,setOffered]=useState<string[]>(['','','']);
- const [specialSlot,setSpecialSlot]=useState(false);
- const [selected,setSelected]=useState('');
+ const [specialSlotIndex,setSpecialSlotIndex]=useState<number|null>(null);
+ const [selectedIndex,setSelectedIndex]=useState<number|null>(null);
  const [aether,setAether]=useState('');
  const [counts,setCounts]=useState<Record<string,string>>({});
  const [error,setError]=useState('');
  const [waves,setWaves]=useState(10);
  const p=useMemo(()=>run?project(run):null,[run]);
- useEffect(()=>{setOffered(['','','']);setSelected('');setAether('');setCounts({});setError('');setSpecialSlot(false)},[run?.id]);
+ useEffect(()=>{setOffered(['','','']);setSelectedIndex(null);setAether('');setCounts({});setError('');setSpecialSlotIndex(null)},[run?.id]);
  function commit(){
   if(!run||!p)return;
   try{
-   const options=offered.map(x=>x.trim()).filter(Boolean);
-   if(options.length<2||options.length>4)throw Error('Record 2–4 offers exactly as shown in game.');
-   if(!options.includes(selected))throw Error('Select one of the displayed options.');
-   if(specialSlot&&!p.specialRemaining)throw Error('The one-time special choice has already been consumed.');
-   const next=recordDecision(run,options,selected,specialSlot);
-   saveRun(next);setError('');setSelected('');setOffered(['','','']);setSpecialSlot(false);
+   const entries=offered.map(x=>x.trim());
+   const options=entries.filter(Boolean);
+   if(options.length<2||options.length>4||entries.slice(0,options.length).some(x=>!x))throw Error('Record 2–4 filled offers without empty gaps.');
+   if(selectedIndex===null||!options[selectedIndex])throw Error('Select one of the displayed options.');
+   if(specialSlotIndex!==null&&!p.specialRemaining)throw Error('The one-time special choice has already been consumed.');
+   if(specialSlotIndex!==null&&!options[specialSlotIndex])throw Error('Specify which filled offer is the special option.');
+   const next=recordDecision(run,options,selectedIndex,specialSlotIndex);
+   saveRun(next);setError('');setSelectedIndex(null);setOffered(['','','']);setSpecialSlotIndex(null);
   }catch(e){setError(String(e instanceof Error?e.message:e))}
  }
  function recordWave(skip:boolean){
@@ -54,7 +56,7 @@ export function LiveRun({run,profile,saveRun,onStart,onGoStrategy}:Props){
    const tag=(event.target as HTMLElement)?.tagName;
    if(['INPUT','TEXTAREA','SELECT'].includes(tag)||event.metaKey||event.ctrlKey||event.altKey)return;
    const idx=Number(event.key)-1;
-   if(idx>=0&&idx<offered.length&&offered[idx]?.trim()){setSelected(offered[idx]);event.preventDefault()}
+   if(idx>=0&&idx<offered.length&&offered[idx]?.trim()){setSelectedIndex(idx);event.preventDefault()}
   };
   window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
  },[offered,run,p]);
@@ -77,9 +79,11 @@ export function LiveRun({run,profile,saveRun,onStart,onGoStrategy}:Props){
    <section className="surface">
     <div className="section-header"><div><h2>What appeared on your screen?</h2><p>Search by name. Pick the actual offering displayed, including a bonus slot when available.</p></div><span className="chip">{p.nextWave} / {p.totalWaves}</span></div>
     <datalist id="offers-reference">{OFFERS.map(x=><option key={x.id} value={x.label}/>)}</datalist>
-    <div className="offer-fields">{offered.map((val,i)=>{const info=OFFERS.find(x=>x.label===val.trim());return <div key={i} className={'offer-entry '+(selected===val&&val.trim()?'picked':'')}><button className="offer-number" title={'Select offer '+(i+1)} onClick={()=>setSelected(val)} disabled={!val.trim()}>{i+1}</button><label><span>Offer {i+1}{i===3?' · extra':''}</span><input list="offers-reference" autoComplete="off" value={val} onChange={e=>{setOffered(arr=>arr.map((x,j)=>j===i?e.target.value:x));setSelected(x=>x===val?'':x)}} placeholder="Type offering name…"/></label><button className="pick-button" disabled={!val.trim()} onClick={()=>setSelected(val)} aria-pressed={Boolean(selected===val&&val.trim())}>{selected===val&&val.trim()?'✓ Selected':'Select'}</button>{info&&<small className="offer-hint">{info.hint}</small>}</div>})}</div>
-    <div className="actions"><button onClick={()=>setOffered(x=>x.length===3?[...x,'']:x.slice(0,3))}>{offered.length===3?'+ Fourth offer':'Remove fourth slot'}</button>{p.specialRemaining&&<label className="checkbox-label"><input type="checkbox" checked={specialSlot} onChange={e=>setSpecialSlot(e.target.checked)}/> Use my one-time special option</label>}</div>
-    <div className="decision-footer"><div><b>Recommendation model migration pending</b><p className="micro">This v2 preview records reliable research data; it does not invent an Aether ranking. The <a href="https://robroyce.github.io/hordemind/" target="_blank" rel="noreferrer">current advisor</a> remains available during the migration.</p></div><button className="primary" disabled={!selected.trim()} onClick={commit}>Record chosen offer →</button></div>
+    <div className="offer-fields">{offered.map((val,i)=>{const info=OFFERS.find(x=>x.label===val.trim());return <div key={i} className={'offer-entry '+(selectedIndex===i?'picked':'')}><button className="offer-number" title={'Select offer '+(i+1)} onClick={()=>setSelectedIndex(i)} disabled={!val.trim()}>{i+1}</button><label><span>Offer {i+1}{specialSlotIndex===i?' · special':''}</span><input list="offers-reference" autoComplete="off" value={val} onChange={e=>{setOffered(arr=>arr.map((x,j)=>j===i?e.target.value:x));if(selectedIndex===i)setSelectedIndex(null)}} placeholder="Type offering name…"/></label><button className="pick-button" disabled={!val.trim()} onClick={()=>setSelectedIndex(i)} aria-pressed={selectedIndex===i}>{selectedIndex===i?'✓ Selected':'Select'}</button>{info&&<small className="offer-hint">{info.hint}</small>}</div>})}</div>
+    <div className="actions"><button onClick={()=>{setOffered(x=>x.length===3?[...x,'']:x.slice(0,3));setSpecialSlotIndex(null);setSelectedIndex(null)}}>{offered.length===3?'+ Fourth offer':'Remove fourth slot'}</button>
+    {p.specialRemaining&&<label className="special-selector">Which slot is the one-time special offer?<select value={specialSlotIndex===null?'':specialSlotIndex} onChange={e=>setSpecialSlotIndex(e.target.value===''?null:Number(e.target.value))}><option value="">No special offer shown</option>{offered.map((_,i)=><option key={i} value={i}>Offer {i+1}</option>)}</select></label>}</div>
+    {specialSlotIndex!==null&&<p className="micro">The special resource is only consumed if you choose that marked offer. Picking another slot preserves it.</p>}
+    <div className="decision-footer"><div><b>Recommendation model migration pending</b><p className="micro">This v2 preview records reliable research data; it does not invent an Aether ranking. The <a href="https://robroyce.github.io/hordemind/" target="_blank" rel="noreferrer">current advisor</a> remains available during the migration.</p></div><button className="primary" disabled={selectedIndex===null} onClick={commit}>Record chosen offer →</button></div>
     <p className="micro">Tip: when not typing, press 1–4 to select a filled offer row.</p>
    </section>}
   <div className="actions postrun"><button onClick={undo} disabled={p.chosen.length===0||complete}>Undo last decision</button><span className="micro">Every change is saved locally as a separate journal event.</span></div>
