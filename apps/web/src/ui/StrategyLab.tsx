@@ -1,7 +1,9 @@
 import {useState} from 'react';
 import {GAME_CLASSES,DIFFICULTIES,REALMS,type CharacterProfile} from '../domain/schema';
-import {normalizeBuildUrl,toggleWarPlanNode,SPECIAL_OFFER_NODE} from '../domain/profile';
-import {COMPASSES,WAR_PLAN_NODES,WAR_PLAN_HOME} from '../catalog';
+import {normalizeBuildUrl,toggleWarPlanNode} from '../domain/profile';
+import {WAR_PLAN_HOME} from '../domain/warplan';
+import {COMPASSES} from '../catalog';
+import {WarPlanTree} from './WarPlanTree';
 import {Help} from './Help';
 
 interface Props{
@@ -20,6 +22,7 @@ const TIPS={
  realm:'Season 15 or Eternal. This is the realm you play on, separate from the game patch the data is tagged with.',
  url:'A link to your build in a planner such as Maxroll, D4Builds or Icy Veins. Saved as a bookmark only: it does not import gear or skills or affect recommendations.',
  kill:'How long a major target such as an Aether Lord takes at this difficulty. Fast: nearly instant. Average: a few seconds. Slow: long enough to cost you other events. The simulator gives faster builds more event time per wave.',
+ splinter:'Your Season 15 Splinter of Terror rank. It unlocks War Plan bonuses: rank 5 adds a Doomsayer at each wave start (Cult of Annihilation), rank 14 makes Impending Doom also trigger with 30 s left, rank 20 makes the Chest of Talismans cost 1 Aether.',
  mobility:'How quickly you reach events spread across the arena, not your movement-speed stat. High: distant events are almost instant. Low: crossing the arena takes real time. The simulator scales available event time by this.'
 } as const;
 const KILL_HINT={fast:'Lords and elites die almost instantly',average:'Several seconds per major target',slow:'Major targets cost noticeable wave time',unknown:'Treated as average'} as const;
@@ -59,7 +62,6 @@ function ProfileEditor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pic
  const [urlError,setUrlError]=useState('');
  const [waves,setWaves]=useState(10);
  const update=(patch:Partial<CharacterProfile>)=>onUpdate({...profile,...patch});
- const routes=[...new Set(WAR_PLAN_NODES.map(x=>x.path))];
 
  function editName(text:string){
   setName(text);
@@ -93,15 +95,12 @@ function ProfileEditor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pic
    </div>
   </section>
   <section className="surface" aria-labelledby="warplan-title">
-   <div className="section-header"><div><h2 id="warplan-title">Infernal Hordes War Plan</h2><p>{WAR_PLAN_HOME}. Node names follow community guides; check them against your in-game tree.</p></div></div>
-   {routes.map(route=><fieldset key={route} className="node-group"><legend>{route}</legend><div className="node-list">
-    {WAR_PLAN_NODES.filter(n=>n.path===route).map(node=><label key={node.id} className="node-card">
-     <input type="checkbox" checked={profile.warPlanNodes.includes(node.id)} onChange={()=>onUpdate(toggleWarPlanNode(profile,node.id))}/>
-     <span><b>{node.id}</b><small>{node.hint}</small>
-      {node.id===SPECIAL_OFFER_NODE&&<small className="node-note">Adds one extra offer that synergizes with your most recent pick. You can take it instead of the regular offers; once taken it does not come back. Live Run lets you mark it.</small>}
-     </span>
-    </label>)}
-   </div></fieldset>)}
+   <div className="section-header"><div><h2 id="warplan-title">Infernal Hordes War Plan</h2><p>{WAR_PLAN_HOME}. Learn the same upgrades you have in game.</p></div></div>
+   <label className="splinter"><Label text="Splinter of Terror rank" tip={TIPS.splinter}/>
+    <input type="number" min={0} max={20} inputMode="numeric" placeholder="Not set" value={profile.splinterRank??''}
+     onChange={e=>{const v=e.target.value===''?null:Math.max(0,Math.min(20,Math.round(Number(e.target.value))));if(v===null||Number.isFinite(v))update({splinterRank:v})}}/>
+   </label>
+   <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}/>
   </section>
   <section className="surface launch">
    <div><h2>Ready for the Hordes?</h2><p>Start a run with this character. You'll enter each wave's offers and get a recommendation.</p></div>

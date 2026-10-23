@@ -17,7 +17,9 @@ type CountKey='mass'|'fiend'|'hellborne'|'lord'|'spire';
 const OBSERVABLES:[CountKey,string][]=[['mass','Masses killed'],['fiend','Fiends killed'],['hellborne','Hellborne killed'],['lord','Lords killed'],['spire','Spires completed']];
 
 
-const freshSlots=()=>[emptySlot(),emptySlot(),emptySlot()];
+const freshSlots=(n:number)=>Array.from({length:n},emptySlot);
+/** Offer rows a wave starts with: Reign in Hell adds one, Total Chaos removes one (tooltips). */
+export const regularOffers=(warPlanNodes:readonly string[])=>warPlanNodes.includes('Reign in Hell')?4:warPlanNodes.includes('Total Chaos')?2:3;
 const message=(e:unknown)=>e instanceof Error?e.message:String(e);
 
 function parseAether(text:string,label:string):number|null{
@@ -78,7 +80,8 @@ function CharacterSummary({profile}:{profile:CharacterProfile}){
 
 function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props&{run:RunRecord}){
  const p=useMemo(()=>project(run),[run]);
- const [slots,setSlots]=useState<Slot[]>(freshSlots);
+ const baseSlots=regularOffers(p.profile.warPlanNodes);
+ const [slots,setSlots]=useState<Slot[]>(()=>freshSlots(baseSlots));
  const [chosen,setChosen]=useState<number|null>(null);
  const [special,setSpecial]=useState<number|null>(null);
  const [aether,setAether]=useState('');
@@ -96,7 +99,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
  const rec=useRecommendations(scenario,offers,special!==null?slots[special]?.offer??null:null);
 
  function resetForm(next:{slots?:Slot[];chosen?:number|null;special?:number|null;aether?:string;counts?:Record<string,string>}={}){
-  setSlots(next.slots??freshSlots());setChosen(next.chosen??null);setSpecial(next.special??null);
+  setSlots(next.slots??freshSlots(baseSlots));setChosen(next.chosen??null);setSpecial(next.special??null);
   setAether(next.aether??'');setCounts(next.counts??{});setError('');
  }
  function updateSlot(i:number,slot:Slot){
@@ -133,7 +136,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
    setEnding(false);
    if(draft){
     const restored=draft.offered.map(slotFor);
-    while(restored.length<3)restored.push(emptySlot());
+    while(restored.length<baseSlots)restored.push(emptySlot());
     const reading=draft.observation;
     resetForm({slots:restored,chosen:draft.chosenIndex,special:draft.specialSlotIndex,
      aether:reading?.totalAether?.toString()??'',counts:Object.fromEntries(Object.entries(reading?.eventCounts??{}).map(([k,v])=>[k,String(v)]))});
@@ -168,6 +171,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
  },[panel]);
 
  const usedSpecial=p.chosen.find(x=>x.payload.usedSpecial);
+ const lastPick=p.chosen.at(-1)?.payload.chosen,lastFamily=lastPick?resolveOffer(lastPick)?.family:undefined;
  const bestSlot=rec.result?.recommended?slots.findIndex(s=>s.offer===rec.result?.recommended):-1;
  const remaining=remainingWaves({totalWaves:p.totalWaves,decisionWave:p.nextWave});
 
@@ -227,12 +231,13 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
         onChange={s=>updateSlot(i,s)} onPicked={()=>focusAfter(i)}/>
        {p.specialRemaining&&<button type="button" className="pact" aria-pressed={special===i} disabled={!slot.offer}
         aria-label={`Mark offer ${i+1} as the Black Pact offer`} title="Mark as the Black Pact offer" onClick={()=>setSpecial(s=>s===i?null:i)}>Pact</button>}
-       {(i>=3||slot.text)&&<button type="button" className="clear" aria-label={i>=3?`Remove offer ${i+1}`:`Clear offer ${i+1}`}
-        onClick={()=>{if(i>=3){setSlots(s=>s.filter((_,j)=>j!==i));setChosen(null);setSpecial(null)}else updateSlot(i,emptySlot())}}>×</button>}
+       {(i>=baseSlots||slot.text)&&<button type="button" className="clear" aria-label={i>=baseSlots?`Remove offer ${i+1}`:`Clear offer ${i+1}`}
+        onClick={()=>{if(i>=baseSlots){setSlots(s=>s.filter((_,j)=>j!==i));setChosen(null);setSpecial(null)}else updateSlot(i,emptySlot())}}>×</button>}
       </div>)}
      </div>
      {slots.length<MAX_OFFERS&&<button type="button" className="add-offer" onClick={()=>setSlots(s=>[...s,emptySlot()])}>Add offer</button>}
-     {special!==null&&<p className="micro">Taking the Pact offer uses it up. Taking any other offer keeps it for a later wave.</p>}
+     {special!==null&&<p className="micro">Taking the Pact offer uses it up; taking any other offer keeps it for a later wave.
+      {lastFamily&&` Pact offers share a category with your previous choice (${lastFamily}).`}</p>}
      <div className="record-bar">
       {bestSlot>=0&&rec.result&&!rec.busy&&<p className="rec-inline">Recommended: <b>{rec.result.recommended}</b>
        {chosen!==bestSlot&&<> · <button type="button" className="linklike" onClick={()=>setChosen(bestSlot)}>choose it</button></>}</p>}

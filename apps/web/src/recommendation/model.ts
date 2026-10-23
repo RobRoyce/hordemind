@@ -14,7 +14,7 @@ export const RECOMMENDER_VERSION='s15-timeflow-3.0-experimental';
 /** `decisionWave` is the wave the offer precedes; the chosen offer applies from that wave on. */
 export interface Scenario{
  history:string[];totalWaves:number;decisionWave:number;
- profile:Pick<CharacterProfile,'killSpeed'|'mobility'|'warPlanNodes'>;
+ profile:Pick<CharacterProfile,'killSpeed'|'mobility'|'warPlanNodes'>&{splinterRank?:number|null};
 }
 export const remainingWaves=(s:Pick<Scenario,'totalWaves'|'decisionWave'>)=>Math.max(0,s.totalWaves-s.decisionWave+1);
 export const hasMechanics=(name:string)=>mechanicsFor(name)!==null;
@@ -77,6 +77,7 @@ function describe(e:Effect):string|null{
   case 'startEvents':return e.firstWaveOnly?`Adds ${count(e.count.value,e.event)} in the next wave.`:`Adds ${count(e.count.value,e.event)} at the start of every wave.`;
   case 'onComplete':return e.from===e.spawn?`Each ${one(e.from)} has a ${pct(e.chance.value)} chance to reform when killed.`:`Each ${one(e.from)} you kill has a ${pct(e.chance.value)} chance to spawn ${a(e.spawn)}.`;
   case 'withEvents':return `Each Aether Event has a ${pct(e.chance.value)} chance to bring ${a(e.spawn)}.`;
+  case 'replaceElites':return `Some elites spawn as ${many(e.spawn)} instead, adding ${one(e.spawn)} Aether without costing event time.`;
   case 'payoutAdd':return `+${e.amount.value} Aether per ${one(e.event)}.`;
   case 'payoutMult':return `${e.factor.value}× Aether from each ${one(e.event)}.`;
   case 'weightMult':return e.factor.value<1?`${many(e.event)} appear ${pct(e.factor.value)} as often.`:`${many(e.event)} appear more often.`;
@@ -96,7 +97,7 @@ function payoffOnly(offer:string):EventKind|null{
  const m=mechanicsFor(offer);
  if(!m)return null;
  const adds=m.effects.filter(e=>e.kind==='payoutAdd'||e.kind==='payoutMult');
- const spawns=m.effects.some(e=>['startEvents','onComplete','withEvents','hellfireSpawns','groupAdd','convert'].includes(e.kind));
+ const spawns=m.effects.some(e=>['startEvents','onComplete','withEvents','replaceElites','hellfireSpawns','groupAdd','convert'].includes(e.kind));
  return adds.length&&!spawns?(adds[0] as {event:EventKind}).event:null;
 }
 
@@ -127,7 +128,7 @@ function explain(offer:string,s:Scenario,d:Draws):string[]{
   const kinds=new Set(m.effects.map(e=>e.kind));
   reasons.push(m.category==='Chaos'?`Replacing the normal wave gives up its Aether from ${parts(losses)}.`:
    kinds.has('convert')?`Converted events no longer pay as before: ${parts(losses)}.`:
-   ['timeMult','startEvents','onComplete','withEvents','hellfireSpawns','groupAdd'].some(k=>kinds.has(k as Effect['kind']))?`Time spent on its events costs you Aether from ${parts(losses)}.`:
+   ['timeMult','startEvents','onComplete','withEvents','replaceElites','hellfireSpawns','groupAdd'].some(k=>kinds.has(k as Effect['kind']))?`Time spent on its events costs you Aether from ${parts(losses)}.`:
    `It lowers Aether from ${parts(losses)}.`);
  }
  const effects=m.effects.map(describe).filter((x):x is string=>x!==null);

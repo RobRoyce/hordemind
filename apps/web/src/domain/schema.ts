@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeNodes } from './warplan';
 
 export const GAME_CLASSES = ['Barbarian','Druid','Necromancer','Rogue','Sorcerer','Spiritborn','Paladin','Warlock'] as const;
 export const CharacterClassSchema = z.enum(GAME_CLASSES);
@@ -16,7 +17,9 @@ export const CharacterProfileSchema = z.object({
   buildUrl: z.union([z.url(),z.literal('')]).default(''),
   difficulty: DifficultySchema.default('Unknown'),
   gamePatch: z.string().trim().min(1).max(80).default('S15-unverified'),
-  warPlanNodes: z.array(z.string().max(100)).default([]),
+  warPlanNodes: z.array(z.string().max(100)).default([]).transform(normalizeNodes),
+  /** Season 15 Splinter of Terror rank; unlocks War Plan bonuses at ranks 5, 14 and 20. */
+  splinterRank: z.number().int().min(0).max(20).nullable().default(null),
   specialOfferingAvailable: z.boolean().default(false),
   killSpeed: z.enum(['fast','average','slow','unknown']).default('unknown'),
   mobility: z.enum(['high','average','low','unknown']).default('unknown'),

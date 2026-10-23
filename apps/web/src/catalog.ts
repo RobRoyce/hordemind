@@ -83,23 +83,8 @@ export const DANGER:Readonly<Record<string,Danger>>={
 };
 for(const o of OFFERS){const d=DANGER[o.label];if(d)o.danger=d}
 
-export const WAR_PLAN_NODES=[
- {id:'Method and Madness',path:'Offer control',hint:'Affects which offerings may be presented in later waves; exact probability is uncertain.'},
- {id:'The Black Pact',path:'Offer control',hint:'One extra offer, matched to your most recent pick. One use per run.'},
- {id:'Total Chaos',path:'Chaos',hint:'Favors random Chaos Waves, at a cost to ordinary choice opportunities.'},
- {id:'Bedlam',path:'Chaos',hint:'Additional Chaos Aether opportunity. Verify ranks and values in-game.'},
- {id:'Reign in Hell',path:'Steady strategies',hint:'Alternative to Chaos-focused routing.'},
- {id:'Pulse of Aether',path:'Steady strategies',hint:'Aether for some suppressed Chaos opportunities; tooltip verification needed.'},
- {id:'Cult of Annihilation',path:'Wave events',hint:'Doomsayer interaction and seasonal Splinter bonuses.'},
- {id:'Impending Doom',path:'Wave events',hint:'Doomsayer-related wave effects.'},
- {id:'Council Coffers',path:'Rewards',hint:'Additional end-of-run rewards, not necessarily wave Aether.'},
- {id:'Exalted Council',path:'Rewards',hint:'End-boss encounter modifier.'},
- {id:'Forged in Flame',path:'Materials',hint:'Obducite-focused path.'},
- {id:'Flawless Finds',path:'Materials',hint:'Gem-focused alternative.'}
-] as const;
 /** Infernal Hordes compass wave caps (Warcraft Tavern, Season 15). */
 export const COMPASSES=[[10,'Legendary compass'],[8,'Rare compass'],[6,'Magic compass'],[4,'Fleeting compass']] as const;
-export const WAR_PLAN_HOME='War Plans table in Temis, Skovos → Infernal Hordes activity tree';
 
 const fold=(s:string)=>s.toLowerCase().replace(/^the\s+/,'').trim();
 const byLabel=new Map(OFFERS.map(o=>[o.label.toLowerCase(),o]));

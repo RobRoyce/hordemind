@@ -1,18 +1,11 @@
 import {CharacterProfileSchema,type CharacterProfile} from './schema';
+import {SPECIAL_OFFER_NODE,toggleNode} from './warplan';
 
-/** The War Plan node that grants the one-use special offer, as HordeMind models it. */
-export const SPECIAL_OFFER_NODE='The Black Pact';
+export {SPECIAL_OFFER_NODE};
 
-/** Branch alternatives guides describe as mutually exclusive. Prerequisites are not enforced. */
-export const EXCLUSIVE_NODES:readonly (readonly [string,string])[]=[
- ['Total Chaos','Reign in Hell'],
- ['Forged in Flame','Flawless Finds']
-];
-
+/** Learns or unlearns a War Plan node as the game allows; The Black Pact drives the special offer. */
 export function toggleWarPlanNode(profile:CharacterProfile,node:string):CharacterProfile{
- const selected=profile.warPlanNodes.includes(node);
- const rivals=EXCLUSIVE_NODES.flatMap(([a,b])=>a===node?[b]:b===node?[a]:[]);
- const warPlanNodes=selected?profile.warPlanNodes.filter(x=>x!==node):[...profile.warPlanNodes.filter(x=>!rivals.includes(x)),node];
+ const warPlanNodes=toggleNode(profile.warPlanNodes,node);
  return {...profile,warPlanNodes,specialOfferingAvailable:warPlanNodes.includes(SPECIAL_OFFER_NODE)};
 }
 

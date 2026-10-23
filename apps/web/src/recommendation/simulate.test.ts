@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {simulateRun,simulateWave,rulesFor,hash} from './simulate';
+import {simulateRun,simulateWave,rulesFor,hash,type PlayerProfile} from './simulate';
 
 const average={killSpeed:'average',mobility:'average',warPlanNodes:[]} as const;
 const total=(b:Record<string,number>)=>Object.values(b).reduce((a,v)=>a+v,0);
@@ -40,5 +40,21 @@ describe('wave simulator',()=>{
   const quick=mean(seed=>total(simulateWave(plain,average,seed)));
   const slow=mean(seed=>total(simulateWave(plain,average,seed,{completionScale:2,fillScale:1})));
   expect(slow).toBeLessThan(quick*0.85);
+ });
+});
+
+describe('War Plan: Impending Doom (tooltip, S15)',()=>{
+ const doom:PlayerProfile={...average,warPlanNodes:['Method and Madness','Impending Doom']};
+ const wave=(profile:PlayerProfile,stack:string[]=[])=>mean(seed=>total(simulateWave({...plain,stack},profile,seed)),400);
+ it('adds Aether from the events it spawns near the end of the wave',()=>{
+  // About one of the four late events fits in the last 10 s, and it displaces a normal one.
+  expect(wave(doom)).toBeGreaterThan(wave(average)+1);
+ });
+ it('triggers again with 30 s left at Splinter of Terror rank 14',()=>{
+  expect(wave({...doom,splinterRank:14})).toBeGreaterThan(wave({...doom,splinterRank:13})+1);
+ });
+ it('makes offers that pay per event worth more',()=>{
+  const puffingGain=(p:PlayerProfile)=>wave(p,['The Puffing Masses'])-wave(p);
+  expect(puffingGain(doom)).toBeGreaterThan(puffingGain(average));
  });
 });

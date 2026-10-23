@@ -174,3 +174,21 @@ describe('review regressions (timeflow 3.0)',()=>{
   expect(chaos?.modeled&&chaos.assumptions.join(' ')).toMatch(/placeholders/);
  });
 });
+
+describe('Fiendish Legions: Fiends replace elites, not other Aether Events',()=>{
+ const quick={sensitivity:false,synergy:false} as const;
+ it('adds Fiend Aether without taking any from Masses or Spires',()=>{
+  const legions=compareScenario(state([]),['The Fiendish Legions'],300,quick).assessments[0];
+  expect(legions?.modeled).toBe(true);
+  if(legions?.modeled){
+   expect(legions.components.Fiend).toBeGreaterThan(5);
+   expect(legions.components.Mass).toBeGreaterThan(-1);
+   expect(legions.components.Spire).toBeGreaterThan(-1);
+   expect(legions.reasons.join(' ')).not.toMatch(/lowers Aether/);
+  }
+ });
+ it('pairs with Colossal Fiends, which turns those Fiends into Lords',()=>{
+  const legions=compareScenario(state(['The Colossal Fiends']),['The Fiendish Legions'],300,quick).assessments[0];
+  expect(legions?.modeled&&legions.components.Lord).toBeGreaterThan(5);
+ });
+});

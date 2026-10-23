@@ -184,3 +184,31 @@ code{font-size:12px;background:#253042;padding:1px 5px;border-radius:5px}
 .danger-high{color:#ffb4a8;border-color:#a3483b;background:#3d1915}
 .danger-some{color:#f3cf98;border-color:#7d6138;background:#30261a}
 .recommendations .danger-note{font-size:11px;color:#e9b9a6;margin:4px 0}
+
+/* War Plan tree: three branches laid out as in game */
+.splinter{max-width:260px;margin-bottom:14px}
+.wp-points{font-size:12px!important;color:var(--muted)!important;margin:0 0 10px!important}
+.wp-points.over{color:#ffcf9e!important}
+.wp-branches{--wp-row:78px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,.8fr);gap:14px}
+.wp-branch{background:#1b2432;border:1px solid #384356;border-radius:14px;padding:12px}
+.wp-branch h3{margin:0 0 2px;font-size:13px;color:#e3c59a}
+.wp-branch .micro{margin:0 0 8px!important}
+.wp-branch.passive{opacity:.55}
+.wp-grid{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.wp-links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.wp-links line{stroke:#4a5568;stroke-width:2;vector-effect:non-scaling-stroke}
+.wp-links line.lit{stroke:#c99556}
+.wp-links .exclusive{stroke:#8a6a42;stroke-width:2;stroke-dasharray:4 4;fill:none;vector-effect:non-scaling-stroke}
+.wp-node{position:relative;z-index:1;align-self:center;justify-self:center;width:calc(100% - 6px);min-height:52px;padding:6px 4px;
+ font-size:11px;font-weight:700;line-height:1.2;border-radius:10px;background:#202a3a;border:1px solid #4a5568;color:#dfe5ee}
+.wp-node.learned{background:#4a3a20;border-color:#e1ad64;color:#ffe4b9;box-shadow:0 0 0 1px #e1ad6455}
+.wp-node.locked{opacity:.5}
+.wp-node.locked:hover,.wp-node.passive:hover{background:#202a3a}
+.wp-node.learned:hover{background:#5a4626}
+.wp-node.passive{cursor:help}
+/* Fixed height: a panel that resized on hover shifted the page mid-click, so clicks near the bottom were lost. */
+.wp-detail{margin-top:14px;padding:12px 14px;border:1px solid #465064;border-radius:12px;background:#161e2b;height:184px;overflow-y:auto}
+.wp-detail h4{margin:0 0 6px;font-size:14px}
+.wp-detail .wp-tooltip{font-style:italic;color:#e7dccb!important}
+.wp-detail p{margin:4px 0!important}
+@media(max-width:980px){.wp-branches{grid-template-columns:minmax(0,1fr)}.wp-branch.passive{order:3}.wp-detail{height:240px}}

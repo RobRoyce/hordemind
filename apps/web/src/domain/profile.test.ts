@@ -5,15 +5,15 @@ import {toggleWarPlanNode,normalizeBuildUrl,validateProfile} from './profile';
 describe('War Plan configuration',()=>{
  it('makes the special offer available exactly when The Black Pact is selected',()=>{
   let p=newProfile('Paladin','Paladin');
-  p=toggleWarPlanNode(p,'The Black Pact');
+  for(const node of ['Method and Madness','Impending Doom','The Black Pact'])p=toggleWarPlanNode(p,node);
   expect(p.specialOfferingAvailable).toBe(true);
-  p=toggleWarPlanNode(p,'The Black Pact');
+  p=toggleWarPlanNode(p,'Impending Doom');
   expect(p.specialOfferingAvailable).toBe(false);
  });
  it('replaces an exclusive alternative instead of keeping both',()=>{
-  let p=toggleWarPlanNode(newProfile('Paladin','Paladin'),'Total Chaos');
-  p=toggleWarPlanNode(p,'Reign in Hell');
-  expect(p.warPlanNodes).toEqual(['Reign in Hell']);
+  let p=toggleWarPlanNode(newProfile('Paladin','Paladin'),'Method and Madness');
+  p=toggleWarPlanNode(toggleWarPlanNode(p,'Total Chaos'),'Reign in Hell');
+  expect(p.warPlanNodes).toEqual(['Method and Madness','Reign in Hell']);
  });
 });
 
