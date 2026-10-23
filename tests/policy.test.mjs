@@ -1,0 +1,15 @@
+import {strict as assert} from "node:assert";
+import {BASE,simulate,random} from "../src/engine.js";
+import {futureOpportunity} from "../src/policy.js";
+const onlyOne={...BASE,waves:1,wave:1,history:[],assumptions:{...BASE.assumptions,samples:100}};
+const chaos=simulate(onlyOne,"Chaotic Offering",12);
+assert.equal(chaos.events.Chaos,1);
+assert.equal(chaos.events.Mass,0,"Chaos must replace, not stack onto, a normal wave");
+const normal=simulate(onlyOne,null,12);
+assert.equal(normal.events.Chaos,0);
+const state={...BASE,waves:3,wave:2,history:["The Puffing Masses"],specialAvailable:true,specialEnabled:true,warNodes:["Method and Madness","The Black Pact"]};
+const future=futureOpportunity(state,{scenarios:2,draws:2});
+assert.equal(future.remaining,1);
+assert(future.mean>=0&&Number.isFinite(future.mean));
+assert(future.caveat.includes("Scenario"));
+console.log("Policy and Chaos-wave tests passed", {future:future.mean});
