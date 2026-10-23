@@ -19,12 +19,15 @@ export function append<T extends RunEvent['type']>(run:RunRecord,type:T,payload:
   if(!source || source.type!=='offers_presented'||!source.payload.offered.includes(candidate.payload.chosen))throw new Error('Chosen offer must be in the recorded choices');
   if(events.some(x=>x.type==='offer_chosen'&&x.payload.wave===candidate.payload.wave))throw new Error('Wave choice already recorded');
   if(candidate.payload.usedSpecial && events.some(x=>x.type==='offer_chosen'&&x.payload.usedSpecial))throw new Error('One-time special offering has already been used');
+  if(candidate.payload.usedSpecial){const started=events.find(x=>x.type==='run_started');if(started?.type!=='run_started'||!started.payload.profile.specialOfferingAvailable)throw new Error('The character profile has no special offering configured');}
  }
  if(candidate.type==='wave_observed'){
   const previous=events.filter(x=>x.type==='wave_observed'&&x.payload.totalAether!==null).at(-1);
   if(candidate.payload.totalAether!==null&&previous&&previous.type==='wave_observed'&&candidate.payload.totalAether<Number(previous.payload.totalAether))throw new Error('Cumulative Aether cannot decrease');
  }
  if(candidate.type==='offers_presented'){
+  const pending=events.filter(x=>x.type==='offer_chosen').at(-1);
+  if(pending?.type==='offer_chosen'&&!events.some(x=>x.type==='wave_observed'&&x.payload.wave===pending.payload.wave))throw new Error('Complete or skip the last wave observation before continuing');
   if(events.some(x=>x.type==='offers_presented'&&x.payload.wave===candidate.payload.wave))throw new Error('Choices already recorded for this wave; correct or undo first');
  }
  return {...run,events:[...run.events,candidate],status:candidate.type==='run_finished'?candidate.payload.outcome:run.status};
