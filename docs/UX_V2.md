@@ -3,7 +3,12 @@
 ## The three modes
 
 1. **Strategy Lab**: rare configuration; character, class, build URL, Torment, kill-speed estimates, War Plan names, objectives. One screen with progressive disclosure. Never block starting a run for optional fields.
-2. **Live Run**: full-screen primary workflow. Show wave, cumulative Aether, current offering stack, and 3–4 offer rows. Search once per slot (reuse quick history). Each card has a two-line reason, optional expandable math, keyboard shortcut, big choose button. After choice prompt for wave-end Aether (skip allowed), then move forward. Undo produces a correction event.
+2. **Live Run**: one screen per wave, offers before wave *k*.
+   - Header shows wave *k* of *N*, the latest Aether reading, the taken-offer stack, and the Black Pact status.
+   - Up to five offer rows use a searchable combobox (name, family, mechanic; recent offers first). Picking moves focus to the next row.
+   - An optional "Aether after wave *k−1*" field and collapsed event counts sit above the offers.
+   - The recommendation sits beside the offers on wide screens. On narrow screens it sits below, with a one-line summary by the record button.
+   - Keys: 1–5 choose a row, Ctrl/⌘+Enter records. Undo prefills the last wave. Ending early is always available.
 3. **Insights**: completed/in-progress runs, event completeness, charts, calibration warnings, future community benchmarks.
 
 ## Keyboard and thumb ergonomics

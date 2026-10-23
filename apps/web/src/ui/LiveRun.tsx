@@ -1,123 +1,270 @@
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import type {CharacterProfile,RunRecord} from '../domain/schema';
-import {append,project,recordDecision,undoChoice} from '../domain/run';
-import {OFFERS} from '../catalog';
+import {MAX_OFFERS} from '../domain/schema';
+import {decisionDraft,endRun,project,recordDecision,undoChoice,type Observation} from '../domain/run';
+import {COMPASSES,resolveOffer} from '../catalog';
+import {remainingWaves} from '../recommendation/model';
+import {scenarioFromRun} from '../recommendation/scenario';
+import {OfferPicker,emptySlot,slotFor,familyClass,type Slot} from './OfferPicker';
 import {OfferRecommendations} from './OfferRecommendations';
-import type {Comparison} from '../recommendation/model';
+import {useRecommendations} from './useRecommendations';
 
-interface Props{run:RunRecord|null;profile:CharacterProfile|null;saveRun:(r:RunRecord)=>void;onStart:(p:CharacterProfile,waves:number)=>void;onGoStrategy:()=>void}
+interface Props{
+ run:RunRecord|null;profile:CharacterProfile|null;recentOffers:readonly string[];
+ saveRun:(r:RunRecord,message:string)=>void;onStart:(p:CharacterProfile,waves:number)=>void;onGoStrategy:()=>void;
+}
 type CountKey='mass'|'fiend'|'hellborne'|'lord'|'spire';
 const OBSERVABLES:[CountKey,string][]=[['mass','Masses killed'],['fiend','Fiends killed'],['hellborne','Hellborne killed'],['lord','Lords killed'],['spire','Spires completed']];
-export function LiveRun({run,profile,saveRun,onStart,onGoStrategy}:Props){
- const [offered,setOffered]=useState<string[]>(['','','']);
- const [specialSlotIndex,setSpecialSlotIndex]=useState<number|null>(null);
- const [selectedIndex,setSelectedIndex]=useState<number|null>(null);
+
+
+const freshSlots=()=>[emptySlot(),emptySlot(),emptySlot()];
+const message=(e:unknown)=>e instanceof Error?e.message:String(e);
+
+function parseAether(text:string,label:string):number|null{
+ if(text.trim()==='')return null;
+ const n=Number(text);
+ if(!Number.isInteger(n)||n<0)throw new Error(`${label} must be a whole number of 0 or more`);
+ return n;
+}
+function parseObservation(aether:string,counts:Record<string,string>):Observation{
+ const eventCounts:Record<string,number>={};
+ for(const [key,text] of Object.entries(counts)){
+  if(text.trim()==='')continue;
+  const n=Number(text);
+  if(!Number.isInteger(n)||n<0)throw new Error('Event counts must be whole numbers of 0 or more');
+  eventCounts[key]=n;
+ }
+ return {totalAether:parseAether(aether,'Aether'),...(Object.keys(eventCounts).length?{eventCounts}:{})};
+}
+
+export function LiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props){
+ if(!run)return <StartRun profile={profile} onStart={onStart} onGoStrategy={onGoStrategy}/>;
+ return <ActiveRun key={run.id} run={run} profile={profile} recentOffers={recentOffers} saveRun={saveRun} onStart={onStart} onGoStrategy={onGoStrategy}/>;
+}
+
+function StartRun({profile,onStart,onGoStrategy}:Pick<Props,'profile'|'onStart'|'onGoStrategy'>){
+ const [waves,setWaves]=useState(10);
+ return <div className="content">
+  <div className="section-intro"><h1>Live Run</h1><p>Enter the offers on your screen before each wave and get a ranked recommendation. Your character setup comes from Strategy Lab.</p></div>
+  <section className="surface start-run">
+   {!profile?<>
+    <h2>Set up a character first</h2>
+    <p>HordeMind needs your class, difficulty and War Plans to compare offers.</p>
+    <button className="primary" onClick={onGoStrategy}>Set up a character</button>
+   </>:<>
+    <h2>{profile.name}</h2>
+    <CharacterSummary profile={profile}/>
+    <div className="start-actions">
+     <label>Waves<select value={waves} onChange={e=>setWaves(Number(e.target.value))}>{COMPASSES.map(([n,name])=><option key={n} value={n}>{n} waves · {name}</option>)}</select></label>
+     <button className="primary" onClick={()=>onStart(profile,waves)}>Start run</button>
+     <button onClick={onGoStrategy}>Edit character</button>
+    </div>
+   </>}
+  </section>
+ </div>;
+}
+
+function CharacterSummary({profile}:{profile:CharacterProfile}){
+ return <dl className="character-summary">
+  <div><dt>Class</dt><dd>{profile.className}</dd></div>
+  <div><dt>Difficulty</dt><dd>{profile.difficulty}</dd></div>
+  <div><dt>Realm</dt><dd>{profile.realm}</dd></div>
+  <div><dt>Build</dt><dd>{profile.buildName||'Not named'}</dd></div>
+  <div><dt>Clear speed</dt><dd>{profile.killSpeed}</dd></div>
+  <div><dt>Mobility</dt><dd>{profile.mobility}</dd></div>
+  <div className="wide"><dt>War Plans</dt><dd>{profile.warPlanNodes.length?profile.warPlanNodes.join(', '):'None selected'}</dd></div>
+ </dl>;
+}
+
+function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props&{run:RunRecord}){
+ const p=useMemo(()=>project(run),[run]);
+ const [slots,setSlots]=useState<Slot[]>(freshSlots);
+ const [chosen,setChosen]=useState<number|null>(null);
+ const [special,setSpecial]=useState<number|null>(null);
  const [aether,setAether]=useState('');
  const [counts,setCounts]=useState<Record<string,string>>({});
+ const [ending,setEnding]=useState(false);
  const [error,setError]=useState('');
- const [recommendations,setRecommendations]=useState<Comparison|null>(null);
- const [recommenderError,setRecommenderError]=useState('');
- const [recommenderBusy,setRecommenderBusy]=useState(false);
- const [waves,setWaves]=useState(10);
- const p=useMemo(()=>run?project(run):null,[run]);
- useEffect(()=>{setOffered(['','','']);setSelectedIndex(null);setAether('');setCounts({});setError('');setSpecialSlotIndex(null)},[run?.id]);
- function commit(){
-  if(!run||!p)return;
-  try{
-   const entries=offered.map(x=>x.trim());
-   const options=entries.filter(Boolean);
-   if(options.length<2||options.length>4||entries.slice(0,options.length).some(x=>!x))throw Error('Record 2–4 filled offers without empty gaps.');
-   if(selectedIndex===null||!options[selectedIndex])throw Error('Select one of the displayed options.');
-   if(specialSlotIndex!==null&&!p.specialRemaining)throw Error('The one-time special choice has already been consumed.');
-   if(specialSlotIndex!==null&&!options[specialSlotIndex])throw Error('Specify which filled offer is the special option.');
-   const next=recordDecision(run,options,selectedIndex,specialSlotIndex);
-   saveRun(next);setError('');setSelectedIndex(null);setOffered(['','','']);setSpecialSlotIndex(null);
-  }catch(e){setError(String(e instanceof Error?e.message:e))}
+ const inputs=useRef<(HTMLInputElement|null)[]>([]);
+ const inProgress=run.status==='in_progress';
+ const deciding=inProgress&&!p.decisionsComplete;
+
+ const filled=slots.flatMap((s,i)=>s.offer?[{i,offer:s.offer}]:[]);
+ const offers=[...new Set(filled.map(x=>x.offer))];
+ const scenario=useMemo(()=>deciding?scenarioFromRun(run):null,[run,deciding]);
+ const rec=useRecommendations(scenario,offers);
+
+ function resetForm(next:{slots?:Slot[];chosen?:number|null;special?:number|null;aether?:string;counts?:Record<string,string>}={}){
+  setSlots(next.slots??freshSlots());setChosen(next.chosen??null);setSpecial(next.special??null);
+  setAether(next.aether??'');setCounts(next.counts??{});setError('');
  }
- function recordWave(skip:boolean){
-  if(!run||!p)return;
-  const last=p.chosen.at(-1);if(!last)return;
-  try{
-   const numeric=skip||aether.trim()===''?null:Number(aether);
-   if(numeric!==null&&(!Number.isInteger(numeric)||numeric<0))throw Error('Aether must be a nonnegative whole number.');
-   const eventCounts=Object.fromEntries(Object.entries(counts).filter(([,val])=>val.trim()!=='').map(([key,val])=>[key,Number(val)]));
-   if(Object.values(eventCounts).some(v=>!Number.isInteger(v)||v<0))throw Error('Event counts must be whole numbers >= 0.');
-   const next=append(run,'wave_observed',{wave:last.payload.wave,totalAether:numeric,...(!skip&&Object.keys(eventCounts).length?{eventCounts}:{})});
-   saveRun(next);setError('');setAether('');setCounts({});
-  }catch(e){setError(String(e instanceof Error?e.message:e))}
+ function updateSlot(i:number,slot:Slot){
+  setSlots(s=>s.map((x,j)=>j===i?slot:x));
+  if(!slot.offer){if(chosen===i)setChosen(null);if(special===i)setSpecial(null)}
  }
- function finish(){
-  if(!run||!p)return;
-  try{saveRun(append(run,'run_finished',{outcome:'completed',finalAether:p.lastTotalAether}));setError('')}
-  catch(e){setError(String(e))}
+ function focusAfter(i:number){
+  const next=slots.findIndex((s,j)=>j>i&&!s.offer);
+  if(next>=0)inputs.current[next]?.focus();
+  else inputs.current[i]?.blur();
+ }
+ function record(){
+  try{
+   const pending=slots.findIndex(s=>s.text.trim()&&!s.offer);
+   if(pending>=0)throw new Error(`Offer ${pending+1} is not a known offering. Pick it from the list or record it as unlisted.`);
+   if(filled.length<2)throw new Error('Enter at least two offers.');
+   if(chosen===null||!slots[chosen]?.offer)throw new Error('Choose the offer you took.');
+   const compact=(slot:number|null)=>slot===null?null:filled.findIndex(x=>x.i===slot);
+   const fresh=rec.result&&!rec.busy;
+   const next=recordDecision(run,{
+    offered:filled.map(x=>x.offer),chosenIndex:compact(chosen)??-1,specialSlotIndex:compact(special),
+    observation:p.wavesPlayedAtNextStep>0?parseObservation(aether,counts):null,
+    recommendedOffer:fresh?rec.result?.recommended??null:null,modelVersion:fresh?rec.result?.modelVersion??null:null
+   });
+   saveRun(next,`Wave ${p.nextWave}: ${slots[chosen]?.offer} recorded`);
+   resetForm();
+   window.setTimeout(()=>inputs.current[0]?.focus(),0);
+  }catch(e){setError(message(e))}
  }
  function undo(){
-  if(!run)return;
-  try{saveRun(undoChoice(run));setError('')}catch(e){setError(String(e))}
+  try{
+   const draft=decisionDraft(run);
+   saveRun(undoChoice(run),'Last decision undone; its offers are back for editing');
+   if(draft){
+    const restored=draft.offered.map(slotFor);
+    while(restored.length<3)restored.push(emptySlot());
+    const reading=draft.observation;
+    resetForm({slots:restored,chosen:draft.chosenIndex,special:draft.specialSlotIndex,
+     aether:reading?.totalAether?.toString()??'',counts:Object.fromEntries(Object.entries(reading?.eventCounts??{}).map(([k,v])=>[k,String(v)]))});
+   }else resetForm();
+  }catch(e){setError(message(e))}
  }
+ function finish(outcome:'completed'|'abandoned'){
+  try{
+   saveRun(endRun(run,outcome,parseAether(aether,'Final Aether')),outcome==='completed'?'Run completed and saved':'Run ended and saved');
+   setEnding(false);setError('');
+  }catch(e){setError(message(e))}
+ }
+
  useEffect(()=>{
-  const key=(event:KeyboardEvent)=>{
-   if(!run||!p||p.awaitingObservation||p.nextWave>p.totalWaves||run.status!=='in_progress')return;
-   const tag=(event.target as HTMLElement)?.tagName;
-   if(['INPUT','TEXTAREA','SELECT'].includes(tag)||event.metaKey||event.ctrlKey||event.altKey)return;
+  const onKey=(event:KeyboardEvent)=>{
+   if(!deciding)return;
+   if((event.metaKey||event.ctrlKey)&&event.key==='Enter'){event.preventDefault();record();return}
+   const target=event.target as HTMLElement|null;
+   if(target&&['INPUT','TEXTAREA','SELECT'].includes(target.tagName)||event.metaKey||event.ctrlKey||event.altKey)return;
    const idx=Number(event.key)-1;
-   if(idx>=0&&idx<offered.length&&offered[idx]?.trim()){setSelectedIndex(idx);event.preventDefault()}
+   if(Number.isInteger(idx)&&idx>=0&&slots[idx]?.offer){setChosen(idx);event.preventDefault()}
   };
-  window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
- },[offered,run,p]);
- const suggestionInputs=offered.map(x=>x.trim()).filter(Boolean);
- useEffect(()=>{
-  // Never block keyboard interaction with the simulation. Cancel stale workers when options change.
-  if(!run||!p||p.awaitingObservation||run.status!=='in_progress'||suggestionInputs.length<2){
-    setRecommendations(null);setRecommenderError('');setRecommenderBusy(false);return;
-  }
-  const inputs=suggestionInputs;
-  let worker:Worker|null=null;
-  let disposed=false;
-  setRecommenderBusy(true);setRecommendations(null);setRecommenderError('');
-  const timer=window.setTimeout(()=>{
-    try{
-      worker=new Worker(new URL('../recommendation/worker.ts',import.meta.url),{type:'module'});
-      worker.onmessage=(event:MessageEvent<{result?:Comparison,error?:string}>)=>{
-        if(disposed)return;
-        if(event.data.error){setRecommenderError(event.data.error);setRecommendations(null)}
-        else setRecommendations(event.data.result??null);
-        setRecommenderBusy(false);worker?.terminate();
-      };
-      worker.onerror=(event)=>{if(!disposed){setRecommenderError(event.message||'Simulation failed');setRecommenderBusy(false)}worker?.terminate()};
-      worker.postMessage({requestId:Date.now(),run,offered:inputs,samples:400});
-    }catch(e){setRecommenderBusy(false);setRecommenderError(String(e instanceof Error?e.message:e))}
-  },220);
-  return ()=>{disposed=true;window.clearTimeout(timer);worker?.terminate()};
- },[run,p?.awaitingObservation,offered.join('|')]);
- if(!run||!p)return <div className="content"><div className="section-intro"><span className="eyebrow">02 / DURING PLAY</span><h1>Live Run</h1><p>Keep your attention on the game. Create a character profile once, then use this compact recorder.</p></div><section className="surface empty-state"><div className="empty-icon">▶</div><h2>Start a run</h2>{!profile?<><p>No character profile is selected yet.</p><button className="primary" onClick={onGoStrategy}>Configure character →</button></>:<><p>Ready with <b>{profile.name}</b> · {profile.className} · {profile.realm} · {profile.difficulty}</p><p className="setup-overview"><strong>Saved configuration:</strong> {profile.buildName||'Unspecified build'} · Clear speed: {profile.killSpeed} · Mobility: {profile.mobility} · War Plan nodes: {profile.warPlanNodes.length?profile.warPlanNodes.join(', '):'None selected'} · Special offer: {profile.specialOfferingAvailable?'Configured':'Not configured'}</p><button onClick={onGoStrategy}>Edit saved character configuration</button><label>Waves <select value={waves} onChange={e=>setWaves(+e.target.value)}>{[6,8,10].map(n=><option key={n}>{n}</option>)}</select></label><button className="primary" onClick={()=>onStart(profile,waves)}>Start a {waves}-wave run →</button></>}</section></div>;
- const complete=run.status!=='in_progress';
- const phase=complete?'Finished':p.awaitingObservation?'Record wave result':p.nextWave>p.totalWaves?'Finish run':'Choose an offering';
+  window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
+ });
+
+ const usedSpecial=p.chosen.find(x=>x.payload.usedSpecial);
+ const bestSlot=rec.result?.recommended?slots.findIndex(s=>s.offer===rec.result?.recommended):-1;
+ const remaining=remainingWaves({totalWaves:p.totalWaves,decisionWave:p.nextWave});
+
  return <div className="content runcontent">
-  <div className="section-intro compact-intro"><span className="eyebrow">LIVE SESSION · {p.profile.className.toUpperCase()}</span><div className="heading-inline"><h1>{phase}</h1><div className="counter"><b>{p.lastTotalAether===null?'—':p.lastTotalAether}</b><small>Aether so far</small></div></div><p>{p.profile.name} · {p.profile.realm} · {p.profile.difficulty} · {p.profile.buildName||'Unspecified build'}</p><details className="run-profile-summary"><summary>Character & War Plan configuration</summary><p>Clear speed: {p.profile.killSpeed} · Mobility: {p.profile.mobility} · Special offering at start: {p.profile.specialOfferingAvailable?'Yes':'No'}</p><p>War Plans: {p.profile.warPlanNodes.length?p.profile.warPlanNodes.join(', '):'None selected'}</p>{p.profile.buildUrl&&<p><a href={p.profile.buildUrl} target="_blank" rel="noreferrer">Open saved build reference ↗</a></p>}<p className="micro">This is the snapshot saved when the run began. Editing your current character does not alter historical run data.</p><button onClick={onGoStrategy}>View/Edit character profile</button></details></div>
-  <div className="runbar"><b>After wave {Math.min(p.nextWave,p.totalWaves)} / {p.totalWaves}</b><span>{p.specialRemaining?'◇ Bonus choice unused':'◆ Bonus choice spent / unavailable'}</span></div>
-  <div className="progress-track"><div style={{width:Math.min(100,p.chosen.length/p.totalWaves*100)+'%'}}/></div>
-  {p.chosen.length>0&&<div className="stack"><span>Selected so far</span>{p.chosen.map((x,i)=><span key={x.id} className="chip" title={'After wave '+(i+1)}>{x.payload.chosen}</span>)}</div>}
-  {complete?<section className="surface empty-state"><h2>Run recorded</h2><p>Return to Insights to review and export this session. Its events remain on this device until you explicitly opt in to future syncing.</p></section>:
-   p.awaitingObservation?<section className="surface">
-    <span className="eyebrow">OPTIONAL · AFTER THE WAVE</span><h2>Record outcome</h2><p>You chose <b>{p.chosen.at(-1)?.payload.chosen}</b>. Enter cumulative Aether if convenient, or skip. Missing counts remain unknown, not zero.</p>
-    <label className="highlight-field">Cumulative Aether<input type="number" min="0" inputMode="numeric" placeholder="Optional, e.g. 357" value={aether} onChange={e=>setAether(e.target.value)}/></label>
-    <details className="secondary-details"><summary>Optional event counts for research</summary><div className="form-grid">{OBSERVABLES.map(([id,label])=><label key={id}>{label}<input type="number" min="0" inputMode="numeric" placeholder="Unknown" value={counts[id]||''} onChange={e=>setCounts(x=>({...x,[id]:e.target.value}))}/></label>)}</div><p className="micro">Counting every event isn't necessary. These counts can later help infer mechanisms directly.</p></details>
-    <div className="actions"><button className="primary" onClick={()=>recordWave(false)}>Save & next →</button><button onClick={()=>recordWave(true)}>Skip observation</button></div>
-   </section>:
-   p.nextWave>p.totalWaves?<section className="surface empty-state"><h2>All wave decisions recorded</h2><p>{p.chosen.length} offers selected. Final Aether: {p.lastTotalAether??'Not recorded'}.</p><button className="primary" onClick={finish}>Finish session</button></section>:
-   <section className="surface">
-    <div className="section-header"><div><h2>What appeared on your screen?</h2><p>Search by name. Pick the actual offering displayed, including a bonus slot when available.</p></div><span className="chip">{p.nextWave} / {p.totalWaves}</span></div>
-    <datalist id="offers-reference">{OFFERS.map(x=><option key={x.id} value={x.label}/>)}</datalist>
-    <div className="offer-fields">{offered.map((val,i)=>{const info=OFFERS.find(x=>x.label===val.trim());return <div key={i} className={'offer-entry '+(selectedIndex===i?'picked':'')}><button className="offer-number" title={'Select offer '+(i+1)} onClick={()=>setSelectedIndex(i)} disabled={!val.trim()}>{i+1}</button><label><span>Offer {i+1}{specialSlotIndex===i?' · special':''}</span><input list="offers-reference" autoComplete="off" value={val} onChange={e=>{setOffered(arr=>arr.map((x,j)=>j===i?e.target.value:x));if(selectedIndex===i)setSelectedIndex(null)}} placeholder="Type offering name…"/></label><button className="pick-button" disabled={!val.trim()} onClick={()=>setSelectedIndex(i)} aria-pressed={selectedIndex===i}>{selectedIndex===i?'✓ Selected':'Select'}</button>{info&&<small className="offer-hint">{info.hint}</small>}</div>})}</div>
-    <div className="actions"><button onClick={()=>{setOffered(x=>x.length===3?[...x,'']:x.slice(0,3));setSpecialSlotIndex(null);setSelectedIndex(null)}}>{offered.length===3?'+ Fourth offer':'Remove fourth slot'}</button>
-    {p.specialRemaining&&<label className="special-selector">Which slot is the one-time special offer?<select value={specialSlotIndex===null?'':specialSlotIndex} onChange={e=>setSpecialSlotIndex(e.target.value===''?null:Number(e.target.value))}><option value="">No special offer shown</option>{offered.map((_,i)=><option key={i} value={i}>Offer {i+1}</option>)}</select></label>}</div>
-    {specialSlotIndex!==null&&<p className="micro">The special resource is only consumed if you choose that marked offer. Picking another slot preserves it.</p>}
-    <OfferRecommendations result={recommendations} loading={recommenderBusy} error={recommenderError} offered={offered} specialSlotIndex={specialSlotIndex} remainingWaves={Math.max(0,p.totalWaves-p.nextWave)} onSelect={setSelectedIndex}/>
-    <div className="decision-footer"><div><b>Decision recorder</b><p className="micro">Select your choice above or override the recommendation. Every available option is saved for future mechanics research.</p></div><button className="primary" disabled={selectedIndex===null} onClick={commit}>Record chosen offer →</button></div>
-    <p className="micro">Tip: when not typing, press 1–4 to select a filled offer row.</p>
+  <header className="run-head">
+   <div className="run-who">
+    <strong>{p.profile.name}</strong>
+    <span>{p.profile.className}</span><span>{p.profile.difficulty}</span><span>{p.profile.realm}</span>
+    <details className="run-profile-summary">
+     <summary>Run setup</summary>
+     <CharacterSummary profile={p.profile}/>
+     <p className="micro">Saved when this run started. Editing your character changes future runs only.</p>
+     <button onClick={onGoStrategy}>Edit character</button>
+    </details>
+   </div>
+   <div className="tally" aria-live="polite">
+    <div><small>{deciding?'Before wave':'Wave'}</small><b>{Math.min(p.nextWave,p.totalWaves)}</b><span>of {p.totalWaves}</span></div>
+    <div><small>Aether</small><b>{p.lastTotalAether??'—'}</b>{p.lastObservedWave!==null&&<span>after wave {p.lastObservedWave}</span>}</div>
+   </div>
+  </header>
+
+  <ol className="wave-track" aria-label="Wave decisions">
+   {Array.from({length:p.totalWaves},(_,i)=>{
+    const choice=p.chosen[i];
+    const state=choice?'done':i===p.chosen.length&&deciding?'current':'todo';
+    return <li key={i} className={state} title={choice?`Wave ${i+1}: ${choice.payload.chosen}`:`Wave ${i+1}`}>
+     <span className="visually-hidden">{choice?`Wave ${i+1}: ${choice.payload.chosen}`:`Wave ${i+1}: ${state==='current'?'deciding now':'not yet'}`}</span>
+    </li>;
+   })}
+  </ol>
+
+  {p.chosen.length>0&&<div className="stack" aria-label="Offers taken">
+   {p.chosen.map(x=><span key={x.id} className={'chip '+familyClass(resolveOffer(x.payload.chosen))}>{x.payload.chosen}{x.payload.usedSpecial?' ◆':''}</span>)}
+  </div>}
+  {p.profile.specialOfferingAvailable&&<p className="special-status">
+   {usedSpecial?`Black Pact offer used before wave ${usedSpecial.payload.wave}.`:'Black Pact offer unused. Mark it below when it appears.'}
+  </p>}
+
+  {run.status!=='in_progress'?<RunEnded run={run} profile={profile} onStart={onStart} totalAether={p.lastTotalAether} decisions={p.chosen.length}/>:
+   deciding&&!ending?<div className="decision-grid">
+    <section className="surface decision" aria-labelledby="decision-title">
+     <h2 id="decision-title">Offers before wave {p.nextWave}</h2>
+     {p.wavesPlayedAtNextStep>0&&<div className="reading">
+      <label>Aether after wave {p.wavesPlayedAtNextStep} <span className="optional">optional</span>
+       <input type="number" min="0" inputMode="numeric" placeholder="Total shown in game" value={aether} onChange={e=>setAether(e.target.value)}/>
+      </label>
+      <details className="secondary-details"><summary>Event counts for wave {p.wavesPlayedAtNextStep}</summary>
+       <div className="form-grid">{OBSERVABLES.map(([id,label])=><label key={id}>{label}<input type="number" min="0" inputMode="numeric" placeholder="Not counted" value={counts[id]??''} onChange={e=>setCounts(x=>({...x,[id]:e.target.value}))}/></label>)}</div>
+       <p className="micro">Leave a field blank when you didn't count it. Blank means unknown, not zero.</p>
+      </details>
+     </div>}
+     <div className="offer-rows">
+      {slots.map((slot,i)=><div key={i} className={'offer-row'+(chosen===i?' chosen':'')+(special===i?' special':'')}>
+       <button type="button" className="choose" aria-pressed={chosen===i} disabled={!slot.offer}
+        aria-label={`Choose offer ${i+1}${slot.offer?`: ${slot.offer}`:''}`} onClick={()=>setChosen(i)}>{i+1}</button>
+       <OfferPicker ref={el=>{inputs.current[i]=el}} index={i} slot={slot} recent={recentOffers}
+        onChange={s=>updateSlot(i,s)} onPicked={()=>focusAfter(i)}/>
+       {p.specialRemaining&&<button type="button" className="pact" aria-pressed={special===i} disabled={!slot.offer}
+        title="Mark as the Black Pact special offer" onClick={()=>setSpecial(s=>s===i?null:i)}>Pact</button>}
+       {(i>=3||slot.text)&&<button type="button" className="clear" aria-label={i>=3?`Remove offer ${i+1}`:`Clear offer ${i+1}`}
+        onClick={()=>{if(i>=3){setSlots(s=>s.filter((_,j)=>j!==i));setChosen(null);setSpecial(null)}else updateSlot(i,emptySlot())}}>×</button>}
+      </div>)}
+     </div>
+     {slots.length<MAX_OFFERS&&<button type="button" className="add-offer" onClick={()=>setSlots(s=>[...s,emptySlot()])}>Add offer</button>}
+     {special!==null&&<p className="micro">Taking the Pact offer uses it up. Taking any other offer keeps it for a later wave.</p>}
+     <div className="record-bar">
+      {bestSlot>=0&&rec.result&&!rec.busy&&<p className="rec-inline">Recommended: <b>{rec.result.recommended}</b>
+       {chosen!==bestSlot&&<> · <button type="button" className="linklike" onClick={()=>setChosen(bestSlot)}>choose it</button></>}</p>}
+      <button className="primary" onClick={record} disabled={chosen===null}>
+       {chosen!==null&&slots[chosen]?.offer?`Take ${slots[chosen]?.offer}`:'Choose an offer'}
+      </button>
+      <span className="micro">Keys: 1–{slots.length} choose · Ctrl/⌘ Enter records</span>
+     </div>
+     {error&&<p className="error-msg" role="alert">{error}</p>}
+    </section>
+    <OfferRecommendations state={rec} slots={slots} chosen={chosen} special={special} remainingWaves={remaining} onChoose={setChosen}/>
+   </div>:
+   <section className="surface final">
+    {ending?<>
+     <h2>End this run now?</h2>
+     <p>Use this if you died, left, or stopped recording. Everything recorded so far is kept.</p>
+    </>:<>
+     <h2>All {p.totalWaves} offers recorded</h2>
+     <p>Play wave {p.totalWaves}. When it ends, enter the Aether total you finished with.</p>
+    </>}
+    <label className="reading">Final Aether <span className="optional">optional</span>
+     <input type="number" min="0" inputMode="numeric" placeholder="Total shown in game" value={aether} onChange={e=>setAether(e.target.value)}/>
+    </label>
+    <div className="actions">
+     {ending?<><button className="primary" onClick={()=>finish('abandoned')}>End run</button><button onClick={()=>{setEnding(false);setError('')}}>Keep recording</button></>:
+      <button className="primary" onClick={()=>finish('completed')}>Finish run</button>}
+    </div>
+    {error&&<p className="error-msg" role="alert">{error}</p>}
    </section>}
-  <div className="actions postrun"><button onClick={undo} disabled={p.chosen.length===0||complete}>Undo last decision</button><span className="micro">Every change is saved locally as a separate journal event.</span></div>
-  {error&&<p className="error-msg" role="alert">{error}</p>}
+
+  {inProgress&&<div className="actions run-actions">
+   <button onClick={undo} disabled={p.chosen.length===0}>Undo last decision</button>
+   {!ending&&<button className="quiet" onClick={()=>{setEnding(true);setError('')}}>End run early</button>}
+  </div>}
  </div>;
+}
+
+function RunEnded({run,profile,onStart,totalAether,decisions}:{run:RunRecord;profile:CharacterProfile|null;onStart:Props['onStart'];totalAether:number|null;decisions:number}){
+ const p=project(run);
+ return <section className="surface final">
+  <h2>{run.status==='completed'?'Run complete':'Run ended'}</h2>
+  <p>{decisions} of {p.totalWaves} offers recorded{totalAether!==null?`, ${totalAether} Aether`:''}. It's saved on this device; see Insights for history and export.</p>
+  {profile&&<button className="primary" onClick={()=>onStart(profile,p.totalWaves)}>Start another {p.totalWaves}-wave run</button>}
+ </section>;
 }

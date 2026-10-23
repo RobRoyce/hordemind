@@ -34,30 +34,43 @@ const EventBase = z.object({
   at: z.iso.datetime()
 });
 const Identifier = z.string().trim().min(1).max(150);
+const EventCounts = z.record(z.string(),z.number().int().min(0));
+export const MAX_OFFERS = 5;
 export const EventSchema = z.discriminatedUnion('type', [
   EventBase.extend({type:z.literal('run_started'),payload:z.object({
     profile:CharacterProfileSchema,
     totalWaves:z.number().int().min(1).max(20),
     gamePatch:Identifier
   })}),
+  // `wave` is the wave this offer precedes: the first offer comes before wave 1.
+  // Up to five slots: three regular offers, a Chaos offer and a special offer.
   EventBase.extend({type:z.literal('offers_presented'),payload:z.object({
     wave:z.number().int().min(1).max(20),
-    offered:z.array(Identifier).min(2).max(4),
-    specialSlotIndex:z.number().int().min(0).max(3).optional()
+    offered:z.array(Identifier).min(2).max(MAX_OFFERS),
+    specialSlotIndex:z.number().int().min(0).max(MAX_OFFERS-1).optional()
   })}),
   EventBase.extend({type:z.literal('offer_chosen'),payload:z.object({
     wave:z.number().int().min(1).max(20),
     chosen:Identifier,
-    chosenIndex:z.number().int().min(0).max(3),
+    chosenIndex:z.number().int().min(0).max(MAX_OFFERS-1),
     usedSpecial:z.boolean(),
     followedRecommendation:z.boolean().nullable().default(null),
+    recommendedOffer:Identifier.nullable().default(null),
     modelVersion:z.string().max(100).nullable().default(null)
   })}),
+  // Legacy (v2-foundation): entered after a choice, so `wave` does not say
+  // which wave's end the total was read at. Read-only; new runs use aether_observed.
   EventBase.extend({type:z.literal('wave_observed'),payload:z.object({
     wave:z.number().int().min(1).max(20),
     totalAether:z.number().int().min(0).nullable(),
-    // Missing is unknown. 0 is a real observed zero.
-    eventCounts:z.record(z.string(),z.number().int().min(0)).optional()
+    eventCounts:EventCounts.optional()
+  })}),
+  // Cumulative Aether read at the end of `afterWave`.
+  // A missing count is unknown; 0 is an observed zero.
+  EventBase.extend({type:z.literal('aether_observed'),payload:z.object({
+    afterWave:z.number().int().min(1).max(20),
+    totalAether:z.number().int().min(0).nullable(),
+    eventCounts:EventCounts.optional()
   })}),
   EventBase.extend({type:z.literal('run_finished'),payload:z.object({
     finalAether:z.number().int().min(0).nullable(),
