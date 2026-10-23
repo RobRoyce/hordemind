@@ -95,10 +95,12 @@ CREATE POLICY contributions_insert ON public.research_contributions FOR INSERT T
 CREATE POLICY contributions_update ON public.research_contributions FOR UPDATE TO authenticated USING(owner_id=(select auth.uid())) WITH CHECK(owner_id=(select auth.uid()) AND EXISTS(SELECT 1 FROM public.runs r WHERE r.id=run_id AND r.owner_id=(select auth.uid())));
 CREATE POLICY contributions_delete ON public.research_contributions FOR DELETE TO authenticated USING(owner_id=(select auth.uid()));
 
--- Revoke broad public access explicitly; policies above do not replace grants.
-REVOKE ALL ON public.character_profiles,public.runs,public.run_events,public.research_contributions FROM anon;
+-- Supabase's default privileges may grant UPDATE/DELETE to authenticated.
+-- RLS policies alone do not revoke table privileges. Explicitly reset grants.
+REVOKE ALL ON public.game_patches,public.character_profiles,public.runs,public.run_events,public.research_contributions FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.game_patches TO anon,authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.character_profiles,public.runs TO authenticated;
+-- Strictly append-only: authenticated clients can never UPDATE or DELETE run_events.
 GRANT SELECT,INSERT ON public.run_events TO authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.research_contributions TO authenticated;
 
