@@ -15,7 +15,7 @@ export function append<T extends RunEvent['type']>(run:RunRecord,type:T,payload:
  const candidate=EventSchema.parse({id:crypto.randomUUID(),runId:run.id,sequence:run.events.length,schemaVersion:1,clientVersion:CLIENT_VERSION,at:now(),type,payload}) as RunEvent;
  const events=effectiveEvents(run);
  if(candidate.type==='offer_chosen'){
-  const source=events.findLast(x=>x.type==='offers_presented'&&x.payload.wave===candidate.payload.wave);
+  const source=events.filter(x=>x.type==='offers_presented'&&x.payload.wave===candidate.payload.wave).at(-1);
   if(!source || source.type!=='offers_presented'||!source.payload.offered.includes(candidate.payload.chosen))throw new Error('Chosen offer must be in the recorded choices');
   if(events.some(x=>x.type==='offer_chosen'&&x.payload.wave===candidate.payload.wave))throw new Error('Wave choice already recorded');
   if(candidate.payload.usedSpecial && events.some(x=>x.type==='offer_chosen'&&x.payload.usedSpecial))throw new Error('One-time special offering has already been used');
