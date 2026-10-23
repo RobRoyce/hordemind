@@ -55,7 +55,7 @@ function Recommendations({state}){
 
 const clean=s=>String(s||"").trim();
 function App(){
- const [state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
+ const [priorInput,setPriorInput]=useState(""),[state,setState]=useState(readInitial),[scores,setScores]=useState(null),[share,setShare]=useState(""),[feedback,setFeedback]=useState(""),[specialChoice,setSpecialChoice]=useState(false),[running,setRunning]=useState(false);
  const update=(k,v)=>setState(s=>({...s,[k]:v}));const selected=state.choices.map(clean).filter(Boolean);const valid=[...new Set(selected)].filter(x=>byName[x]&&isModeled(x));const unmodeled=[...new Set(selected)].filter(x=>byName[x]&&!isModeled(x));
  useEffect(()=>{localStorage.setItem(KEY,JSON.stringify(state))},[state]);
  function compute(){if(valid.length<2){setFeedback("Need two model-supported offers to compare. Unmodeled offers are identified separately; they are not falsely scored as +0.");return}setRunning(true);setTimeout(()=>{const s=valid.map(o=>evaluate(state,o,Number(state.assumptions.samples)||1200)).sort((a,b)=>b.mean-a.mean);setScores(s);setRunning(false);setFeedback("")},20)}
@@ -91,6 +91,9 @@ function App(){
      unmodeled.length>0&&h("p",{className:"warning"},"Cataloged but not yet simulated (NOT zero value): "+unmodeled.join(", "))
     ),
     h("article",{className:"panel"},h("div",{className:"sectionhead"},h("h2",null,"Previous selections"),h("button",{onClick:()=>{setState(s=>({...s,history:s.history.slice(0,-1),wave:Math.max(1,s.wave-1)}));setScores(null)},disabled:state.history.length===0},"Undo")),
+     h("p",{className:"hint"},"Already a few waves in? Add your previous picks below without advancing the wave automatically."),
+     h(Selector,{value:priorInput,placeholder:"Add a previous offer…",change:setPriorInput}),
+     h("div",{className:"actions"},h("button",{disabled:!byName[priorInput],onClick:()=>{setState(v=>({...v,history:[...v.history,priorInput]}));setPriorInput("");setScores(null)}},"Add previous pick"),h("button",{onClick:()=>{setState(v=>({...v,history:[]}));setScores(null)},disabled:state.history.length===0},"Clear previous")), 
      state.history.length?state.history.map((name,i)=>h("div",{className:"historyitem",key:i},h("span",{className:"number"},i+1),name)):h("p",{className:"hint"},"No previous offers yet."))),
    h("section",null,
     h(Recommendations,{state}),
