@@ -78,6 +78,12 @@ async function check(viewport){
    }
    await page.keyboard.press('Shift+Tab');
    assert(await focusedIn('[role="dialog"]'),'Shift+Tab stays inside');
+   // The panel itself holds focus after a tap on blank sheet space.
+   for(const key of ['Shift+Tab','Tab']){
+    await dialog.focus();
+    await page.keyboard.press(key);
+    assert(await focusedIn('[role="dialog"]'),`${key} from the panel stays inside`);
+   }
    await noSeriousViolations(page,'with the sheet open');
    await page.keyboard.press('Escape');
    await dialog.waitFor({state:'detached'});

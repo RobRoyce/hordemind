@@ -55,8 +55,11 @@ export function Sheet({open,title,onClose,children,returnFocus}:Props){
   const items=focusables(panel.current);
   const first=items[0],last=items.at(-1);
   if(!first||!last)return;
-  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
-  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+  const active=document.activeElement as HTMLElement|null;
+  // Focus on the panel itself, or anything not tabbable, re-enters at the matching end.
+  const outside=!active||!items.includes(active);
+  if(e.shiftKey&&(outside||active===first)){e.preventDefault();last.focus()}
+  else if(!e.shiftKey&&(outside||active===last)){e.preventDefault();first.focus()}
  }
 
  const head=<div className={s.head}>

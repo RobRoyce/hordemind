@@ -35,6 +35,8 @@ describe('design tokens',()=>{
   expect(css).toMatch(/--hm-font-text:\s*'Spectral',\s*Georgia,\s*serif/);
  });
  it('component CSS uses tokens only',()=>{
+  // An empty glob would pass vacuously, so the guard must see the kit's own sheets.
+  expect(Object.keys(MODULE_CSS)).toEqual(expect.arrayContaining(['./Button.module.css','./gallery/gallery.module.css']));
   for(const [file,text] of Object.entries(MODULE_CSS)){
    expect(text,file).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
    for(const m of text.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g))expect(Number(m[1]),file).toBeGreaterThanOrEqual(13);
