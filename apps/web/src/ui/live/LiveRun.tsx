@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import type {CharacterProfile,RunRecord} from '../../domain/schema';
 import {MAX_OFFERS} from '../../domain/schema';
 import {decisionDraft,endRun,project,recordDecision,undoChoice,type Observation} from '../../domain/run';
@@ -78,6 +78,8 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const inputs=useRef<(HTMLInputElement|null)[]>([]);
  const pickerReturn=useRef<HTMLElement|null>(null);
  const panelHeading=useRef<HTMLHeadingElement>(null);
+ /** A row to fill once the next render commits: focused, or with its phone sheet open. */
+ const fillAfterRender=useRef<{row:number;open:boolean}|null>(null);
  const inProgress=run.status==='in_progress';
  const deciding=inProgress&&!p.decisionsComplete;
 
@@ -115,10 +117,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  }
  /** Starts filling a row that mounts on the next render. */
  function fillSoon(i:number){
-  window.setTimeout(()=>{
-   if(narrow)openPicker(i,true);
-   else inputs.current[i]?.focus();
-  },0);
+  fillAfterRender.current={row:i,open:narrow};
  }
  function addRow(){
   const at=special??slots.length;
@@ -165,7 +164,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    });
    saveRun(next,`Wave ${p.nextWave}: ${chosenOffer} recorded`,undo);
    resetForm();
-   window.setTimeout(()=>inputs.current[0]?.focus(),0);
+   fillAfterRender.current={row:0,open:false};
   }catch(e){setError(message(e))}
  }
  /** Reverses the last decision and puts its offers back in the rows. Reads the newest run, so the toast's Undo works too. */
@@ -210,6 +209,16 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    if(openRow===null&&Number.isInteger(idx)&&idx>=0&&slots[idx]?.offer){setSelection(pick(idx));event.preventDefault()}
   };
   window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
+ });
+
+ // Filling waits for the render that mounts or empties the row, so its picker sees it empty.
+ // A layout effect lands in the same commit, before the player can move focus elsewhere.
+ useLayoutEffect(()=>{
+  const fill=fillAfterRender.current;
+  if(!fill)return;
+  fillAfterRender.current=null;
+  if(fill.open)openPicker(fill.row,true);
+  else inputs.current[fill.row]?.focus();
  });
 
  // The panel that replaces the focused control receives focus, so keyboard and screen-reader users follow along.

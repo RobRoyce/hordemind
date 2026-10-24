@@ -37,6 +37,8 @@ const navTo=(page,name)=>page.getByRole('navigation',{name:'Main navigation'}).g
 
 async function journey(viewport){
  const context=await browser.newContext({viewport,acceptDownloads:true});
+ // Real time until a step pauses it.
+ await context.clock.install();
  const page=await context.newPage();
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
@@ -153,12 +155,20 @@ async function journey(viewport){
   await decisionHeading().click();
   await page.keyboard.press('1');
   assert.equal(await page.getByRole('button',{name:/Choose offer 1/}).getAttribute('aria-pressed'),'true');
+  // Frozen timers stand in for a busy main thread, which can delay a deferred focus past the player's next action.
+  // The page's Date can trail the clock after an idle stretch, so pause a second past either reading.
+  await page.clock.pauseAt(Math.max(await page.evaluate(()=>Date.now()),Date.now())+1000);
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
   assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
+  assert(await offer(1).evaluate(el=>el===document.activeElement),'recording moves focus to the first row');
 
   step('wave 2: reading taken on the offer screen, Pact offer added and taken');
-  await page.getByLabel(/Aether after wave 1/).fill('85');
+  const aetherField=page.getByLabel(/Aether after wave 1/);
+  await aetherField.fill('85');
+  await page.clock.runFor(100);
+  assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
+  await page.clock.resume();
   await pick(1,'burst','The Bursting Masses');
   // The Pact row's picker opens at the last pick's category, Masses.
   await page.getByRole('button',{name:'Add the Black Pact offer'}).click();
