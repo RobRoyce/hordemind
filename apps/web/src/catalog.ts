@@ -90,7 +90,7 @@ export function resolveOffer(text:string):OfferRef|null{
 }
 
 /** Browsing order for the picker: the categories players think in, Chaos last. */
-const FAMILY_ORDER:readonly OfferFamily[]=['Masses','Spires','Hellborne','Fiends','Lords','Monsters','Hellfire','Player boon','Player bane','Council','Special boss','Chaos'];
+export const FAMILY_ORDER:readonly OfferFamily[]=['Masses','Spires','Hellborne','Fiends','Lords','Monsters','Hellfire','Player boon','Player bane','Council','Special boss','Chaos'];
 const byFamily=[...OFFERS].sort((a,b)=>FAMILY_ORDER.indexOf(a.family)-FAMILY_ORDER.indexOf(b.family)||a.label.localeCompare(b.label));
 
 /**
