@@ -2,6 +2,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {checkGraph} from './geometry.mjs';
+import AxeBuilder from '@axe-core/playwright';
 
 // GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
 const browser=await chromium.launch({
@@ -16,6 +17,25 @@ const step=name=>console.log('  ·',name);
 // Elements are found by role and accessible name, so the same journey runs on old and new screens.
 
 /** A setting is a native select or a radiogroup of radios; both answer to the setting's label. */
+async function noSeriousViolations(page,context){
+ // Scan the resting state: sheets and toasts animate in.
+ await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'));
+ const {violations}=await new AxeBuilder({page}).analyze();
+ const serious=violations.filter(v=>v.impact==='serious'||v.impact==='critical')
+  .map(v=>`${v.id} (${v.impact}): ${v.nodes.map(n=>n.target.join(' ')).join(', ')}`);
+ // axe finishes its run in a blank page, which leaves this one in the background, where Chrome throttles timers.
+ await page.bringToFront();
+ assert.deepEqual(serious,[],`axe violations on ${context}`);
+}
+/** iPhone Safari zooms the page when a text field under 16px takes focus. */
+async function noZoomingFields(page,context){
+ if(page.viewportSize().width>=700)return;
+ const small=await page.evaluate(()=>[...document.querySelectorAll('input,select,textarea')]
+  .filter(el=>el.getClientRects().length>0&&!['checkbox','radio','button','submit','range','hidden'].includes(el.type))
+  .map(el=>({name:el.getAttribute('aria-label')||el.labels?.[0]?.textContent||el.tagName,size:parseFloat(getComputedStyle(el).fontSize)}))
+  .filter(f=>f.size<16).map(f=>`${f.name} (${f.size}px)`));
+ assert.deepEqual(small,[],`text fields under 16px on ${context}`);
+}
 async function settingControl(page,label){
  const exact=typeof label==='string';
  const group=page.getByRole('radiogroup',{name:label,exact});
@@ -76,6 +96,8 @@ async function journey(viewport){
   const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'War Plan',exact:true}));
   assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
   assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
+  await noSeriousViolations(page,'Character');
+  await noZoomingFields(page,'Character');
 
   step('a malformed build link is rejected inline and never blocks saving');
   await page.getByLabel('Build planner link',{exact:true}).fill('not a link');
@@ -116,6 +138,8 @@ async function journey(viewport){
   // Phones show the picker as a dialog; wider screens show it inline under the row.
   const picker=page.getByRole(viewport.width<700?'dialog':'group',{name:'Offer 2 of 3'});
   await picker.waitFor();
+  await noSeriousViolations(page,'Live Run with the picker open');
+  await noZoomingFields(page,'Live Run with the picker open');
   await page.keyboard.press('Escape');
   await picker.waitFor({state:'detached'});
 
@@ -150,6 +174,7 @@ async function journey(viewport){
   for(const n of [1,2,3])if(await offer(n).inputValue()===best)bestRow=n;
   assert(bestRow>0,'the best offer is one of the rows');
   assert.equal(await page.getByRole('button',{name:`Choose offer ${bestRow}: ${best}`}).getAttribute('aria-pressed'),'true');
+  await noSeriousViolations(page,'Live Run with offers entered');
 
   step('choose with the keyboard and record');
   await decisionHeading().click();
@@ -169,6 +194,10 @@ async function journey(viewport){
   await page.clock.runFor(100);
   assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
   await page.clock.resume();
+  const counts=page.getByText('Event counts for wave 1',{exact:true});
+  await counts.click();
+  await noZoomingFields(page,'Live Run with event counts open');
+  await counts.click();
   await pick(1,'burst','The Bursting Masses');
   // The Pact row's picker opens at the last pick's category, Masses.
   await page.getByRole('button',{name:'Add the Black Pact offer'}).click();
@@ -241,6 +270,7 @@ async function journey(viewport){
   await page.keyboard.press('Control+Enter');
   assert.equal((await stored()).runs[0].events.length,before);
   await page.getByLabel(/Final Aether/).fill('190');
+  await noZoomingFields(page,'the end-run panel');
   await page.getByRole('button',{name:'End run',exact:true}).click();
   await page.getByRole('heading',{name:'Run ended'}).waitFor();
   run=(await stored()).runs[0];
@@ -250,6 +280,7 @@ async function journey(viewport){
   await navTo(page,/^Insights/);
   await page.getByRole('heading',{name:'Insights'}).waitFor();
   await page.getByText(/3\s*recorded choices/i).first().waitFor();
+  await noSeriousViolations(page,'Insights');
   const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:/Export (data|all runs)/}).click()]);
   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
   // The export is the raw append-only journal: the undone offer set stays, suppressed by a correction.
