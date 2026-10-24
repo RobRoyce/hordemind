@@ -1,0 +1,12 @@
+.notice{
+ padding:var(--hm-space-1) 0 var(--hm-space-1) var(--hm-space-3);
+ border-left:2px solid var(--hm-rule);
+ color:var(--hm-ink);
+}
+.notice>:first-child{margin-top:0}
+.notice>:last-child{margin-bottom:0}
+
+.info{border-left-color:var(--hm-gold)}
+.warning{border-left-color:var(--hm-amber)}
+.error{border-left-color:var(--hm-danger)}
+.error strong{color:var(--hm-danger)}

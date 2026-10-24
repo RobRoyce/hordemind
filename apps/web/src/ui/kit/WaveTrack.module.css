@@ -1,0 +1,19 @@
+.track{
+ display:flex;
+ align-items:center;
+ gap:6px;
+ margin:0;
+ padding:var(--hm-space-2) 0;
+ list-style:none;
+}
+
+.wave{
+ flex:1;
+ height:2px;
+ background:var(--hm-rule);
+}
+.done{background:color-mix(in srgb,var(--hm-amber) 75%,var(--hm-bg))}
+.current{
+ height:4px;
+ background:var(--hm-gold);
+}

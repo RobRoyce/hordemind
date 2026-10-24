@@ -26,6 +26,10 @@ describe('design tokens',()=>{
   for(const t of ['rubric','faint'])expect(contrast(tok[t],tok.bg),t).toBeGreaterThanOrEqual(3);
   for(const f of FAMILY_SLUGS)expect(contrast(tok['fam-'+f],tok.bg),f).toBeGreaterThanOrEqual(3);
  });
+ it('keeps text legible inside the frame',()=>{
+  for(const t of ['ink','muted','gold','amber','ember'])expect(contrast(tok[t],tok['frame-fill-top']),`${t} on frame top`).toBeGreaterThanOrEqual(4.5);
+  for(const t of ['ink','muted','gold','amber','ember','danger'])expect(contrast(tok[t],tok['frame-fill-bottom']),`${t} on frame bottom`).toBeGreaterThanOrEqual(4.5);
+ });
  it('keeps fallback font stacks',()=>{
   expect(css).toMatch(/--hm-font-display:\s*'Grenze Gotisch',\s*'Spectral',\s*Georgia,\s*serif/);
   expect(css).toMatch(/--hm-font-text:\s*'Spectral',\s*Georgia,\s*serif/);

@@ -50,6 +50,12 @@
  --hm-text-6:32px;
  --hm-text-7:42px;
 
+ /* The carved gold frame around the pick: a bevelled edge over an ember-dark fill. */
+ --hm-frame-edge-top:#c99a52;
+ --hm-frame-edge-bottom:#6e5130;
+ --hm-frame-fill-top:#451a14;
+ --hm-frame-fill-bottom:#21130e;
+
  --hm-motion:150ms;
  --hm-ember-glow:0 0 18px rgb(240 162 74 / 0.35);
 }

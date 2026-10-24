@@ -1,0 +1,19 @@
+.mark{
+ display:inline-flex;
+ align-items:center;
+ gap:var(--hm-space-2);
+ white-space:nowrap;
+}
+
+.diamond{
+ flex:none;
+ width:8px;
+ height:8px;
+ background:var(--pigment);
+ transform:rotate(45deg);
+}
+
+.unlisted .diamond{
+ background:none;
+ border:1px dashed var(--hm-faint);
+}
