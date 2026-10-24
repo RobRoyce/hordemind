@@ -111,6 +111,7 @@ export interface Observation{totalAether:number|null;eventCounts?:Record<string,
 export interface DecisionInput{
  offered:string[];chosenIndex:number;specialSlotIndex?:number|null;
  observation?:Observation|null;recommendedOffer?:string|null;modelVersion?:string|null;
+ choiceSource?:'default'|'picked';
 }
 const observed=(o:Observation|null|undefined):o is Observation=>Boolean(o&&(o.totalAether!==null||Object.keys(o.eventCounts??{}).length));
 
@@ -131,7 +132,8 @@ export function recordDecision(run:RunRecord,input:DecisionInput):RunRecord{
  next=append(next,'offers_presented',{wave:p.nextWave,offered,...(special!==null?{specialSlotIndex:special}:{})});
  const chosen=offered[chosenIndex]??'',recommended=input.recommendedOffer??null;
  return append(next,'offer_chosen',{wave:p.nextWave,chosen,chosenIndex,usedSpecial:chosenIndex===special,
-  followedRecommendation:recommended===null?null:recommended===chosen,recommendedOffer:recommended,modelVersion:input.modelVersion??null});
+  followedRecommendation:recommended===null?null:recommended===chosen,recommendedOffer:recommended,modelVersion:input.modelVersion??null,
+  choiceSource:input.choiceSource??null});
 }
 
 export function endRun(run:RunRecord,outcome:'completed'|'abandoned',finalAether:number|null):RunRecord{
@@ -150,12 +152,12 @@ function lastDecision(run:RunRecord){
  return {selected,presented,reading,legacy};
 }
 
-export interface DecisionDraft{offered:string[];chosenIndex:number;specialSlotIndex:number|null;observation:Observation|null}
+export interface DecisionDraft{offered:string[];chosenIndex:number;specialSlotIndex:number|null;choiceSource:'default'|'picked'|null;observation:Observation|null}
 export function decisionDraft(run:RunRecord):DecisionDraft|null{
  const last=lastDecision(run);
  if(!last?.presented)return null;
  const {payload}=last.presented,reading=last.reading?.payload;
- return {offered:[...payload.offered],chosenIndex:last.selected.payload.chosenIndex,specialSlotIndex:payload.specialSlotIndex??null,
+ return {offered:[...payload.offered],chosenIndex:last.selected.payload.chosenIndex,specialSlotIndex:payload.specialSlotIndex??null,choiceSource:last.selected.payload.choiceSource,
   observation:reading?{totalAether:reading.totalAether,...(reading.eventCounts?{eventCounts:{...reading.eventCounts}}:{})}:null};
 }
 

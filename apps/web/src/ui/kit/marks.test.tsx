@@ -26,6 +26,11 @@ describe('structure components and game marks',()=>{
   expect(familySlug('Special boss')).toBe('special');
  });
  it('unlisted offers get a mark',()=>expect(html(<CategoryMark family={null}/>)).toContain('Unlisted'));
+ it('a label replaces the category name beside the pigment',()=>{
+  const out=html(<CategoryMark family="Masses" label="The Puffing Masses"/>);
+  expect(out).toContain('The Puffing Masses');
+  expect(out).toContain('--hm-fam-masses');
+ });
  it('errors are alerts',()=>expect(html(<Notice tone="error">x</Notice>)).toContain('role="alert"'));
  it('other notices are notes',()=>expect(html(<Notice tone="info" label="Black Pact advice">x</Notice>)).toMatch(/role="note"[^>]*aria-label="Black Pact advice"|aria-label="Black Pact advice"[^>]*role="note"/));
  it('missing numbers show a dash',()=>expect(html(<Numeral label="Aether" value={null}/>)).toContain('—'));

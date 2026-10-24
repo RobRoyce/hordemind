@@ -1,4 +1,4 @@
-import {useId,useMemo,useRef,type KeyboardEvent} from 'react';
+import {Fragment,useId,useMemo,useRef,type KeyboardEvent} from 'react';
 import {cx} from './cx';
 import {DEFAULT_LAYOUT,layoutGraph,type GraphNodeInput,type LayoutOptions,type PlacedNode} from './graphLayout';
 import s from './DiamondGraph.module.css';
@@ -8,7 +8,8 @@ export interface GraphNode extends GraphNodeInput{
  /** A second label line, such as "or Total Chaos" for a choose-one pair. */
  note?:string;
 }
-export type NodeState='learned'|'open'|'locked';
+/** Excluded draws like locked but stays clickable: activating it swaps it in for its partner. */
+export type NodeState='learned'|'open'|'excluded'|'locked';
 
 interface Props{
  nodes:readonly GraphNode[];
@@ -40,6 +41,7 @@ function neighbor(nodes:readonly PlacedNode[],from:PlacedNode,[sx,sy]:readonly [
 }
 
 const diamondPoints=(x:number,y:number,h:number)=>`${x},${y-h} ${x+h},${y} ${x},${y+h} ${x-h},${y}`;
+const MIN_HIT=44;
 
 export function DiamondGraph({nodes,layout=DEFAULT_LAYOUT,state,focused,onActivate,onFocusNode,label,describedBy}:Props){
  const L=useMemo(()=>layoutGraph(nodes,layout),[nodes,layout]);
@@ -80,17 +82,22 @@ export function DiamondGraph({nodes,layout=DEFAULT_LAYOUT,state,focused,onActiva
   {L.nodes.map(n=>{
    const node=byId.get(n.id)!;
    const st=state(n.id);
-   const left=Math.min(n.diamond.x,n.label.x),right=Math.max(n.diamond.x+n.diamond.width,n.label.x+n.label.width);
+   const edge=Math.min(n.diamond.x,n.label.x),far=Math.max(n.diamond.x+n.diamond.width,n.label.x+n.label.width);
+   // Narrow labels still get a 44px-wide target, centered on the node.
+   const width=Math.max(MIN_HIT,far-edge),left=Math.min(edge,n.x-width/2);
    const noteId=node.note?`${idBase}-${n.id}`:undefined;
-   return <button key={n.id} type="button" data-graph-node={n.id} ref={el=>{if(el)buttons.current.set(n.id,el);else buttons.current.delete(n.id)}}
-    className={s.hit} style={{left,top:n.diamond.y,width:right-left,height:n.label.y+n.label.height-n.diamond.y}}
+   return <Fragment key={n.id}>
+   <button type="button" data-graph-node={n.id} ref={el=>{if(el)buttons.current.set(n.id,el);else buttons.current.delete(n.id)}}
+    className={s.hit} style={{left,top:n.diamond.y,width,height:n.label.y+n.label.height-n.diamond.y}}
     aria-pressed={st==='learned'} aria-disabled={st==='locked'||undefined}
     aria-describedby={[noteId,describedBy].filter(Boolean).join(' ')||undefined}
     onClick={()=>{if(st!=='locked')onActivate(n.id)}} onFocus={()=>onFocusNode(n.id)} onMouseEnter={()=>onFocusNode(n.id)}
     onKeyDown={e=>onKeyDown(e,n)}>
     <span className="hm-visually-hidden">{node.name}</span>
-    {node.note&&<span id={noteId} className="hm-visually-hidden">{node.note}</span>}
-   </button>;
+   </button>
+   {/* The note describes the node, so it stays out of the button's name. */}
+   {node.note&&<span id={noteId} className="hm-visually-hidden">{node.note}</span>}
+   </Fragment>;
   })}
  </div>;
 }

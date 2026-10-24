@@ -138,7 +138,7 @@ jobs:
           set -euo pipefail
           base="https://robroyce.github.io/hordemind/"
           for attempt in $(seq 1 30); do
-            if html="$(curl --fail --silent --show-error --location --max-time 12 "${base}?version=${GITHUB_SHA}")" && grep -q 'HordeMind 2' <<< "$html"; then
+            if html="$(curl --fail --silent --show-error --location --max-time 12 "${base}?version=${GITHUB_SHA}")" && grep -q '<title>HordeMind</title>' <<< "$html"; then
               break
             fi
             if [ "$attempt" -eq 30 ]; then

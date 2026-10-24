@@ -1,0 +1,48 @@
+.empty{
+ margin:0;
+ color:var(--hm-muted);
+}
+
+.run{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:var(--hm-space-4);
+ width:100%;
+ min-height:44px;
+ padding:0;
+ border:0;
+ background:none;
+ color:var(--hm-ink);
+ font:inherit;
+ text-align:left;
+ cursor:pointer;
+}
+.run:hover .title{color:var(--hm-gold)}
+
+.side,.end{
+ display:flex;
+ flex-direction:column;
+ gap:2px;
+ min-width:0;
+}
+.end{
+ flex:none;
+ align-items:flex-end;
+ text-align:right;
+}
+
+.title{font-weight:600}
+
+.meta{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.aether{
+ color:var(--hm-ember);
+ font-weight:600;
+ font-variant-numeric:lining-nums tabular-nums;
+}
+
+.progress{color:var(--hm-amber)}

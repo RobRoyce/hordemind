@@ -4,19 +4,26 @@ import {newProfile,newRun} from '../domain/run';
 import {validateProfile} from '../domain/profile';
 import {createLocalRepository,downloadExport,STORAGE_KEY} from '../storage/local';
 import {mergeStates,reconcile,sameState} from '../domain/merge';
-import {StrategyLab} from './StrategyLab';
-import {LiveRun} from './LiveRun';
-import {Insights} from './Insights';
+import {Character} from './character/Character';
+import {LiveRun} from './live/LiveRun';
+import {Insights} from './insights/Insights';
 import {useSync,type SyncState} from './useSync';
-import {newIssueUrl} from './report';
+import {REPO_URL,newIssueUrl} from './report';
+import {AppNav,Button,Notice,Toast,cx,useNarrow,type ToastAction} from './kit';
+import {Footer} from './shell/Footer';
+import {viewFromHash,type View} from './shell/route';
+import {nextToast,type ToastState} from './shell/toast';
+import s from './shell/App.module.css';
 
-export type View='strategy'|'run'|'insights';
 const repository=createLocalRepository();
 const RECENT_LIMIT=8;
+const NAV=[{id:'character',label:'Character'},{id:'run',label:'Live Run'},{id:'insights',label:'Insights'}] as const;
 
-function viewFromHash():View{
- const v=window.location.hash.replace('#','');
- return v==='run'||v==='insights'||v==='strategy'?v:'run';
+/** Reads the view from the address bar, rewriting "#strategy" to "#character". */
+function currentView():View{
+ const view=viewFromHash(window.location.hash);
+ if(window.location.hash==='#strategy')history.replaceState(null,'','#character');
+ return view;
 }
 const runProfileId=(run:RunRecord|undefined)=>{
  const started=run?.events.find(e=>e.type==='run_started');
@@ -30,9 +37,11 @@ function recentOffers(runs:RunRecord[]):string[]{
  return [...seen].slice(0,RECENT_LIMIT);
 }
 
-function syncLabel(s:SyncState){
- if(!s.user)return 'Saved on this device';
- return s.phase==='syncing'?'Syncing…':s.phase==='error'?'Sync failed: see Insights':s.last?'Saved here and synced':'Saved on this device';
+function syncLabel(sync:SyncState,short:boolean){
+ if(sync.user&&sync.phase==='syncing')return 'Syncing…';
+ if(sync.user&&sync.phase==='error')return short?'Sync failed':'Sync failed: see Insights';
+ if(short)return 'Saved';
+ return sync.user&&sync.last?'Saved here and synced':'Saved on this device';
 }
 
 export function App(){
@@ -41,9 +50,10 @@ export function App(){
  // Unreadable stored data is never overwritten until the user chooses to start fresh.
  const [blocked,setBlocked]=useState(initial.status==='unreadable');
  const [saveError,setSaveError]=useState('');
- const [view,setView]=useState<View>(viewFromHash);
- const [notice,setNotice]=useState('');
- const noticeTimer=useRef<number|undefined>(undefined);
+ const [view,setView]=useState<View>(currentView);
+ const [toast,setToast]=useState<ToastState|null>(null);
+ const toastTimer=useRef<number|undefined>(undefined);
+ const narrow=useNarrow();
  const dataRef=useRef(data);dataRef.current=data;
  const blockedRef=useRef(blocked);blockedRef.current=blocked;
  const selectedProfile=useMemo(()=>data.profiles.find(x=>x.id===data.activeProfileId)??null,[data]);
@@ -69,7 +79,7 @@ export function App(){
   return()=>window.removeEventListener('storage',onStorage);
  },[]);
  useEffect(()=>{
-  const onHash=()=>setView(viewFromHash());
+  const onHash=()=>{dismiss();setView(currentView())};
   window.addEventListener('hashchange',onHash);
   return()=>window.removeEventListener('hashchange',onHash);
  },[]);
@@ -82,12 +92,19 @@ export function App(){
  }),[]);
  const [sync,syncControls]=useSync(data,adopt,!blocked);
 
- function say(text:string){
-  setNotice(text);
-  window.clearTimeout(noticeTimer.current);
-  noticeTimer.current=window.setTimeout(()=>setNotice(''),2600);
+ /** Shows a toast, replacing any toast already showing. */
+ function say(text:string,action?:ToastAction){
+  const next=nextToast(text,action&&{label:action.label,onClick:()=>{dismiss();action.onClick()}});
+  setToast(next);
+  window.clearTimeout(toastTimer.current);
+  toastTimer.current=window.setTimeout(()=>setToast(null),next.ms);
  }
- function navigate(tab:View){setView(tab);history.replaceState(null,'','#'+tab)}
+ function dismiss(){
+  window.clearTimeout(toastTimer.current);
+  setToast(null);
+ }
+ // A toast's action belongs to the screen that raised it.
+ function navigate(tab:View){dismiss();setView(tab);history.replaceState(null,'','#'+tab)}
  function selectProfile(id:string){
   setData(s=>({...s,activeProfileId:id,activeRunId:runProfileId(s.runs.find(r=>r.id===s.activeRunId))===id?s.activeRunId:null}));
  }
@@ -109,43 +126,30 @@ export function App(){
   navigate('run');
   say('Run started');
  }
- function saveRun(run:RunRecord,message:string){
+ /** Saves a run. With `undo`, the toast offers to reverse the change. */
+ function saveRun(run:RunRecord,message:string,undo?:()=>void){
   setData(old=>({...old,runs:old.runs.map(x=>x.id===run.id?run:x)}));
-  say(message);
+  say(message,undo&&{label:'Undo',onClick:undo});
  }
 
- return <div className="shell">
-  <header className="topbar">
-   <div className="brand"><span className="brandicon" aria-hidden="true">✦</span><span>Horde<strong>Mind</strong></span><span className="edition">v2 preview</span></div>
-   <div className="topright"><span className={'offline-status'+(sync.phase==='error'?' sync-error':'')}>{syncLabel(sync)}</span><a href="https://github.com/RobRoyce/hordemind" target="_blank" rel="noreferrer">Source ↗</a></div>
-  </header>
-  {blocked&&<div className="banner" role="alert">
-   <p><strong>Saved data on this device couldn't be read.</strong> It may come from a newer version of HordeMind. A copy is kept in browser storage, and nothing will be saved until you choose what to do.</p>
-   <div className="actions">
-    <button onClick={()=>downloadExport(localStorage.getItem(STORAGE_KEY)??'')}>Download the unreadable data</button>
-    <button onClick={()=>setBlocked(false)}>Start fresh on this device</button>
-   </div>
+ return <div className={s.app}>
+  <AppNav items={NAV} current={view} onSelect={id=>navigate(viewFromHash(id))} status={syncLabel(sync,narrow)} sourceUrl={REPO_URL}/>
+  {(blocked||saveError)&&<div className={s.banners}>
+   {blocked&&<Notice tone="error">
+    <p><strong>Saved data on this device couldn't be read.</strong> It may come from a newer version of HordeMind. A copy is kept in browser storage, and nothing will be saved until you choose what to do.</p>
+    <div className={s.actions}>
+     <Button onClick={()=>downloadExport(localStorage.getItem(STORAGE_KEY)??'')}>Download the unreadable data</Button>
+     <Button onClick={()=>setBlocked(false)}>Start fresh on this device</Button>
+    </div>
+   </Notice>}
+   {saveError&&<Notice tone="error"><p><strong>Couldn't save on this device:</strong> {saveError}. Recent changes exist only in this tab. Export from Insights to keep them.</p></Notice>}
   </div>}
-  {saveError&&<div className="banner" role="alert"><p><strong>Couldn't save on this device:</strong> {saveError}. Recent changes exist only in this tab. Export from Insights to keep them.</p></div>}
-  <div className="app-grid">
-   <nav className="sidebar" aria-label="Main navigation">
-    {([
-     ['strategy','◈','Strategy Lab','Character and War Plans'],
-     ['run','▶','Live Run','Offers and recommendations'],
-     ['insights','▤','Insights','History and export']
-    ] as const).map(([tab,icon,title,subtitle])=>
-     <button className={'navitem '+(view===tab?'active':'')} aria-current={view===tab?'page':undefined} key={tab} onClick={()=>navigate(tab)}>
-      <span className="navicon" aria-hidden="true">{icon}</span><span><b>{title}</b><small>{subtitle}</small></span>
-     </button>
-    )}
-    <div className="nav-foot"><p>Season 15 · experimental</p><span>Recommendations come from an uncalibrated simulator. Runs stay in this browser; nothing is uploaded.</span><a className="report-link" href={newIssueUrl} target="_blank" rel="noreferrer">Spotted something wrong? Report it on GitHub</a></div>
-   </nav>
-   <main className="workspace">
-    {view==='strategy'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
-    {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoStrategy={()=>navigate('strategy')}/>}
-    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(s=>({...s,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
-   </main>
-  </div>
-  <div className={'status'+(notice?' visible':'')} role="status" aria-live="polite">{notice}</div>
+  <main className={cx(s.main,s[view])}>
+   {view==='character'&&<Character profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
+   {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoCharacter={()=>navigate('character')}/>}
+   {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(old=>({...old,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
+  </main>
+  <Footer reportUrl={newIssueUrl} sourceUrl={REPO_URL}/>
+  <Toast message={toast?.message??null} {...(toast?.action?{action:toast.action}:{})}/>
  </div>;
 }

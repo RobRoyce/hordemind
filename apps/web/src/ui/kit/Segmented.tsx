@@ -6,10 +6,12 @@ interface Props<T extends string>{
  value:T;
  options:readonly {value:T;label:string}[];
  onChange:(value:T)=>void;
+ /** Id of a hint that describes the group. */
+ describedBy?:string|undefined;
 }
 
 /** A radio group drawn as joined segments. Arrow keys move and select; Home and End jump. */
-export function Segmented<T extends string>({label,value,options,onChange}:Props<T>){
+export function Segmented<T extends string>({label,value,options,onChange,describedBy}:Props<T>){
  const refs=useRef<(HTMLButtonElement|null)[]>([]);
  const checked=options.findIndex(o=>o.value===value);
  const tabStop=checked>=0?checked:0;
@@ -26,7 +28,7 @@ export function Segmented<T extends string>({label,value,options,onChange}:Props
   refs.current[to]?.focus();
  }
 
- return <div role="radiogroup" aria-label={label} className={s.group}>
+ return <div role="radiogroup" aria-label={label} aria-describedby={describedBy} className={s.group}>
   {options.map((o,i)=><button key={o.value} ref={el=>{refs.current[i]=el}} type="button" role="radio"
    aria-checked={o.value===value} tabIndex={i===tabStop?0:-1} className={s.option}
    onClick={()=>onChange(o.value)} onKeyDown={e=>onKeyDown(e,i)}>{o.label}</button>)}

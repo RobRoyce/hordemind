@@ -26,6 +26,7 @@ The owner confirmed in Season 15 play that the first offer comes before wave 1 s
 - Runs can end early as `abandoned`. `completed` requires a decision for every wave.
 - `wave_observed` stays readable for legacy runs and is never written again. Analyses must treat its timing as unknown.
 - `offer_chosen` records `recommendedOffer` and `modelVersion`, so model accuracy and follow rates can be measured later.
+- `offer_chosen` also records `choiceSource`. It's `default` when the player recorded the pre-selected best without changing the selection, and `picked` when they chose the row themselves. Events recorded before the field existed read as `null`, so later analysis can discount accepted defaults.
 - Up to five offers per screen: three regular offers, a Chaos offer, and a special offer.
 
 ## Consequences

@@ -37,6 +37,8 @@
  display:flex;
  flex-direction:column;
  max-height:85vh;
+ /* Mobile Safari's toolbars cover part of 100vh; dvh tracks the visible height. */
+ max-height:85dvh;
  padding:var(--hm-space-1) var(--hm-space-4) calc(var(--hm-space-4) + env(safe-area-inset-bottom));
  border-top:1px solid var(--hm-rule);
  background:var(--hm-sheet);

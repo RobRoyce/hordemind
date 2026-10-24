@@ -60,6 +60,8 @@
  --hm-ember-glow:0 0 18px rgb(240 162 74 / 0.35);
 }
 
+*,*::before,*::after{box-sizing:border-box}
+
 body{
  margin:0;
  background:var(--hm-bg);

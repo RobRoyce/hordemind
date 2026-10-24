@@ -1,6 +1,8 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {checkGraph} from './geometry.mjs';
+import AxeBuilder from '@axe-core/playwright';
 
 // GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
 const browser=await chromium.launch({
@@ -15,6 +17,25 @@ const step=name=>console.log('  ·',name);
 // Elements are found by role and accessible name, so the same journey runs on old and new screens.
 
 /** A setting is a native select or a radiogroup of radios; both answer to the setting's label. */
+async function noSeriousViolations(page,context){
+ // Scan the resting state: sheets and toasts animate in.
+ await page.waitForFunction(()=>document.getAnimations().every(a=>a.playState!=='running'));
+ const {violations}=await new AxeBuilder({page}).analyze();
+ const serious=violations.filter(v=>v.impact==='serious'||v.impact==='critical')
+  .map(v=>`${v.id} (${v.impact}): ${v.nodes.map(n=>n.target.join(' ')).join(', ')}`);
+ // axe finishes its run in a blank page, which leaves this one in the background, where Chrome throttles timers.
+ await page.bringToFront();
+ assert.deepEqual(serious,[],`axe violations on ${context}`);
+}
+/** iPhone Safari zooms the page when a text field under 16px takes focus. */
+async function noZoomingFields(page,context){
+ if(page.viewportSize().width>=700)return;
+ const small=await page.evaluate(()=>[...document.querySelectorAll('input,select,textarea')]
+  .filter(el=>el.getClientRects().length>0&&!['checkbox','radio','button','submit','range','hidden'].includes(el.type))
+  .map(el=>({name:el.getAttribute('aria-label')||el.labels?.[0]?.textContent||el.tagName,size:parseFloat(getComputedStyle(el).fontSize)}))
+  .filter(f=>f.size<16).map(f=>`${f.name} (${f.size}px)`));
+ assert.deepEqual(small,[],`text fields under 16px on ${context}`);
+}
 async function settingControl(page,label){
  const exact=typeof label==='string';
  const group=page.getByRole('radiogroup',{name:label,exact});
@@ -36,6 +57,8 @@ const navTo=(page,name)=>page.getByRole('navigation',{name:'Main navigation'}).g
 
 async function journey(viewport){
  const context=await browser.newContext({viewport,acceptDownloads:true});
+ // Real time until a step pauses it.
+ await context.clock.install();
  const page=await context.newPage();
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
@@ -44,9 +67,10 @@ async function journey(viewport){
  const offer=n=>page.getByRole('combobox',{name:`Offer ${n}`});
  const estimates=()=>page.getByLabel(/^Estimate for /);
  const decisionHeading=()=>page.getByRole('heading',{name:/Offers before wave/});
+ const chosenEvents=async()=>(await stored()).runs[0].events.filter(e=>e.type==='offer_chosen');
  async function pick(n,query,label){
   await offer(n).fill(query);
-  await page.getByRole('option',{name:new RegExp(label)}).first().waitFor();
+  await page.getByRole('option',{name:new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))}).first().waitFor();
   await offer(n).press('Enter');
   assert.equal(await offer(n).inputValue(),label);
  }
@@ -55,7 +79,7 @@ async function journey(viewport){
   await page.goto(base+'#strategy',{waitUntil:'domcontentloaded'});
 
   step('create a Paladin and configure it without any save button');
-  await page.getByLabel('Character name').fill('CI Paladin');
+  await page.getByLabel('Character name',{exact:true}).fill('CI Paladin');
   await page.getByRole('button',{name:'Create character'}).click();
   await setChoice(page,'Difficulty','Torment XII');
   await setChoice(page,'Realm','Eternal');
@@ -69,11 +93,16 @@ async function journey(viewport){
   for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await warPlan(name).click();
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'true');
   assert((await page.getByRole('region',{name:'Upgrade details'}).innerText()).includes('An ominous altar appears between waves'));
+  const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'War Plan',exact:true}));
+  assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
+  assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
+  await noSeriousViolations(page,'Character');
+  await noZoomingFields(page,'Character');
 
   step('a malformed build link is rejected inline and never blocks saving');
-  await page.getByLabel('Build planner link').fill('not a link');
+  await page.getByLabel('Build planner link',{exact:true}).fill('not a link');
   await page.getByText('does not look like a web address').waitFor();
-  await page.getByLabel('Build planner link').fill('maxroll.gg/d4/planner/ci');
+  await page.getByLabel('Build planner link',{exact:true}).fill('maxroll.gg/d4/planner/ci');
   const profile=(await stored()).profiles[0];
   assert.equal(profile.buildUrl,'https://maxroll.gg/d4/planner/ci');
   assert.equal(profile.mobility,'low');
@@ -101,10 +130,47 @@ async function journey(viewport){
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
 
-  step('an empty picker lists the whole catalog, not a first page');
+  if(viewport.width>=700){
+   step('keyboard: the open picker is exposed, one Tab stop, and Enter moves into it');
+   await offer(1).focus();
+   const categories=page.getByRole('group',{name:'Categories'});
+   await categories.waitFor();
+   assert.equal(await offer(1).getAttribute('aria-expanded'),'true');
+   assert(await offer(1).evaluate(el=>!!document.getElementById(el.getAttribute('aria-controls'))?.querySelector('[aria-label="Categories"]')),'the field controls the panel');
+   await page.keyboard.press('Enter');
+   assert(await categories.getByRole('button',{name:/^Masses/}).evaluate(el=>el===document.activeElement),'Enter moves to the first tile');
+   await offer(1).focus();
+   for(let i=0;i<3;i++)await page.keyboard.press('Tab');
+   assert(await offer(2).evaluate(el=>el===document.activeElement),'three Tabs reach the next row: field, Close, one stop for the panel');
+   await page.keyboard.press('Escape');
+  }
+
+  step('tap a category, then an offer; the picker moves to the next row');
   await offer(1).click();
-  assert((await page.getByRole('option').count())>40,'all offers are browsable before wave 1');
-  await offer(1).press('Escape');
+  await page.getByRole('button',{name:/^Masses/}).click();
+  await page.getByRole('button',{name:/^The Puffing Masses/}).click();
+  assert.equal(await offer(1).inputValue(),'The Puffing Masses');
+  // Phones show the picker as a dialog; wider screens show it inline under the row.
+  const picker=page.getByRole(viewport.width<700?'dialog':'group',{name:'Offer 2 of 3'});
+  await picker.waitFor();
+  await noSeriousViolations(page,'Live Run with the picker open');
+  await noZoomingFields(page,'Live Run with the picker open');
+  if(viewport.width<700){
+   // The sheet traps focus: Tab from its one stop in the step wraps inside the dialog.
+   await picker.locator('[data-nav][tabindex="0"]').focus();
+   for(let i=0;i<4;i++){
+    await page.keyboard.press('Tab');
+    assert(await picker.evaluate(el=>el.contains(document.activeElement)),'Tab never leaves the phone sheet');
+   }
+  }
+  await page.keyboard.press('Escape');
+  await picker.waitFor({state:'detached'});
+
+  step('unknown text can be recorded as unlisted');
+  await offer(3).fill('zzz');
+  await offer(3).press('Escape');
+  await page.getByRole('button',{name:'record “zzz” as unlisted'}).waitFor();
+  await page.getByRole('button',{name:'Clear offer 3'}).click();
 
   step('search offers by name and mechanic; partial text never reaches the recommender');
   await offer(1).fill('puff');
@@ -125,19 +191,43 @@ async function journey(viewport){
   assert.equal(report.searchParams.get('template'),'wrong-game-info.yml','each estimate links to the wrong-info form');
   assert(report.searchParams.get('context').includes('Before wave 1 of'),'the report carries the run context');
 
+  step('the best offer is pre-selected before any choice');
+  const best=await recommendation.getByRole('heading',{level:2}).innerText();
+  let bestRow=0;
+  for(const n of [1,2,3])if(await offer(n).inputValue()===best)bestRow=n;
+  assert(bestRow>0,'the best offer is one of the rows');
+  assert.equal(await page.getByRole('button',{name:`Choose offer ${bestRow}: ${best}`}).getAttribute('aria-pressed'),'true');
+  await noSeriousViolations(page,'Live Run with offers entered');
+
   step('choose with the keyboard and record');
   await decisionHeading().click();
   await page.keyboard.press('1');
   assert.equal(await page.getByRole('button',{name:/Choose offer 1/}).getAttribute('aria-pressed'),'true');
+  // Frozen timers stand in for a busy main thread, which can delay a deferred focus past the player's next action.
+  // The page's Date can trail the clock after an idle stretch, so pause a second past either reading.
+  await page.clock.pauseAt(Math.max(await page.evaluate(()=>Date.now()),Date.now())+1000);
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
+  assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
+  assert(await offer(1).evaluate(el=>el===document.activeElement),'recording moves focus to the first row');
 
-  step('wave 2: reading taken on the offer screen, Pact offer marked and taken');
-  await page.getByLabel(/Aether after wave 1/).fill('85');
+  step('wave 2: reading taken on the offer screen, Pact offer added and taken');
+  const aetherField=page.getByLabel(/Aether after wave 1/);
+  await aetherField.fill('85');
+  await page.clock.runFor(100);
+  assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
+  await page.clock.resume();
+  const counts=page.getByText('Event counts for wave 1',{exact:true});
+  await counts.click();
+  await noZoomingFields(page,'Live Run with event counts open');
+  await counts.click();
   await pick(1,'burst','The Bursting Masses');
-  await pick(2,'anch','The Anchored Masses');
-  await page.getByRole('button',{name:'Mark offer 2 as the Black Pact offer'}).click();
-  await page.getByRole('button',{name:/Choose offer 2/}).click();
+  // The Pact row's picker opens at the last pick's category, Masses.
+  await page.getByRole('button',{name:'Add the Black Pact offer'}).click();
+  await page.getByRole('button',{name:/^The Anchored Masses/}).click();
+  assert.equal(await offer(4).inputValue(),'The Anchored Masses');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:/Choose offer 4/}).click();
   await page.getByLabel('Black Pact advice').waitFor({timeout:25000});
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
@@ -146,12 +236,13 @@ async function journey(viewport){
   const reading=run.events.find(e=>e.type==='aether_observed');
   assert.deepEqual(reading.payload,{afterWave:1,totalAether:85});
 
-  step('undo brings the last wave back for editing');
-  await page.getByRole('button',{name:'Undo last decision'}).click();
+  step('undo from the toast brings the last wave back for editing');
+  await page.getByRole('button',{name:'Undo',exact:true}).click();
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
-  assert.equal(await offer(2).inputValue(),'The Anchored Masses');
+  assert.equal(await offer(4).inputValue(),'The Anchored Masses');
   assert.equal(await page.getByLabel(/Aether after wave 1/).inputValue(),'85');
-  assert.equal(await page.getByRole('button',{name:/Choose offer 2/}).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.getByRole('button',{name:/Choose offer 4/}).getAttribute('aria-pressed'),'true');
+  assert(await offer(4).evaluate(el=>el===document.activeElement),'undo puts focus on the restored choice');
   await page.getByRole('button',{name:/Choose offer 1/}).click();
   await page.getByRole('button',{name:/Take The Bursting Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
@@ -170,9 +261,55 @@ async function journey(viewport){
   assert.equal(afterTabs,3,'both tabs kept every recorded choice, including the undone one');
   assert.equal((await stored()).profiles[0].buildName,'Blessed Shield (tab 2)');
 
+  step('wave 3 by taps only, taking the pre-selected best');
+  await offer(1).click();
+  for(const [family,name] of [['Spires','The Rising Spires'],['Spires','The Draining Spires'],['Hellfire','The Burning Rain']]){
+   await page.getByRole('button',{name:new RegExp('^'+family)}).click();
+   await page.getByRole('button',{name:new RegExp('^'+name)}).click();
+  }
+  assert.equal(await offer(3).inputValue(),'The Burning Rain');
+  await page.getByRole('button',{name:/^Take The /}).click();
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+  const third=(await chosenEvents()).at(-1).payload;
+  assert.equal(third.choiceSource,'default','taking the pre-selected offer is recorded as the default');
+  assert.equal(third.chosen,third.recommendedOffer);
+  // The toast's Undo belongs to this screen, so leaving dismisses it.
+  await page.getByRole('button',{name:'Undo',exact:true}).waitFor();
+  await navTo(page,/^Insights/);
+  await navTo(page,/^Live Run/);
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).count(),0,'leaving Live Run dismisses its Undo toast');
+
+  step('the quiet Undo button brings wave 3 back, and the restored default is still a default');
+  await page.getByRole('button',{name:'Undo last decision'}).click();
+  await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
+  assert.equal(await offer(3).inputValue(),'The Burning Rain');
+  let chosenRow=0;
+  for(const n of [1,2,3])if(await offer(n).inputValue()===third.chosen)chosenRow=n;
+  assert(await offer(chosenRow).evaluate(el=>el===document.activeElement),'undo puts focus on the restored choice');
+  await page.getByRole('button',{name:`Take ${third.chosen}`}).click();
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+  assert.equal((await chosenEvents()).at(-1).payload.choiceSource,'default');
+  // A hash typed in the address bar leaves the screen too.
+  await page.getByRole('button',{name:'Undo',exact:true}).waitFor();
+  await page.evaluate(()=>{location.hash='#insights'});
+  await page.getByRole('heading',{name:'Insights'}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).count(),0,'a hash change dismisses the Undo toast');
+  await navTo(page,/^Live Run/);
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+
   step('end the run early; shortcuts cannot record the hidden decision');
   await pick(1,'rising','The Rising Spires');
   await pick(2,'draining','The Draining Spires');
+  // Number keys are suspended while a picker is open, even with focus on a tile.
+  const unselected=await page.getByRole('button',{name:/^Choose offer 2/}).getAttribute('aria-pressed')==='true'?1:2;
+  await offer(3).click();
+  await page.getByRole('button',{name:/^Masses/}).focus();
+  await page.keyboard.press(String(unselected));
+  assert.equal(await page.getByRole('button',{name:new RegExp(`^Choose offer ${unselected}`)}).getAttribute('aria-pressed'),'false');
+  await page.keyboard.press('Escape');
+  await pick(3,'hunting','The Summoned Hellborne (hunting you)');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'a long offer name never scrolls the page sideways');
   await decisionHeading().click();
   await page.keyboard.press('1');
   await page.getByRole('button',{name:'End run early'}).click();
@@ -181,6 +318,7 @@ async function journey(viewport){
   await page.keyboard.press('Control+Enter');
   assert.equal((await stored()).runs[0].events.length,before);
   await page.getByLabel(/Final Aether/).fill('190');
+  await noZoomingFields(page,'the end-run panel');
   await page.getByRole('button',{name:'End run',exact:true}).click();
   await page.getByRole('heading',{name:'Run ended'}).waitFor();
   run=(await stored()).runs[0];
@@ -189,13 +327,14 @@ async function journey(viewport){
   step('Insights lists the run and exports the full journal');
   await navTo(page,/^Insights/);
   await page.getByRole('heading',{name:'Insights'}).waitFor();
-  await page.getByText(/2\s*recorded choices/i).first().waitFor();
+  await page.getByText(/3\s*recorded choices/i).first().waitFor();
+  await noSeriousViolations(page,'Insights');
   const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:/Export (data|all runs)/}).click()]);
   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
   // The export is the raw append-only journal: the undone offer set stays, suppressed by a correction.
   const events=exported.state.runs[0].events;
-  assert.equal(events.filter(e=>e.type==='offers_presented').length,3);
-  assert.equal(events.filter(e=>e.type==='correction').length,1);
+  assert.equal(events.filter(e=>e.type==='offers_presented').length,5);
+  assert.equal(events.filter(e=>e.type==='correction').length,2);
 
   assert.deepEqual(errors,[],'Browser emitted errors');
  }catch(error){

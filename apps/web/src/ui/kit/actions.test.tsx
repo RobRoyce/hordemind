@@ -9,6 +9,15 @@ const html=(el:ReactElement)=>renderToStaticMarkup(el);
 const REALMS=[{value:'Season 15',label:'Season 15'},{value:'Eternal',label:'Eternal'}] as const;
 
 describe('action and field components',()=>{
+ it('a group field labels with text, not a label element, and passes its hint to the control',()=>{
+  const out=html(<Field label="Mobility" hint="Treated as average" group>
+   {w=><Segmented label="Mobility" value="a" options={[{value:'a',label:'A'},{value:'b',label:'B'}]} onChange={()=>{}} describedBy={w.describedBy}/>}
+  </Field>);
+  expect(out).not.toContain('<label');
+  const hintId=/<p id="([^"]+)"[^>]*>Treated as average/.exec(out)?.[1];
+  expect(hintId).toBeTruthy();
+  expect(out).toContain(`aria-describedby="${hintId}"`);
+ });
  it('Button defaults to type=button',()=>expect(html(<Button>Go</Button>)).toContain('type="button"'));
  it('Field wires label, hint and error',()=>{
   const out=html(<Field label="Mobility" hint="h" error="e">{w=><input id={w.id} aria-describedby={w.describedBy} aria-invalid={w.invalid}/>}</Field>);

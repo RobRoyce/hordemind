@@ -59,7 +59,10 @@ export const EventSchema = z.discriminatedUnion('type', [
     usedSpecial:z.boolean(),
     followedRecommendation:z.boolean().nullable().default(null),
     recommendedOffer:Identifier.nullable().default(null),
-    modelVersion:z.string().max(100).nullable().default(null)
+    modelVersion:z.string().max(100).nullable().default(null),
+    // 'default': the pre-selected best, never changed during this decision. 'picked': chosen by the player.
+    // null: recorded before the app tracked this.
+    choiceSource:z.enum(['default','picked']).nullable().default(null)
   })}),
   // Legacy (v2-foundation): entered after a choice, so `wave` does not say
   // which wave's end the total was read at. Read-only; new runs use aether_observed.

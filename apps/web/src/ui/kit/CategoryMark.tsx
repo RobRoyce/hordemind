@@ -13,11 +13,14 @@ const SLUGS:Readonly<Record<OfferFamily,FamilySlug>>={
 /** The pigment token suffix for an offer family. */
 export function familySlug(f:OfferFamily):FamilySlug{return SLUGS[f]}
 
-/** A pigment diamond and the category name. `null` marks an offer outside the catalog. */
-export function CategoryMark({family}:{family:OfferFamily|null}){
+/**
+ * A pigment diamond and the category name. `null` marks an offer outside the catalog.
+ * `label` shows other text, such as the offer's name, beside the pigment.
+ */
+export function CategoryMark({family,label}:{family:OfferFamily|null;label?:string}){
  const pigment=family?{'--pigment':`var(--hm-fam-${familySlug(family)})`} as CSSProperties:undefined;
  return <span className={cx(s.mark,!family&&s.unlisted)} style={pigment}>
   <span className={s.diamond} aria-hidden="true"/>
-  {family??'Unlisted'}
+  {label??family??'Unlisted'}
  </span>;
 }

@@ -1,0 +1,41 @@
+.card{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-2);
+ transition:opacity var(--hm-motion);
+}
+.card p{margin:0}
+.busy{opacity:0.55}
+
+.kicker{
+ color:var(--hm-amber);
+ font-style:italic;
+}
+
+.name{
+ margin:0;
+ color:var(--hm-gold);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-6);
+ font-weight:700;
+ line-height:1.05;
+}
+
+.value{
+ color:var(--hm-ember);
+ font-weight:600;
+}
+
+.why{
+ padding-left:var(--hm-space-3);
+ border-left:2px solid var(--hm-rubric);
+ color:var(--hm-muted);
+ font-style:italic;
+}
+
+.small{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.danger{color:var(--hm-danger)}

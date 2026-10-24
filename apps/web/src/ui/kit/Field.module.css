@@ -82,6 +82,12 @@
  font:inherit;
  transition:border-color var(--hm-motion);
 }
+
+/* iOS Safari zooms the page when a field under 16px takes focus. */
+@media (max-width:699px){
+ .input,.select{font-size:var(--hm-text-3)}
+}
+
 .input::placeholder{color:var(--hm-muted)}
 .input:hover,.select:hover{border-color:var(--hm-muted)}
 .input:focus,.select:focus{border-color:var(--hm-gold)}

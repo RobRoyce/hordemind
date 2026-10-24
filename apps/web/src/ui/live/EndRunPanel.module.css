@@ -1,0 +1,28 @@
+.panel{
+ padding-top:var(--hm-space-3);
+ border-top:1px solid var(--hm-rule);
+}
+
+.body{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-3);
+}
+
+.heading{
+ margin:0;
+ color:var(--hm-gold);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-5);
+ font-weight:500;
+ line-height:1.1;
+}
+.heading:focus{outline:none}
+
+.text{margin:0}
+
+.actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:var(--hm-space-3);
+}

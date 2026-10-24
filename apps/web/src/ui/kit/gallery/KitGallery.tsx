@@ -1,10 +1,11 @@
 import {useRef,useState} from 'react';
 import type {OfferFamily} from '../../../catalog';
-import {WAR_PLAN,available,nodeById,toggleNode,type Branch} from '../../../domain/warplan';
+import {WAR_PLAN,nodeById,toggleNode,type Branch} from '../../../domain/warplan';
+import {nodeState} from '../../character/warPlanView';
 import {
  Button,CategoryMark,Checkbox,DangerMark,DiamondGraph,Disclosure,Field,Frame,Notice,NumberField,Numeral,PageHeader,
  RuledList,SectionHeading,Segmented,Select,Sheet,Tabs,TextField,Toast,WaveTrack,COMPACT_LAYOUT,DEFAULT_LAYOUT,useNarrow,
- type GraphNode,type NodeState
+ type GraphNode
 } from '..';
 import g from './gallery.module.css';
 
@@ -35,15 +36,15 @@ export function KitGallery(){
  const [toast,setToast]=useState(false);
  const [sheet,setSheet]=useState(false);
  const opener=useRef<HTMLButtonElement>(null);
- const [learned,setLearned]=useState<string[]>(['Method and Madness','Impending Doom','Cult of Annihilation']);
+ // Reign in Hell makes Total Chaos show the excluded state.
+ const [learned,setLearned]=useState<string[]>(['Method and Madness','Reign in Hell','Impending Doom','Cult of Annihilation']);
  const [focused,setFocused]=useState<string|null>(null);
 
  const layout=narrow?COMPACT_LAYOUT:DEFAULT_LAYOUT;
  const charWidth=narrow?7:8;
- const state=(id:string):NodeState=>learned.includes(id)?'learned':available(learned,id)?'open':'locked';
  const graph=(branch:Branch,title:string)=><div className={g.branch}>
   <h3 className={g.branchTitle}>{title}</h3>
-  <DiamondGraph label={title} nodes={branchNodes(branch,charWidth)} layout={layout} state={state} focused={focused}
+  <DiamondGraph label={title} nodes={branchNodes(branch,charWidth)} layout={layout} state={id=>nodeState(learned,id)} focused={focused}
    onActivate={id=>setLearned(l=>toggleNode(l,id))} onFocusNode={setFocused}/>
  </div>;
 
