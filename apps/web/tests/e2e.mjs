@@ -234,6 +234,7 @@ async function journey(viewport){
   assert.equal(await offer(4).inputValue(),'The Anchored Masses');
   assert.equal(await page.getByLabel(/Aether after wave 1/).inputValue(),'85');
   assert.equal(await page.getByRole('button',{name:/Choose offer 4/}).getAttribute('aria-pressed'),'true');
+  assert(await offer(4).evaluate(el=>el===document.activeElement),'undo puts focus on the restored choice');
   await page.getByRole('button',{name:/Choose offer 1/}).click();
   await page.getByRole('button',{name:/Take The Bursting Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
@@ -271,6 +272,17 @@ async function journey(viewport){
   await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
   assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).count(),0,'leaving Live Run dismisses its Undo toast');
 
+  step('the quiet Undo button brings wave 3 back, and the restored default is still a default');
+  await page.getByRole('button',{name:'Undo last decision'}).click();
+  await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
+  assert.equal(await offer(3).inputValue(),'The Burning Rain');
+  let chosenRow=0;
+  for(const n of [1,2,3])if(await offer(n).inputValue()===third.chosen)chosenRow=n;
+  assert(await offer(chosenRow).evaluate(el=>el===document.activeElement),'undo puts focus on the restored choice');
+  await page.getByRole('button',{name:`Take ${third.chosen}`}).click();
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+  assert.equal((await chosenEvents()).at(-1).payload.choiceSource,'default');
+
   step('end the run early; shortcuts cannot record the hidden decision');
   await pick(1,'rising','The Rising Spires');
   await pick(2,'draining','The Draining Spires');
@@ -306,8 +318,8 @@ async function journey(viewport){
   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
   // The export is the raw append-only journal: the undone offer set stays, suppressed by a correction.
   const events=exported.state.runs[0].events;
-  assert.equal(events.filter(e=>e.type==='offers_presented').length,4);
-  assert.equal(events.filter(e=>e.type==='correction').length,1);
+  assert.equal(events.filter(e=>e.type==='offers_presented').length,5);
+  assert.equal(events.filter(e=>e.type==='correction').length,2);
 
   assert.deepEqual(errors,[],'Browser emitted errors');
  }catch(error){

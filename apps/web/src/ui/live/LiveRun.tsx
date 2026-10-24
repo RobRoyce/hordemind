@@ -78,7 +78,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const inputs=useRef<(HTMLInputElement|null)[]>([]);
  const pickerReturn=useRef<HTMLElement|null>(null);
  const panelHeading=useRef<HTMLHeadingElement>(null);
- /** A row to fill once the next render commits: focused, or with its phone sheet open. */
+ /** A row to fill once the next render commits: focused, or with its phone sheet open. Filled rows just take focus. */
  const fillAfterRender=useRef<{row:number;open:boolean}|null>(null);
  const inProgress=run.status==='in_progress';
  const deciding=inProgress&&!p.decisionsComplete;
@@ -174,7 +174,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    const draft=decisionDraft(now);
    saveRun(undoChoice(now),'Last decision undone; its offers are back for editing');
    setEnding(false);
-   if(!draft){resetForm();return}
+   if(!draft){resetForm();fillAfterRender.current={row:0,open:false};return}
    const sp=draft.specialSlotIndex;
    const rows:Slot[]=[],rowOf=new Map<number,number>();
    draft.offered.forEach((offer,k)=>{if(k!==sp){rowOf.set(k,rows.length);rows.push(slotFor(offer))}});
@@ -189,6 +189,8 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
     selection:chosenRow===undefined||draft.choiceSource==='default'?NO_SELECTION:pick(chosenRow),
     aether:reading?.totalAether?.toString()??'',
     counts:Object.fromEntries(Object.entries(reading?.eventCounts??{}).map(([k,v])=>[k,String(v)]))});
+   // The toast that held Undo is gone, so focus goes to the restored choice.
+   fillAfterRender.current={row:chosenRow??0,open:false};
   }catch(e){setError(message(e))}
  }
  function finish(outcome:'completed'|'abandoned'){
