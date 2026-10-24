@@ -111,6 +111,7 @@ export interface Observation{totalAether:number|null;eventCounts?:Record<string,
 export interface DecisionInput{
  offered:string[];chosenIndex:number;specialSlotIndex?:number|null;
  observation?:Observation|null;recommendedOffer?:string|null;modelVersion?:string|null;
+ choiceSource?:'default'|'picked';
 }
 const observed=(o:Observation|null|undefined):o is Observation=>Boolean(o&&(o.totalAether!==null||Object.keys(o.eventCounts??{}).length));
 
@@ -131,7 +132,8 @@ export function recordDecision(run:RunRecord,input:DecisionInput):RunRecord{
  next=append(next,'offers_presented',{wave:p.nextWave,offered,...(special!==null?{specialSlotIndex:special}:{})});
  const chosen=offered[chosenIndex]??'',recommended=input.recommendedOffer??null;
  return append(next,'offer_chosen',{wave:p.nextWave,chosen,chosenIndex,usedSpecial:chosenIndex===special,
-  followedRecommendation:recommended===null?null:recommended===chosen,recommendedOffer:recommended,modelVersion:input.modelVersion??null});
+  followedRecommendation:recommended===null?null:recommended===chosen,recommendedOffer:recommended,modelVersion:input.modelVersion??null,
+  choiceSource:input.choiceSource??null});
 }
 
 export function endRun(run:RunRecord,outcome:'completed'|'abandoned',finalAether:number|null):RunRecord{

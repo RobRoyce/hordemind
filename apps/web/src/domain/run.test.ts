@@ -1,5 +1,6 @@
 import {describe,it,expect} from 'vitest';
-import {newProfile,newRun,recordDecision,append,project,undoChoice,effectiveEvents,endRun,decisionDraft} from './run';
+import {newProfile,newRun,recordDecision,append,project,undoChoice,effectiveEvents,endRun,decisionDraft,CLIENT_VERSION} from './run';
+import {EventSchema} from './schema';
 import type {RunRecord} from './schema';
 
 const blackPact=()=>{const p=newProfile('Paladin','Paladin');p.warPlanNodes=['The Black Pact'];p.specialOfferingAvailable=true;return p};
@@ -127,5 +128,31 @@ describe('runs recorded by the earlier observe-after-choice flow',()=>{
   r=recordDecision(r,{offered:['E','F'],chosenIndex:1});
   expect(project(r).nextWave).toBe(4);
   expect(project(r).lastTotalAether).toBe(60);
+ });
+});
+
+describe('choice source: was the recorded row the untouched default?',()=>{
+ const baseFields={id:crypto.randomUUID(),runId:crypto.randomUUID(),sequence:1,schemaVersion:1,clientVersion:CLIENT_VERSION,at:new Date().toISOString()};
+ it('records whether the choice was the untouched default',()=>{
+  const r=recordDecision(newRun(newProfile('Paladin','Paladin'),3),{offered:['A','B'],chosenIndex:0,recommendedOffer:'A',modelVersion:'m',choiceSource:'default'});
+  expect(project(r).chosen[0]?.payload.choiceSource).toBe('default');
+ });
+ it('records a picked row as picked',()=>{
+  const r=recordDecision(newRun(newProfile('Paladin','Paladin'),3),{offered:['A','B'],chosenIndex:1,choiceSource:'picked'});
+  expect(project(r).chosen[0]?.payload.choiceSource).toBe('picked');
+ });
+ it('stores null when the caller says nothing',()=>{
+  const r=recordDecision(newRun(newProfile('Paladin','Paladin'),3),{offered:['A','B'],chosenIndex:0});
+  expect(project(r).chosen[0]?.payload.choiceSource).toBeNull();
+ });
+ it('reads legacy choices without the field as null',()=>{
+  const e=EventSchema.parse({...baseFields,type:'offer_chosen',payload:{wave:1,chosen:'A',chosenIndex:0,usedSpecial:false}});
+  expect(e.type==='offer_chosen'&&e.payload.choiceSource).toBeNull();
+ });
+ it('round-trips a new choice through the schema',()=>{
+  const e=EventSchema.parse({...baseFields,type:'offer_chosen',payload:{wave:1,chosen:'A',chosenIndex:0,usedSpecial:false,choiceSource:'picked'}});
+  const again=EventSchema.parse(JSON.parse(JSON.stringify(e)));
+  expect(again.type==='offer_chosen'&&again.payload.choiceSource).toBe('picked');
+  expect(again).toEqual(e);
  });
 });
