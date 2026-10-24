@@ -11,10 +11,12 @@ interface FieldProps{
  help?:string;
  hint?:string;
  error?:string;
+ /** The control is a group, such as Segmented, that names itself; the label is plain text. */
+ group?:boolean;
  children:(wire:FieldWire)=>ReactNode;
 }
 
-export function Field({label,help,hint,error,children}:FieldProps){
+export function Field({label,help,hint,error,group=false,children}:FieldProps){
  const id=useId();
  const [open,setOpen]=useState(false);
  const tipId=id+'-tip';
@@ -23,7 +25,7 @@ export function Field({label,help,hint,error,children}:FieldProps){
  const describedBy=[hintId,errorId].filter(Boolean).join(' ')||undefined;
  return <div className={s.field}>
   <div className={s.labelRow}>
-   <label htmlFor={id} className={s.label}>{label}</label>
+   {group?<span className={s.label}>{label}</span>:<label htmlFor={id} className={s.label}>{label}</label>}
    {help&&<button type="button" className={s.helpToggle} aria-label={`Help: ${label}`}
     aria-expanded={open} aria-controls={tipId} onClick={()=>setOpen(o=>!o)}>
     <span className={s.diamond} aria-hidden="true">?</span>

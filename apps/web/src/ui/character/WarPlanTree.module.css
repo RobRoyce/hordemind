@@ -1,0 +1,100 @@
+.tree{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-4);
+}
+.tree p{margin:0}
+
+.counter{color:var(--hm-ink)}
+.over{color:var(--hm-danger)}
+
+.muted{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.branches{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:flex-start;
+ gap:var(--hm-space-5) var(--hm-space-7);
+}
+
+.branch{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-1);
+ min-width:0;
+}
+.branch > :last-child{margin-top:var(--hm-space-3)}
+
+.branchTitle{
+ margin:0;
+ color:var(--hm-ink);
+ font-size:var(--hm-text-3);
+ font-weight:600;
+}
+
+.legend{
+ display:flex;
+ flex-wrap:wrap;
+ gap:var(--hm-space-2) var(--hm-space-5);
+ margin:0;
+ padding:0;
+ list-style:none;
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+.legend li{
+ display:flex;
+ align-items:center;
+ gap:var(--hm-space-2);
+}
+
+.swatch{
+ width:10px;
+ height:10px;
+ border:1.5px solid var(--hm-ink);
+ background:var(--hm-bg);
+ transform:rotate(45deg);
+}
+.learned{
+ border-color:var(--hm-gold);
+ background:var(--hm-frame-fill-top);
+}
+.locked{border:1.5px dashed var(--hm-faint)}
+
+/* Holds most tooltips without growing, so the page doesn't jump while you hover. */
+.detail{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-2);
+ min-height:15rem;
+ padding:var(--hm-space-4);
+ border:1px solid var(--hm-hair);
+ background:var(--hm-raised);
+}
+.detail p{margin:0}
+.detail b{font-weight:600}
+
+.detailName{
+ margin:0;
+ color:var(--hm-gold);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-4);
+ font-weight:500;
+}
+
+.tooltip{font-style:italic}
+
+.report{
+ align-self:flex-start;
+ margin-top:auto;
+ color:var(--hm-gold);
+ font-size:var(--hm-text-1);
+}
+
+@media (max-width:699px){
+ .branches{flex-direction:column}
+ .detail{min-height:18rem}
+}

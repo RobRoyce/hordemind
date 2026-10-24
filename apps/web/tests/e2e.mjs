@@ -1,6 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {checkGraph} from './geometry.mjs';
 
 // GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
 const browser=await chromium.launch({
@@ -56,7 +57,7 @@ async function journey(viewport){
   await page.goto(base+'#strategy',{waitUntil:'domcontentloaded'});
 
   step('create a Paladin and configure it without any save button');
-  await page.getByLabel('Character name').fill('CI Paladin');
+  await page.getByLabel('Character name',{exact:true}).fill('CI Paladin');
   await page.getByRole('button',{name:'Create character'}).click();
   await setChoice(page,'Difficulty','Torment XII');
   await setChoice(page,'Realm','Eternal');
@@ -70,11 +71,14 @@ async function journey(viewport){
   for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await warPlan(name).click();
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'true');
   assert((await page.getByRole('region',{name:'Upgrade details'}).innerText()).includes('An ominous altar appears between waves'));
+  const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'War Plan',exact:true}));
+  assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
+  assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
 
   step('a malformed build link is rejected inline and never blocks saving');
-  await page.getByLabel('Build planner link').fill('not a link');
+  await page.getByLabel('Build planner link',{exact:true}).fill('not a link');
   await page.getByText('does not look like a web address').waitFor();
-  await page.getByLabel('Build planner link').fill('maxroll.gg/d4/planner/ci');
+  await page.getByLabel('Build planner link',{exact:true}).fill('maxroll.gg/d4/planner/ci');
   const profile=(await stored()).profiles[0];
   assert.equal(profile.buildUrl,'https://maxroll.gg/d4/planner/ci');
   assert.equal(profile.mobility,'low');

@@ -4,7 +4,7 @@ import {newProfile,newRun} from '../domain/run';
 import {validateProfile} from '../domain/profile';
 import {createLocalRepository,downloadExport,STORAGE_KEY} from '../storage/local';
 import {mergeStates,reconcile,sameState} from '../domain/merge';
-import {StrategyLab} from './StrategyLab';
+import {Character} from './character/Character';
 import {LiveRun} from './live/LiveRun';
 import {Insights} from './Insights';
 import {useSync,type SyncState} from './useSync';
@@ -144,7 +144,7 @@ export function App(){
    {saveError&&<Notice tone="error"><p><strong>Couldn't save on this device:</strong> {saveError}. Recent changes exist only in this tab. Export from Insights to keep them.</p></Notice>}
   </div>}
   <main className={cx(s.main,s[view])}>
-   {view==='character'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
+   {view==='character'&&<Character profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
    {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoCharacter={()=>navigate('character')}/>}
    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(old=>({...old,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
   </main>

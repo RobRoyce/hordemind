@@ -27,3 +27,17 @@
  box-shadow:inset 0 -2px 0 var(--hm-gold);
 }
 .option:focus-visible{outline-offset:-2px}
+
+/* Phones: equal columns across the full width, so a long option wraps its own label instead of the row. */
+@media (max-width:699px){
+ .group{
+  display:grid;
+  grid-auto-columns:minmax(0,1fr);
+  grid-auto-flow:column;
+  width:100%;
+ }
+ .option{
+  padding:var(--hm-space-1) var(--hm-space-2);
+  line-height:1.2;
+ }
+}
