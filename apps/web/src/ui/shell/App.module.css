@@ -1,0 +1,47 @@
+.app{
+ display:flex;
+ flex-direction:column;
+ min-height:100vh;
+}
+
+/* The content column; each view sets its width. */
+.main{
+ --gutter:var(--hm-space-5);
+ box-sizing:border-box;
+ flex:1;
+ width:min(100%,calc(var(--width) + 2 * var(--gutter)));
+ margin:0 auto;
+ padding:var(--hm-space-6) var(--gutter) var(--hm-space-7);
+}
+.run{--width:640px}
+.character{--width:900px}
+.insights{--width:720px}
+
+.banners{
+ box-sizing:border-box;
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-3);
+ width:min(100%,calc(900px + 2 * var(--hm-space-5)));
+ margin:var(--hm-space-4) auto 0;
+ padding:0 var(--hm-space-5);
+}
+.banners p{margin:0 0 var(--hm-space-2)}
+.actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:var(--hm-space-3);
+}
+
+@media (max-width:699px){
+ /* Room for the fixed bottom tabs, and toasts that sit above them. */
+ .app{
+  padding-bottom:calc(52px + env(safe-area-inset-bottom));
+  --hm-toast-offset:calc(52px + var(--hm-space-3));
+ }
+ .main{
+  --gutter:var(--hm-space-4);
+  padding-top:var(--hm-space-5);
+ }
+ .banners{padding:0 var(--hm-space-4)}
+}
