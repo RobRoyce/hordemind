@@ -130,6 +130,21 @@ async function journey(viewport){
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
 
+  if(viewport.width>=700){
+   step('keyboard: the open picker is exposed, one Tab stop, and Enter moves into it');
+   await offer(1).focus();
+   const categories=page.getByRole('group',{name:'Categories'});
+   await categories.waitFor();
+   assert.equal(await offer(1).getAttribute('aria-expanded'),'true');
+   assert(await offer(1).evaluate(el=>!!document.getElementById(el.getAttribute('aria-controls'))?.querySelector('[aria-label="Categories"]')),'the field controls the panel');
+   await page.keyboard.press('Enter');
+   assert(await categories.getByRole('button',{name:/^Masses/}).evaluate(el=>el===document.activeElement),'Enter moves to the first tile');
+   await offer(1).focus();
+   for(let i=0;i<3;i++)await page.keyboard.press('Tab');
+   assert(await offer(2).evaluate(el=>el===document.activeElement),'three Tabs reach the next row: field, Close, one stop for the panel');
+   await page.keyboard.press('Escape');
+  }
+
   step('tap a category, then an offer; the picker moves to the next row');
   await offer(1).click();
   await page.getByRole('button',{name:/^Masses/}).click();

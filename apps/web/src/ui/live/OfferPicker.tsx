@@ -45,13 +45,19 @@ function Steps({recent,likely,family,onFamily,onPick,onExitTop}:StepsProps){
  const tiles=useMemo(()=>categoryTiles(likely),[likely]);
  const recentRefs=useMemo(()=>recent.map(resolveOffer).filter((o):o is OfferRef=>o!==null).slice(0,RECENT_IN_PICKER),[recent]);
 
+ // The step is one tab stop; arrow keys move between its items.
+ const [stop,setStop]=useState(0);
+ const roving=(k:number,count:number)=>({tabIndex:k===Math.min(stop,count-1)?0:-1,onFocus:()=>setStop(k)});
+
  // A step change unmounts the focused button. Focus moves to the first offer, or back to the tile it came from.
  const previous=useRef(family);
  useEffect(()=>{
   const came=previous.current;
   previous.current=family;
+  if(came===family)return;
+  setStop(0);
   const el=root.current,active=document.activeElement;
-  if(!el||came===family||(active&&active!==document.body&&!el.contains(active)))return;
+  if(!el||(active&&active!==document.body&&!el.contains(active)))return;
   const target=family?el.querySelector<HTMLElement>('[data-offer]'):el.querySelector<HTMLElement>(`[data-family="${came}"]`);
   (target??el.querySelector<HTMLElement>('[data-nav]'))?.focus();
  },[family]);
@@ -78,32 +84,36 @@ function Steps({recent,likely,family,onFamily,onPick,onExitTop}:StepsProps){
   items[Math.min(j,items.length-1)]?.focus();
  }
 
- if(family)return <div ref={root} className={s.steps} onKeyDown={onKeyDown}>
+ if(family){
+  const offers=offersIn(family),count=offers.length+1;
+  return <div ref={root} className={s.steps} onKeyDown={onKeyDown}>
   <div className={s.stepHead}>
-   <button type="button" data-nav className={s.back} onClick={()=>onFamily(null)}><span aria-hidden="true">‹</span> All categories</button>
+   <button type="button" data-nav {...roving(0,count)} className={s.back} onClick={()=>onFamily(null)}><span aria-hidden="true">‹</span> All categories</button>
    <CategoryMark family={family}/>
   </div>
   <ul className={s.list} aria-label={`${family} offers`}>
-   {offersIn(family).map(o=><li key={o.id}>
-    <button type="button" data-nav data-offer className={s.offer} onClick={()=>onPick(o)}>
+   {offers.map((o,i)=><li key={o.id}>
+    <button type="button" data-nav data-offer {...roving(i+1,count)} className={s.offer} onClick={()=>onPick(o)}>
      <span className={s.offerName}>{o.label}{o.danger&&<DangerMark danger={o.danger}/>}</span>
      <small>{o.hint}</small>
     </button>
    </li>)}
   </ul>
  </div>;
+ }
 
+ const count=recentRefs.length+tiles.length;
  return <div ref={root} className={s.steps} onKeyDown={onKeyDown}>
   {recentRefs.length>0&&<div>
    <p className={s.label} id={recentId}>Seen in your recent runs</p>
    <ul className={s.list} aria-labelledby={recentId}>
-    {recentRefs.map(o=><li key={o.id}>
-     <button type="button" data-nav className={s.recent} onClick={()=>onPick(o)}><span>{o.label}</span><CategoryMark family={o.family}/></button>
+    {recentRefs.map((o,i)=><li key={o.id}>
+     <button type="button" data-nav {...roving(i,count)} className={s.recent} onClick={()=>onPick(o)}><span>{o.label}</span><CategoryMark family={o.family}/></button>
     </li>)}
    </ul>
   </div>}
   <div role="group" aria-label="Categories" data-grid className={s.grid}>
-   {tiles.map(t=><button key={t.family} type="button" data-nav data-family={t.family} className={cx(s.tile,t.likely&&s.likely)}
+   {tiles.map((t,i)=><button key={t.family} type="button" data-nav data-family={t.family} {...roving(recentRefs.length+i,count)} className={cx(s.tile,t.likely&&s.likely)}
     onClick={()=>t.only?onPick(t.only):onFamily(t.family)}>
     <CategoryMark family={t.family}/>
     <small>{t.only?t.only.label:t.likely?`Likely, after ${t.family}`:`${t.count} offers`}</small>
@@ -134,7 +144,7 @@ interface Props{
 export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker(
  {index,slot,recent,likely,startFamily=null,total,title,open,onOpenChange,onChange,onPicked},ref){
  const narrow=useNarrow();
- const id=useId(),listId=id+'-list',noteId=id+'-note';
+ const id=useId(),listId=id+'-list',noteId=id+'-note',panelId=id+'-panel';
  const root=useRef<HTMLDivElement>(null);
  const input=useRef<HTMLInputElement>(null);
  useImperativeHandle(ref,()=>input.current as HTMLInputElement);
@@ -182,6 +192,7 @@ export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker
    if(match){e.preventDefault();pick(picked(match))}
    else if(slot.offer){e.preventDefault();onPicked()}
    else if(empty&&!open){e.preventDefault();onOpenChange(true)}
+   else if(panel){e.preventDefault();root.current?.querySelector<HTMLElement>('[data-nav]')?.focus()}
   }
   else if(e.key==='Escape'&&(listOpen||open)){
    e.preventDefault();
@@ -198,7 +209,7 @@ export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker
  }}>
   <input
    ref={input} role="combobox" aria-label={`Offer ${index+1}`}
-   aria-expanded={showList} aria-controls={showList?listId:undefined} aria-autocomplete="list"
+   aria-expanded={showList||panel} aria-controls={showList?listId:panel?panelId:undefined} aria-autocomplete="list"
    aria-activedescendant={showList?`${listId}-${nav.active}`:undefined}
    aria-invalid={unresolved||undefined} aria-describedby={unresolved&&!showList?noteId:undefined}
    autoComplete="off" spellCheck={false} inputMode={narrow?'none':undefined}
@@ -216,7 +227,7 @@ export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker
     onClick={()=>onChange(unlisted(slot.text))}>record “{slot.text.trim()}” as unlisted</button>.
   </p>}
   {/* Mouse presses keep focus in the field, so the panel stays open until a pick lands. */}
-  {panel&&<div className={s.below} onMouseDown={e=>e.preventDefault()}>
+  {panel&&<div id={panelId} className={s.below} onMouseDown={e=>e.preventDefault()}>
    <Sheet open title={title??pickerTitle(index,total)} onClose={close}>
     <Steps recent={recent} likely={likely} family={family} onFamily={setFamily} onPick={o=>pick(picked(o))} onExitTop={()=>input.current?.focus()}/>
    </Sheet>
