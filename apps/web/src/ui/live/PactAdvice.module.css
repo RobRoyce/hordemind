@@ -1,0 +1,6 @@
+.text{margin:0}
+
+.title{
+ color:var(--hm-gold);
+ font-weight:600;
+}
