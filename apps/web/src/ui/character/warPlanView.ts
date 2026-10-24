@@ -1,5 +1,5 @@
-import {WAR_PLAN,nodeById} from '../../domain/warplan';
-import type {GraphNode} from '../kit';
+import {WAR_PLAN,available,nodeById} from '../../domain/warplan';
+import type {GraphNode,NodeState} from '../kit';
 
 export type DrawnBranch='offers'|'events';
 
@@ -15,4 +15,12 @@ export function warPlanGraphNodes(branch:DrawnBranch,charWidth=8):GraphNode[]{
 }
 
 /** Learned upgrades in the drawn branches. Rewards still spend points in game, but HordeMind ignores them. */
+/** Excluded means the choose-one partner is learned. Clicking still swaps it in, as the game allows. */
+export function nodeState(learned:readonly string[],id:string):NodeState{
+ if(learned.includes(id))return 'learned';
+ if(!available(learned,id))return 'locked';
+ const partner=nodeById(id)?.exclusive;
+ return partner&&learned.includes(partner)?'excluded':'open';
+}
+
 export const countedUpgrades=(learned:readonly string[])=>learned.filter(id=>{const n=nodeById(id);return n!==null&&n.branch!=='rewards'}).length;

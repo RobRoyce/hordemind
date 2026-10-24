@@ -29,7 +29,7 @@
 
 .learned .diamond{fill:var(--hm-frame-fill-top);stroke:var(--hm-gold)}
 .open .diamond{fill:var(--hm-bg);stroke:var(--hm-ink)}
-.locked .diamond{fill:var(--hm-bg);stroke:var(--hm-faint);stroke-dasharray:3 3}
+.locked .diamond,.excluded .diamond{fill:var(--hm-bg);stroke:var(--hm-faint);stroke-dasharray:3 3}
 
 .label{font-family:var(--hm-font-text)}
 .name{
@@ -37,7 +37,7 @@
  font-size:var(--hm-text-2);
 }
 .learned .name{fill:var(--hm-gold)}
-.locked .name{fill:var(--hm-muted)}
+.locked .name,.excluded .name{fill:var(--hm-muted)}
 .note{
  fill:var(--hm-muted);
  font-size:var(--hm-text-1);

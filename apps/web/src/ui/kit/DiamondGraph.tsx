@@ -8,7 +8,8 @@ export interface GraphNode extends GraphNodeInput{
  /** A second label line, such as "or Total Chaos" for a choose-one pair. */
  note?:string;
 }
-export type NodeState='learned'|'open'|'locked';
+/** Excluded draws like locked but stays clickable: activating it swaps it in for its partner. */
+export type NodeState='learned'|'open'|'excluded'|'locked';
 
 interface Props{
  nodes:readonly GraphNode[];

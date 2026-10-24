@@ -1,8 +1,8 @@
 import {useId,useMemo,useState} from 'react';
-import {WAR_PLAN_POINTS,available,nodeById,unsupported} from '../../domain/warplan';
-import {COMPACT_LAYOUT,DEFAULT_LAYOUT,DiamondGraph,Notice,cx,useNarrow,type NodeState} from '../kit';
+import {WAR_PLAN_POINTS,nodeById,unsupported} from '../../domain/warplan';
+import {COMPACT_LAYOUT,DEFAULT_LAYOUT,DiamondGraph,Notice,cx,useNarrow} from '../kit';
 import {wrongInfoUrl} from '../report';
-import {countedUpgrades,warPlanGraphNodes,type DrawnBranch} from './warPlanView';
+import {countedUpgrades,nodeState,warPlanGraphNodes,type DrawnBranch} from './warPlanView';
 import s from './WarPlanTree.module.css';
 
 interface Props{learned:readonly string[];onToggle:(id:string)=>void}
@@ -20,7 +20,12 @@ function Detail({id,shown,learned}:{id:string;shown:string|null;learned:readonly
    <p className={s.tooltip}>{n.tooltip}</p>
    {n.exclusive&&<p className={s.muted}>Choose one: learning it replaces {n.exclusive}.</p>}
    <p><b>In HordeMind:</b> {n.use}</p>
-   <p className={s.muted}>{learned.includes(n.id)?'Learned.':available(learned,n.id)?'Available: click to learn.':`Locked: learn ${n.parents.join(' or ')} first.`}</p>
+   <p className={s.muted}>{{
+    learned:'Learned.',
+    open:'Available: click to learn.',
+    excluded:`Excluded while ${n.exclusive} is learned. Click to swap it in.`,
+    locked:`Locked: learn ${n.parents.join(' or ')} first.`
+   }[nodeState(learned,n.id)]}</p>
    <a className={s.report} href={wrongInfoUrl(n.id,`Tooltip: ${n.tooltip}\nIn HordeMind: ${n.use}`)} target="_blank" rel="noreferrer">Tooltip or effect wrong? Report it</a>
   </>}
  </div>;
@@ -33,7 +38,6 @@ export function WarPlanTree({learned,onToggle}:Props){
  const [shown,setShown]=useState<string|null>(null);
  const charWidth=narrow?7:8;
  const nodes=useMemo(()=>({offers:warPlanGraphNodes('offers',charWidth),events:warPlanGraphNodes('events',charWidth)}),[charWidth]);
- const state=(id:string):NodeState=>learned.includes(id)?'learned':available(learned,id)?'open':'locked';
  const counted=countedUpgrades(learned);
  const over=counted>WAR_PLAN_POINTS;
  const stranded=unsupported(learned).filter(id=>nodeById(id)?.branch!=='rewards');
@@ -50,7 +54,7 @@ export function WarPlanTree({learned,onToggle}:Props){
    {BRANCHES.map(b=><div key={b.id} className={s.branch}>
     <h3 className={s.branchTitle}>{b.title}</h3>
     <p className={s.muted}>{b.note}</p>
-    <DiamondGraph label={b.title} nodes={nodes[b.id]} layout={narrow?COMPACT_LAYOUT:DEFAULT_LAYOUT} state={state} focused={shown}
+    <DiamondGraph label={b.title} nodes={nodes[b.id]} layout={narrow?COMPACT_LAYOUT:DEFAULT_LAYOUT} state={id=>nodeState(learned,id)} focused={shown}
      onActivate={onToggle} onFocusNode={setShown} describedBy={detailId}/>
    </div>)}
   </div>
