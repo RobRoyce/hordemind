@@ -294,7 +294,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
       <PickCard result={result} busy={rec.busy} reportContext={reportContext}/>
       {result.pact&&<PactAdvice pact={result.pact}/>}
      </>
-     :<p className={s.waiting} role="status">{rec.busy?'Simulating…':'Enter at least two offers to compare them.'}</p>}
+     :<p className={s.waiting} role="status">{rec.busy||offers.length>=2?'Simulating…':'Enter at least two offers to compare them.'}</p>}
 
     {error&&<Notice tone="error"><p>{error}</p></Notice>}
     <RecordBar offer={chosenOffer} rows={slots.length} onRecord={record}/>
