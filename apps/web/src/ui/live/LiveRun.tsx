@@ -228,7 +228,9 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const firstPanel=useRef(true);
  useEffect(()=>{
   if(firstPanel.current){firstPanel.current=false;return}
-  if(panel==='deciding')inputs.current[0]?.focus();else panelHeading.current?.focus();
+  // Undo may already have focused the restored choice; otherwise focus left with the old panel.
+  if(panel!=='deciding')panelHeading.current?.focus();
+  else if(document.activeElement===document.body)inputs.current[0]?.focus();
  },[panel]);
 
  const usedSpecial=p.chosen.find(x=>x.payload.usedSpecial);

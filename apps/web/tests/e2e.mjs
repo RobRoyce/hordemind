@@ -290,6 +290,13 @@ async function journey(viewport){
   await page.getByRole('button',{name:`Take ${third.chosen}`}).click();
   await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
   assert.equal((await chosenEvents()).at(-1).payload.choiceSource,'default');
+  // A hash typed in the address bar leaves the screen too.
+  await page.getByRole('button',{name:'Undo',exact:true}).waitFor();
+  await page.evaluate(()=>{location.hash='#insights'});
+  await page.getByRole('heading',{name:'Insights'}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).count(),0,'a hash change dismisses the Undo toast');
+  await navTo(page,/^Live Run/);
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
 
   step('end the run early; shortcuts cannot record the hidden decision');
   await pick(1,'rising','The Rising Spires');

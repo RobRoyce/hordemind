@@ -79,7 +79,7 @@ export function App(){
   return()=>window.removeEventListener('storage',onStorage);
  },[]);
  useEffect(()=>{
-  const onHash=()=>setView(currentView());
+  const onHash=()=>{dismiss();setView(currentView())};
   window.addEventListener('hashchange',onHash);
   return()=>window.removeEventListener('hashchange',onHash);
  },[]);
