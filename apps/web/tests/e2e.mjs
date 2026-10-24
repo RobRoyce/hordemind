@@ -249,6 +249,12 @@ async function journey(viewport){
   const third=(await chosenEvents()).at(-1).payload;
   assert.equal(third.choiceSource,'default','taking the pre-selected offer is recorded as the default');
   assert.equal(third.chosen,third.recommendedOffer);
+  // The toast's Undo belongs to this screen, so leaving dismisses it.
+  await page.getByRole('button',{name:'Undo',exact:true}).waitFor();
+  await navTo(page,/^Insights/);
+  await navTo(page,/^Live Run/);
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).count(),0,'leaving Live Run dismisses its Undo toast');
 
   step('end the run early; shortcuts cannot record the hidden decision');
   await pick(1,'rising','The Rising Spires');

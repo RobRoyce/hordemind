@@ -103,7 +103,8 @@ export function App(){
   window.clearTimeout(toastTimer.current);
   setToast(null);
  }
- function navigate(tab:View){setView(tab);history.replaceState(null,'','#'+tab)}
+ // A toast's action belongs to the screen that raised it.
+ function navigate(tab:View){dismiss();setView(tab);history.replaceState(null,'','#'+tab)}
  function selectProfile(id:string){
   setData(s=>({...s,activeProfileId:id,activeRunId:runProfileId(s.runs.find(r=>r.id===s.activeRunId))===id?s.activeRunId:null}));
  }
