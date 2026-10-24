@@ -5,6 +5,6 @@ export default defineConfig({
   // Repository Pages path will be used after v2 replaces the current app.
   base: './',
   build: { outDir: 'dist', sourcemap: true },
-  // Vitest blanks plain CSS unless included; the token tests read tokens.css as text.
-  test: { css: { include: [/tokens\.css/] } }
+  // Vitest skips CSS it does not include; the token tests read stylesheets as text.
+  test: { css: { include: [/tokens\.css/, /\.module\.css/] } }
 });

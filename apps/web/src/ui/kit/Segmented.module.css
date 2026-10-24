@@ -1,0 +1,29 @@
+.group{
+ display:flex;
+ flex-wrap:wrap;
+ width:fit-content;
+ max-width:100%;
+ border:1px solid var(--hm-rule);
+}
+
+.option{
+ flex:1 0 auto;
+ min-height:44px;
+ padding:0 var(--hm-space-4);
+ border:0;
+ border-right:1px solid var(--hm-rule);
+ border-radius:0;
+ background:transparent;
+ color:var(--hm-muted);
+ font:inherit;
+ cursor:pointer;
+ transition:background-color var(--hm-motion),color var(--hm-motion);
+}
+.option:last-child{border-right:0}
+.option:hover{color:var(--hm-ink)}
+.option[aria-checked="true"]{
+ background:color-mix(in srgb,var(--hm-gold) 16%,transparent);
+ color:var(--hm-ink);
+ box-shadow:inset 0 -2px 0 var(--hm-gold);
+}
+.option:focus-visible{outline-offset:-2px}
