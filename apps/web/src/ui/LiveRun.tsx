@@ -5,7 +5,11 @@ import {decisionDraft,endRun,project,recordDecision,undoChoice,type Observation}
 import {COMPASSES,resolveOffer} from '../catalog';
 import {remainingWaves} from '../recommendation/model';
 import {scenarioFromRun} from '../recommendation/scenario';
-import {OfferPicker,emptySlot,slotFor,familyClass,type Slot} from './OfferPicker';
+import {familyClass} from './OfferPicker';
+import {OfferPicker,PickerSheet,pickerTitle} from './live/OfferPicker';
+import {emptySlot,slotFor,type Slot} from './live/slot';
+import {likelyFamily} from './live/pickerModel';
+import {useNarrow} from './kit';
 import {OfferRecommendations} from './OfferRecommendations';
 import {useRecommendations} from './useRecommendations';
 
@@ -89,6 +93,9 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
  const [ending,setEnding]=useState(false);
  const [error,setError]=useState('');
  const inputs=useRef<(HTMLInputElement|null)[]>([]);
+ const narrow=useNarrow();
+ const [openRow,setOpenRow]=useState<number|null>(null);
+ const pickerReturn=useRef<HTMLElement|null>(null);
  const panelHeading=useRef<HTMLHeadingElement>(null);
  const inProgress=run.status==='in_progress';
  const deciding=inProgress&&!p.decisionsComplete;
@@ -106,10 +113,25 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
   setSlots(s=>s.map((x,j)=>j===i?slot:x));
   if(!slot.offer){if(chosen===i)setChosen(null);if(special===i)setSpecial(null)}
  }
- function focusAfter(i:number){
-  const next=slots.findIndex((s,j)=>j>i&&!s.offer);
-  if(next>=0)inputs.current[next]?.focus();
-  else inputs.current[i]?.blur();
+ function openPicker(i:number,open:boolean){
+  setOpenRow(r=>open?i:r===i?null:r);
+  if(open)pickerReturn.current=inputs.current[i]??null;
+ }
+ /** The next empty row after `i`, wrapping around; `slots` still shows row `i` empty. */
+ function nextEmpty(i:number){
+  const order=[...slots.keys()].filter(j=>j!==i).sort((a,b)=>(a<i?a+slots.length:a)-(b<i?b+slots.length:b));
+  return order.find(j=>!slots[j]?.offer)??null;
+ }
+ function afterPick(i:number){
+  const next=nextEmpty(i);
+  // A pick in the phone sheet moves the sheet on; anywhere else, focus moves to the next row.
+  if(narrow&&openRow===i){
+   setOpenRow(next);
+   if(next!==null)pickerReturn.current=inputs.current[next]??null;
+   return;
+  }
+  if(next!==null)inputs.current[next]?.focus();
+  else{setOpenRow(null);inputs.current[i]?.blur()}
  }
  function record(){
   try{
@@ -157,7 +179,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
    const target=event.target as HTMLElement|null;
    if(target&&['INPUT','TEXTAREA','SELECT'].includes(target.tagName)||event.metaKey||event.ctrlKey||event.altKey)return;
    const idx=Number(event.key)-1;
-   if(Number.isInteger(idx)&&idx>=0&&slots[idx]?.offer){setChosen(idx);event.preventDefault()}
+   if(openRow===null&&Number.isInteger(idx)&&idx>=0&&slots[idx]?.offer){setChosen(idx);event.preventDefault()}
   };
   window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey);
  });
@@ -172,6 +194,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
 
  const usedSpecial=p.chosen.find(x=>x.payload.usedSpecial);
  const lastPick=p.chosen.at(-1)?.payload.chosen,lastFamily=lastPick?resolveOffer(lastPick)?.family:undefined;
+ const likely=likelyFamily(p.profile.warPlanNodes,lastPick??null);
  const bestSlot=rec.result?.recommended?slots.findIndex(s=>s.offer===rec.result?.recommended):-1;
  const remaining=remainingWaves({totalWaves:p.totalWaves,decisionWave:p.nextWave});
 
@@ -227,14 +250,19 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoStrategy}:Props
       {slots.map((slot,i)=><div key={i} className={'offer-row'+(chosen===i?' chosen':'')+(special===i?' special':'')}>
        <button type="button" className="choose" aria-pressed={chosen===i} disabled={!slot.offer}
         aria-label={`Choose offer ${i+1}${slot.offer?`: ${slot.offer}`:''}`} onClick={()=>setChosen(i)}>{i+1}</button>
-       <OfferPicker ref={el=>{inputs.current[i]=el}} index={i} slot={slot} recent={recentOffers}
-        onChange={s=>updateSlot(i,s)} onPicked={()=>focusAfter(i)}/>
+       <div style={{flex:1,minWidth:0,display:'grid',gridTemplateColumns:'0 minmax(0,1fr) 0 0'}}>
+        <OfferPicker ref={el=>{inputs.current[i]=el}} index={i} slot={slot} recent={recentOffers} likely={likely} total={slots.length}
+         open={openRow===i} onOpenChange={o=>openPicker(i,o)} onChange={s=>updateSlot(i,s)} onPicked={()=>afterPick(i)}/>
+       </div>
        {p.specialRemaining&&<button type="button" className="pact" aria-pressed={special===i} disabled={!slot.offer}
         aria-label={`Mark offer ${i+1} as the Black Pact offer`} title="Mark as the Black Pact offer" onClick={()=>setSpecial(s=>s===i?null:i)}>Pact</button>}
        {(i>=baseSlots||slot.text)&&<button type="button" className="clear" aria-label={i>=baseSlots?`Remove offer ${i+1}`:`Clear offer ${i+1}`}
-        onClick={()=>{if(i>=baseSlots){setSlots(s=>s.filter((_,j)=>j!==i));setChosen(null);setSpecial(null)}else updateSlot(i,emptySlot())}}>×</button>}
+        onClick={()=>{if(i>=baseSlots){setSlots(s=>s.filter((_,j)=>j!==i));setChosen(null);setSpecial(null);setOpenRow(null)}else updateSlot(i,emptySlot())}}>×</button>}
       </div>)}
      </div>
+     {narrow&&<PickerSheet row={openRow} title={openRow===null?'':pickerTitle(openRow,slots.length)} recent={recentOffers} likely={likely}
+      returnFocus={pickerReturn} onClose={()=>setOpenRow(null)}
+      onPick={slot=>{if(openRow===null)return;updateSlot(openRow,slot);afterPick(openRow)}}/>}
      {slots.length<MAX_OFFERS&&<button type="button" className="add-offer" onClick={()=>setSlots(s=>[...s,emptySlot()])}>Add offer</button>}
      {special!==null&&<p className="micro">Taking the Pact offer uses it up; taking any other offer keeps it for a later wave.
       {lastFamily&&` Pact offers share a category with your previous choice (${lastFamily}).`}</p>}

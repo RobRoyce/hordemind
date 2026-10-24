@@ -101,10 +101,22 @@ async function journey(viewport){
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
 
-  step('an empty picker lists the whole catalog, not a first page');
+  step('tap a category, then an offer; the picker moves to the next row');
   await offer(1).click();
-  assert((await page.getByRole('option').count())>40,'all offers are browsable before wave 1');
-  await offer(1).press('Escape');
+  await page.getByRole('button',{name:/^Masses/}).click();
+  await page.getByRole('button',{name:/^The Puffing Masses/}).click();
+  assert.equal(await offer(1).inputValue(),'The Puffing Masses');
+  // Phones show the picker as a dialog; wider screens show it inline under the row.
+  const picker=page.getByRole(viewport.width<700?'dialog':'group',{name:'Offer 2 of 3'});
+  await picker.waitFor();
+  await page.keyboard.press('Escape');
+  await picker.waitFor({state:'detached'});
+
+  step('unknown text can be recorded as unlisted');
+  await offer(3).fill('zzz');
+  await offer(3).press('Escape');
+  await page.getByRole('button',{name:'record “zzz” as unlisted'}).waitFor();
+  await page.getByRole('button',{name:'Clear offer 3'}).click();
 
   step('search offers by name and mechanic; partial text never reaches the recommender');
   await offer(1).fill('puff');

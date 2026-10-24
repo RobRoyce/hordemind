@@ -11,6 +11,8 @@ interface Props{
  children:ReactNode;
  /** Receives focus when the sheet closes. */
  returnFocus?:RefObject<HTMLElement|null>;
+ /** Receives focus when the phone sheet opens. Defaults to the first focusable element. */
+ initialFocus?:RefObject<HTMLElement|null>;
 }
 
 const FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -21,7 +23,7 @@ const focusables=(root:HTMLElement)=>[...root.querySelectorAll<HTMLElement>(FOCU
  * Below 700px, a modal bottom sheet that traps focus. Wider, an inline panel.
  * Escape closes both.
  */
-export function Sheet({open,title,onClose,children,returnFocus}:Props){
+export function Sheet({open,title,onClose,children,returnFocus,initialFocus}:Props){
  const narrow=useNarrow();
  const panel=useRef<HTMLDivElement>(null);
  const body=useRef<HTMLDivElement>(null);
@@ -29,12 +31,12 @@ export function Sheet({open,title,onClose,children,returnFocus}:Props){
 
  useEffect(()=>{
   if(open&&!wasOpen.current&&narrow){
-   const first=body.current&&focusables(body.current)[0];
+   const first=initialFocus?.current??(body.current&&focusables(body.current)[0]);
    (first??panel.current)?.focus();
   }
   if(!open&&wasOpen.current)returnFocus?.current?.focus();
   wasOpen.current=open;
- },[open,narrow,returnFocus]);
+ },[open,narrow,returnFocus,initialFocus]);
 
  useEffect(()=>{
   if(!open||!narrow)return;
