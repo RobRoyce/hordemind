@@ -6,7 +6,7 @@ import {createLocalRepository,downloadExport,STORAGE_KEY} from '../storage/local
 import {mergeStates,reconcile,sameState} from '../domain/merge';
 import {Character} from './character/Character';
 import {LiveRun} from './live/LiveRun';
-import {Insights} from './Insights';
+import {Insights} from './insights/Insights';
 import {useSync,type SyncState} from './useSync';
 import {REPO_URL,newIssueUrl} from './report';
 import {AppNav,Button,Notice,Toast,cx,useNarrow,type ToastAction} from './kit';
