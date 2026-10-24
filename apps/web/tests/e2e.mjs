@@ -155,6 +155,14 @@ async function journey(viewport){
   await picker.waitFor();
   await noSeriousViolations(page,'Live Run with the picker open');
   await noZoomingFields(page,'Live Run with the picker open');
+  if(viewport.width<700){
+   // The sheet traps focus: Tab from its one stop in the step wraps inside the dialog.
+   await picker.locator('[data-nav][tabindex="0"]').focus();
+   for(let i=0;i<4;i++){
+    await page.keyboard.press('Tab');
+    assert(await picker.evaluate(el=>el.contains(document.activeElement)),'Tab never leaves the phone sheet');
+   }
+  }
   await page.keyboard.press('Escape');
   await picker.waitFor({state:'detached'});
 

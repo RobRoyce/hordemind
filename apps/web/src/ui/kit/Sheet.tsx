@@ -17,7 +17,8 @@ interface Props{
 
 const FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
-const focusables=(root:HTMLElement)=>[...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(el=>el.getClientRects().length>0);
+/** Visible elements in the tab order. Roving items at tabindex -1 are reached by arrow keys instead. */
+const focusables=(root:HTMLElement)=>[...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(el=>el.tabIndex>=0&&el.getClientRects().length>0);
 
 /**
  * Below 700px, a modal bottom sheet that traps focus. Wider, an inline panel.
