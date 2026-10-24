@@ -1,6 +1,6 @@
 # HordeMind visual system and UI rebuild
 
-- **Status:** approved in brainstorming, 2026-10-23
+- **Status:** approved by the owner, 2026-10-23
 - **Owner:** Rob Royce
 - **Mockups:** `.superpowers/brainstorm/5386-1792809841/content/` (local only, gitignored)
 
@@ -405,15 +405,24 @@ The footer sits at the end of the page on every screen. It holds:
 | Picker | Vitest: category order from catalog counts, alphabetical offers, one-tap categories, the Likely hint only with Method and Madness, the Pact row opening at its category |
 | Pre-selection | Vitest on the selection reducer: follows the new best until the player picks, keeps a player's pick while its offer remains, and sets `choiceSource` correctly |
 | Schema | Vitest: legacy `offer_chosen` events without `choiceSource` parse to `null`, and new events round-trip |
-| Journey | The existing e2e runs at 1440×900 and 390×844. It finds elements by role and label instead of CSS class names, adds a tap-only run with no typing, and adds an Undo-from-toast step. |
-| Accessibility | `@axe-core/playwright` (dev dependency, MPL-2.0) scans each screen and the kit gallery. Any serious or critical violation fails. |
+| Journey baseline (Kit PR) | The existing e2e finds elements by role and label instead of CSS class names, and runs at both 1440×900 and 390×844. It must pass against today's screens before any screen changes. |
+| Journey changes (Screens PR) | Edits are limited to behavior that changes: the Character tab and `#character` hash, the pre-selected pick and `choiceSource`, the Black Pact row, a tap-only run with no typing, and Undo from the toast. |
+| Accessibility | `@axe-core/playwright` (dev dependency, MPL-2.0) scans the kit gallery from the Kit PR on, and each screen from the Screens PR on. Any serious or critical violation fails. |
 | Visual | Screenshots of every screen at both sizes, plus the kit gallery, attached to each PR |
 | Gate | `make verify` passes locally before every push |
 
 ## 11. Delivery
 
-1. **Kit PR.** Tokens, fonts, kit components, `Sheet`, `graphLayout`, the `#kit` gallery and their tests. No visible change to the app.
-2. **Screens PR.** Frame and nav, Live Run with the picker, pre-selection, `choiceSource` and the toast, then Character, then Insights, one commit each. It deletes `style.css` and moves the e2e to the new selectors.
+1. **Kit PR.** No visible change to the app. It contains:
+   - Tokens, fonts, kit components, `Sheet`, `graphLayout` and the `#kit` gallery, with their tests.
+   - The e2e migration to role and label selectors, plus the 390×844 pass, proven green against today's screens.
+   - Where a selector needs it, accessible names added to today's markup. These cause no visible change.
+2. **Screens PR.**
+   - One commit each for frame and nav, Live Run (picker, pre-selection, `choiceSource`, toast), Character and Insights.
+   - It deletes `style.css`.
+   - E2e edits are limited to the changed behavior listed in Testing. Any other e2e edit needs a stated reason in the PR description.
+
+**Why the test migrates first:** the browser test guards behavior. If it were rewritten in the same PR as the screens, a regression could be "fixed" by adjusting the test. Migrating it against the old UI proves that the selectors, not the behavior, are what changed.
 
 - **Rollback:** each PR reverts on its own. `choiceSource` is optional, so older code ignores it.
 
