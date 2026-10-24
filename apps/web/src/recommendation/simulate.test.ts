@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {simulateRun,simulateWave,simulateWaveDetailed,rulesFor,hash,type PlayerProfile} from './simulate';
+import {simulateRun,simulateWave,simulateWaveDetailed,rulesFor,hash,pickNext,type PlayerProfile} from './simulate';
 
 const average={killSpeed:'average',mobility:'average',warPlanNodes:[]} as const;
 const total=(b:Record<string,number>)=>Object.values(b).reduce((a,v)=>a+v,0);
@@ -56,6 +56,30 @@ describe('War Plan: Impending Doom (tooltip, S15)',()=>{
  it('makes offers that pay per event worth more',()=>{
   const puffingGain=(p:PlayerProfile)=>wave(p,['The Puffing Masses'])-wave(p);
   expect(puffingGain(doom)).toBeGreaterThan(puffingGain(average));
+ });
+});
+
+describe('choosing among waiting events',()=>{
+ const cost=(e:{cost:number})=>e.cost,value=(e:{value:number})=>e.value;
+ it('takes the event that pays the most Aether per second',()=>{
+  expect(pickNext([{value:5,cost:10},{value:4,cost:4},{value:3,cost:5}],60,cost,value)).toBe(1);
+ });
+ it('passes over events that cannot finish before the wave ends',()=>{
+  expect(pickNext([{value:20,cost:8},{value:3,cost:3}],5,cost,value)).toBe(1);
+ });
+ it('keeps spawn order between equally good events',()=>{
+  expect(pickNext([{value:4,cost:4},{value:8,cost:8}],60,cost,value)).toBe(0);
+ });
+
+ // Impending Doom at Splinter rank 14 leaves more events waiting than an average build can finish.
+ const doom:PlayerProfile={...average,warPlanNodes:['Impending Doom'],splinterRank:14};
+ const finished=(stack:string[],kind:'Mass'|'Fiend'|'Spire',each:number)=>mean(seed=>simulateWave({...plain,stack},doom,seed)[kind]/each);
+ it('leaves Soulspires, the slowest Aether, for last when events pile up',()=>{
+  expect(finished([],'Fiend',4)).toBeGreaterThan(3*finished([],'Spire',5));
+ });
+ it('counts what an event spawns when choosing it',()=>{
+  // Hellish Masses makes a Mass worth more per second than a Fiend pack.
+  expect(finished(['The Hellish Masses'],'Mass',3)).toBeGreaterThan(2*finished(['The Hellish Masses'],'Fiend',4));
  });
 });
 

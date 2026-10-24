@@ -3,6 +3,7 @@
  * the progress bar, which spawns Aether Events, and time spent completing events is time
  * not spent filling the bar. A Spire that pays well but takes ten seconds therefore
  * displaces other events, which is the opportunity cost a fixed-count model misses.
+ * When several events wait, the player takes the one that pays the most per second.
  *
  * This is a surrogate with explicit assumptions (see mechanics.ts), not Blizzard's scheduler.
  */
@@ -109,6 +110,16 @@ export const hash=(s:number)=>{let x=s|0;x^=x>>>16;x=Math.imul(x,0x7feb352d);x^=
 interface Pending{kind:EventKind;/** Spawned where the player already is, e.g. a reformed Mass. */local:boolean;lord?:boolean}
 
 /**
+ * Index of the waiting event that pays the most Aether per second and still finishes in
+ * `timeLeft`. Ties keep spawn order. Returns 0 when none fits, so the oldest is dropped.
+ */
+export function pickNext<E>(queue:readonly E[],timeLeft:number,cost:(e:E)=>number,value:(e:E)=>number):number{
+ let best=0,score=-Infinity;
+ queue.forEach((e,i)=>{const c=cost(e);if(c<=timeLeft&&value(e)/c>score){score=value(e)/c;best=i}});
+ return best;
+}
+
+/**
  * Simulates one wave. Each random purpose has its own stream, so draws for one purpose
  * stay aligned across paired comparisons even when one stack makes more draws of another.
  */
@@ -139,13 +150,14 @@ export function simulateWaveDetailed(spec:WaveSpec,profile:PlayerProfile,seed:nu
  const weightTotal=weights.reduce((a,[,w])=>a+w,0);
  const group=BASE.hellborneGroup.value+r.groupAdd;
 
- const pay=(kind:EventKind,lord=false)=>{
+ const worth=(kind:EventKind,lord=false)=>{
   let base=kind==='Lord'&&lord&&r.convertFiendFactor?BASE.aether.Lord.value*r.convertFiendFactor:kind==='Hellborne'?0:kind in BASE.aether?BASE.aether[kind as keyof typeof BASE.aether].value:0;
   if(kind==='Hellborne')base=group*(BASE.aether.Hellborne.value+(r.payoutAdd.get('Hellborne')??0));
   else base+=r.payoutAdd.get(kind)??0;
   if(kind==='Mass'&&r.puffing)base+=r.puffing*(r.stackSize+r.massOffers);
-  out[kind]+=base*(r.payoutMult.get(kind)??1);
+  return base*(r.payoutMult.get(kind)??1);
  };
+ const pay=(kind:EventKind,lord=false)=>{out[kind]+=worth(kind,lord)};
  const cost=(e:Pending)=>{
   const completion=BASE.completion[e.kind as keyof typeof BASE.completion]?.value??3;
   const groupScale=e.kind==='Hellborne'?group/BASE.hellborneGroup.value:1;
@@ -153,6 +165,11 @@ export function simulateWaveDetailed(spec:WaveSpec,profile:PlayerProfile,seed:nu
  };
  // Every Fiend, whatever spawned it, arrives as a Lord under Colossal Fiends.
  const event=(kind:EventKind,local:boolean):Pending=>kind==='Fiend'&&r.convertFiendFactor?{kind:'Lord',local,lord:true}:{kind,local};
+
+ // The player values an event by its Aether plus the expected Aether of what it spawns on death.
+ const worthOf=(e:Pending)=>worth(e.kind,e.lord);
+ const meanEvent=weightTotal>0?weights.reduce((a,[k,w])=>a+w*worthOf(event(k,false)),0)/weightTotal:0;
+ const value=(e:Pending)=>worthOf(e)+(r.onComplete.get(e.kind)??[]).reduce((a,{spawn,chance})=>a+chance*(spawn==='AetherEvent'?meanEvent:worthOf(event(spawn,true))),0);
  const spawnFromProgress=(queue:Pending[])=>{
   let x=streams.types()*weightTotal,kind:EventKind='Mass';
   for(const [k,w] of weights){x-=w;if(x<=0){kind=k;break}}
@@ -186,7 +203,7 @@ export function simulateWaveDetailed(spec:WaveSpec,profile:PlayerProfile,seed:nu
  let time=0,progress=0,guard=0;
  while(time<T&&guard++<400){
   while(doomAt.length&&time>=doomAt[0]!){doomAt.shift();fireDoom(queue)}
-  const next=queue.shift();
+  const next=queue.splice(pickNext(queue,T-time,cost,value),1)[0];
   if(!next){
    const need=(1-progress)*fill,doom=doomAt[0];
    // Stop filling at a timed trigger so it fires on time.
@@ -201,7 +218,7 @@ export function simulateWaveDetailed(spec:WaveSpec,profile:PlayerProfile,seed:nu
   pay(next.kind,next.lord);
   progress+=c*BASE.progressWhileBusy.value/fill;
   while(progress>=1){progress-=1;spawnFromProgress(queue)}
-  // Follow-ups spawn where the event died, so they cost no travel and are handled first.
+  // Follow-ups spawn where the event died, so they cost no travel.
   for(const {spawn,chance} of r.onComplete.get(next.kind)??[]){
    if(streams.rolls()>=chance)continue;
    if(spawn==='AetherEvent')spawnFromProgress(queue);else queue.unshift(event(spawn,true));

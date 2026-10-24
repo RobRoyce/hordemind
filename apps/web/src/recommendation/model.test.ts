@@ -77,8 +77,8 @@ describe('explanations name where the modeled gain comes from',()=>{
  });
  it('charges Spires against wave time inside a Mass engine',()=>{
   const prior=['The Puffing Masses','The Massing Masses','The Teeming Masses','The Bursting Masses'];
-  const anchored=compareScenario(state(prior),['The Anchored Masses'],200,{sensitivity:false,synergy:false}).assessments[0];
-  expect(anchored?.modeled&&anchored.reasons.join(' ')).toMatch(/Time spent on its events costs you Aether from Masses/);
+  const rising=compareScenario(state(prior),['The Rising Spires'],200,{sensitivity:false,synergy:false}).assessments[0];
+  expect(rising?.modeled&&rising.reasons.join(' ')).toMatch(/Time spent on its events costs you Aether from Masses/);
  });
 });
 
@@ -148,10 +148,10 @@ describe('review regressions (timeflow 3.0)',()=>{
   expect(result.pact?.advice).toMatch(/not modeled/);
  });
  it('leads with the net loss when an offer costs more than it pays',()=>{
-  const prior=['The Puffing Masses','The Massing Masses','The Teeming Masses','The Bursting Masses'];
-  const anchored=compareScenario(state(prior),['The Anchored Masses'],200,quick).assessments[0];
-  expect(anchored?.modeled&&anchored.mean).toBeLessThan(0);
-  expect(anchored?.modeled&&anchored.reasons[0]).toMatch(/^Costs about \d+ Aether overall/);
+  // Doubled Mass health costs more time than the reforms pay back.
+  const massing=compareScenario(state([]),['The Massing Masses'],200,quick).assessments[0];
+  expect(massing?.modeled&&massing.mean).toBeLessThan(0);
+  expect(massing?.modeled&&massing.reasons[0]).toMatch(/^Costs about \d+ Aether overall/);
  });
  it('explains that Colossal Fiends leaves no Fiends for a Fiend bonus',()=>{
   const fiends=compareScenario(state(['The Colossal Fiends']),['The Exalted Fiends'],150,quick).assessments[0];
@@ -235,6 +235,30 @@ describe('readings of the game text are labelled as readings, not as game facts'
  it('labels the no-natural-Lords rule as a reading too',async()=>{
   const {BASE}=await import('./mechanics');
   expect(BASE.eventWeights.Lord.provenance).toBe('implied');
+ });
+});
+
+describe('Impending Doom limits faster spawning (owner report)',()=>{
+ const quick={sensitivity:false,synergy:false} as const;
+ const reasons=(warPlanNodes:string[],splinterRank:number|null=14)=>{
+  const a=compareScenario({history:[],totalWaves:10,decisionWave:1,profile:{killSpeed:'fast',mobility:'high',warPlanNodes,splinterRank}},['The Exalted Hordes'],200,quick).assessments[0];
+  return a?.modeled?a.reasons.join(' '):'';
+ };
+ it('says why Exalted Hordes is worth less and what it would be worth without Impending Doom',()=>{
+  const text=reasons(['Impending Doom']);
+  expect(text).toMatch(/Impending Doom spawns events on a timer in the last 30 seconds of each wave/);
+  expect(text).toMatch(/Without Impending Doom this would be worth about \+\d+/);
+ });
+ it('says extra events replace slow ones, not that they cost time',()=>{
+  const text=reasons(['Impending Doom']);
+  expect(text).not.toMatch(/Time spent on its events/);
+  expect(text).toMatch(/With more events to choose from, you skip some for better-paying ones, so you get less from Spires/);
+ });
+ it('names the 10-second trigger below Splinter rank 14',()=>{
+  expect(reasons(['Impending Doom'],13)).toMatch(/in the last 10 seconds of each wave/);
+ });
+ it('says nothing about Impending Doom when the War Plan lacks it',()=>{
+  expect(reasons([])).not.toMatch(/Impending Doom/);
  });
 });
 

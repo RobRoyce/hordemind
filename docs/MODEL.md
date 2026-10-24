@@ -27,10 +27,11 @@ References:
 
 The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose whichever your S15 game tooltip says in Advanced Assumptions. The other sources and inferred interactions are not declared exact if unverified.
 
-## Current engine: `s15-timeflow-3.0` (ADR 0004)
+## Current engine: `s15-timeflow-3.1` (ADR 0004)
 
 - **Mechanics:** `apps/web/src/recommendation/mechanics.ts` holds every value with its provenance (`guide`, `disputed`, `assumed`).
 - **Simulation:** `simulate.ts` runs time-competitive waves. Progress-bar fills spawn Aether Events, completing events costs travel and kill time, and banes scale kill time.
+- **Event choice:** when several events wait, the player takes the one that pays the most Aether per second, counting the expected Aether of what it spawns on death. The player never skips a waiting event to keep filling the bar.
 - **Comparison:** `model.ts` runs paired comparisons against an offer with no effect, three sensitivity reruns, a probability-free synergy outlook, and Black Pact break-even advice.
 - The table of guide discrepancies below shows which values v3 adopted. Spire multipliers, Lord base 5, Colossal conversion, Exalted Hordes +50%, Goblins 20%, the Butcher's +100, and Burning Rain and Wrath of Hell all now follow the guides. The Butcher appearing once per run is marked disputed.
 
@@ -61,6 +62,8 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 
 The tree, verbatim tooltips and their use are in [the War Plan research note](research/infernal-hordes-war-plan.md). Effects that change the model:
 - **Impending Doom** is simulated. Aether Events spawn at all four locations with 10 s left, and with 30 s left at Splinter of Terror rank 14.
+  - Faster spawning doesn't speed up these timed events, so Doom lowers The Exalted Hordes. Its card says so and shows its value without Doom.
+  - Owner observation (2026-10-23): at rank 14, events left at wave end come from the 10 s batch only. The model leaves about one older event as well.
 - **Bedlam** adds +50 to the Chaotic Offering. The value is from its tooltip.
 - **Reign in Hell** and **Total Chaos** set the number of offer rows in Live Run.
 - Pulse of Aether and Devil's Deal add Aether that is the same for every offer. Cult of Annihilation and Scale of Tathamet are not modeled.
