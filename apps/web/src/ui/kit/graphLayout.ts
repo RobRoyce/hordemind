@@ -20,11 +20,13 @@ const LEAVE=4;
 export function layoutGraph(nodes:readonly GraphNodeInput[],o:LayoutOptions):GraphLayout{
  const minCol=Math.min(...nodes.map(n=>n.col));
  const half=o.diamond/2;
+ // Shift right when a label is wider than its column and would start left of the graph.
+ const offset=Math.max(0,...nodes.map(n=>n.labelWidth/2-(n.col-minCol+0.5)*o.colWidth));
 
  const placed=new Map<string,PlacedNode&{col:number;labelBottom:number}>();
  for(const n of nodes){
   const col=n.col-minCol;
-  const x=(col+0.5)*o.colWidth;
+  const x=(col+0.5)*o.colWidth+offset;
   const y=n.row*o.rowHeight+half+TOP;
   const labelTop=y+half+o.labelGap;
   const labelBottom=labelTop+n.labelLines*o.lineHeight;
@@ -58,7 +60,7 @@ export function layoutGraph(nodes:readonly GraphNodeInput[],o:LayoutOptions):Gra
  }
 
  const list=[...placed.values()];
- const width=Math.max(...list.map(n=>(n.col+1)*o.colWidth),...list.map(n=>n.label.x+n.label.width));
+ const width=Math.max(...list.map(n=>(n.col+1)*o.colWidth+offset),...list.map(n=>n.label.x+n.label.width));
  const height=Math.max(...list.map(n=>n.labelBottom))+TOP;
  return {nodes:list.map(({id,x,y,diamond,label})=>({id,x,y,diamond,label})),connectors,width,height};
 }

@@ -1,0 +1,112 @@
+.page{
+ box-sizing:border-box;
+ max-width:900px;
+ margin:0 auto;
+ padding:var(--hm-space-6) var(--hm-space-4) var(--hm-space-7);
+}
+
+.section{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-4);
+ padding:var(--hm-space-5) 0;
+ border-top:1px solid var(--hm-rule);
+}
+
+.row{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:var(--hm-space-4) var(--hm-space-6);
+}
+
+.stack{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-4);
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+ gap:var(--hm-space-4) var(--hm-space-5);
+}
+
+.p{margin:0}
+.small{
+ margin:0;
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.kicker{
+ margin:0;
+ color:var(--hm-amber);
+ font-style:italic;
+}
+.pickName{
+ margin:2px 0 var(--hm-space-2);
+ color:var(--hm-gold);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-6);
+ font-weight:700;
+ line-height:1.05;
+}
+.why{
+ margin:var(--hm-space-2) 0;
+ padding-left:var(--hm-space-3);
+ border-left:2px solid var(--hm-rubric);
+ color:var(--hm-muted);
+ font-style:italic;
+}
+.ember{color:var(--hm-ember);font-weight:600}
+.amber{color:var(--hm-amber)}
+
+.marks{
+ display:flex;
+ flex-wrap:wrap;
+ gap:var(--hm-space-3) var(--hm-space-5);
+}
+
+.listRow{
+ display:flex;
+ justify-content:space-between;
+ gap:var(--hm-space-4);
+}
+
+.tiles{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:var(--hm-space-2);
+ margin-top:var(--hm-space-3);
+}
+.tile{
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ gap:var(--hm-space-1);
+ min-height:64px;
+ padding:var(--hm-space-2) var(--hm-space-3);
+ border:1px solid var(--hm-rule);
+ background:var(--hm-raised);
+ color:var(--hm-ink);
+ font:inherit;
+ cursor:pointer;
+}
+
+.branches{
+ display:flex;
+ flex-wrap:wrap;
+ gap:var(--hm-space-6);
+}
+.branch{min-width:0}
+.branchTitle{
+ margin:0 0 var(--hm-space-2);
+ color:var(--hm-muted);
+ font-size:var(--hm-text-2);
+ font-weight:500;
+}
+
+@media (min-width:700px){
+ .tiles{grid-template-columns:repeat(4,1fr)}
+}

@@ -141,9 +141,9 @@ Screen components are built only from the kit.
 
 ### Kit gallery
 
-- The `#kit` route renders only when `import.meta.env.DEV` is set.
+- A separate page, `kit.html`, built with the app so CI can test it and never linked from it.
 - It shows every component in every state: default, hover, focus, disabled, error, both danger levels and all 11 pigments.
-- It never appears in the production nav.
+- It never appears in the app's nav.
 
 ### Boundaries
 
@@ -414,7 +414,7 @@ The footer sits at the end of the page on every screen. It holds:
 ## 11. Delivery
 
 1. **Kit PR.** No visible change to the app. It contains:
-   - Tokens, fonts, kit components, `Sheet`, `graphLayout` and the `#kit` gallery, with their tests.
+   - Tokens, fonts, kit components, `Sheet`, `graphLayout` and the `kit.html` gallery, with their tests.
    - The e2e migration to role and label selectors, plus the 390×844 pass, proven green against today's screens.
    - Where a selector needs it, accessible names added to today's markup. These cause no visible change.
 2. **Screens PR.**

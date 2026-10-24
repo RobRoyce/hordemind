@@ -70,7 +70,7 @@ export function DiamondGraph({nodes,layout=DEFAULT_LAYOUT,state,focused,onActiva
     return <g key={n.id} className={s[st]}>
      {focused===n.id&&<polygon className={s.ring} points={diamondPoints(n.x,n.y,half+6)}/>}
      <polygon className={s.diamond} points={diamondPoints(n.x,n.y,half)}/>
-     <text data-graph-label="" className={s.label} x={n.x} textAnchor="middle">
+     <text data-graph-label={n.id} className={s.label} x={n.x} textAnchor="middle">
       <tspan className={s.name} x={n.x} y={n.label.y+layout.lineHeight-4}>{node.name}</tspan>
       {node.note&&<tspan className={s.note} x={n.x} y={n.label.y+2*layout.lineHeight-4}>{node.note}</tspan>}
      </text>
@@ -82,7 +82,7 @@ export function DiamondGraph({nodes,layout=DEFAULT_LAYOUT,state,focused,onActiva
    const st=state(n.id);
    const left=Math.min(n.diamond.x,n.label.x),right=Math.max(n.diamond.x+n.diamond.width,n.label.x+n.label.width);
    const noteId=node.note?`${idBase}-${n.id}`:undefined;
-   return <button key={n.id} type="button" data-graph-node="" ref={el=>{if(el)buttons.current.set(n.id,el);else buttons.current.delete(n.id)}}
+   return <button key={n.id} type="button" data-graph-node={n.id} ref={el=>{if(el)buttons.current.set(n.id,el);else buttons.current.delete(n.id)}}
     className={s.hit} style={{left,top:n.diamond.y,width:right-left,height:n.label.y+n.label.height-n.diamond.y}}
     aria-pressed={st==='learned'} aria-disabled={st==='locked'||undefined}
     aria-describedby={[noteId,describedBy].filter(Boolean).join(' ')||undefined}

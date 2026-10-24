@@ -67,6 +67,14 @@ describe('graph extent',()=>{
   expect(L.width).toBe(DEFAULT_LAYOUT.colWidth);
   expect(L.nodes.every(n=>n.x===DEFAULT_LAYOUT.colWidth/2)).toBe(true);
  });
+ it.each(CASES)('keeps every label box inside the graph, %s layout',(_,options,charWidth)=>{
+  const events=WAR_PLAN.filter(n=>n.branch==='events').map(n=>({id:n.id,row:n.row,col:n.col,parents:n.parents,labelLines:1,labelWidth:charWidth*n.id.length}));
+  const L=layoutGraph(events,options);
+  for(const n of L.nodes){
+   expect(n.label.x,n.id).toBeGreaterThanOrEqual(0);
+   expect(n.label.x+n.label.width,n.id).toBeLessThanOrEqual(L.width);
+  }
+ });
  it('three compact columns fit a 390px phone with 16px gutters',()=>{
   expect(layoutGraph(offersBranch(7),COMPACT_LAYOUT).width).toBeLessThanOrEqual(390-32);
  });
