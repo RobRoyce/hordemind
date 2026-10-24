@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 concurrency:
   group: v2-${{ github.event.pull_request.number || github.ref_name }}
-  cancel-in-progress: true
+  # Pull requests drop superseded runs. Main queues them, so a deploy in flight always finishes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
