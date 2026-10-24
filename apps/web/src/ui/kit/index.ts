@@ -15,4 +15,7 @@ export {CategoryMark,familySlug,type FamilySlug} from './CategoryMark';
 export {DangerMark} from './DangerMark';
 export {Numeral} from './Numeral';
 export {WaveTrack} from './WaveTrack';
+export {Sheet} from './Sheet';
+export {AppNav} from './AppNav';
+export {useNarrow} from './useNarrow';
 export {cx} from './cx';
