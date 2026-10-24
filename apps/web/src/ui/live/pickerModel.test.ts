@@ -1,4 +1,5 @@
 import {describe,expect,it} from 'vitest';
+import {OFFERS} from '../../catalog';
 import {categoryTiles,likelyFamily,offersIn,pactFamily} from './pickerModel';
 
 describe('picker model',()=>{
@@ -6,6 +7,10 @@ describe('picker model',()=>{
   expect(categoryTiles(null).map(t=>t.family)).toEqual(['Masses','Spires','Hellborne','Monsters','Fiends','Lords','Player bane','Hellfire','Player boon','Council','Special boss','Chaos']));
  it('counts each category from the catalog',()=>
   expect(categoryTiles(null).map(t=>t.count)).toEqual([11,9,6,4,3,3,3,2,2,1,1,1]));
+ it('reaches every catalog offer through some tile',()=>{
+  const browsable=categoryTiles(null).flatMap(t=>offersIn(t.family).map(o=>o.label));
+  expect([...browsable].sort()).toEqual(OFFERS.map(o=>o.label).sort());
+ });
  it('single-offer categories carry their offer',()=>{
   expect(categoryTiles(null).find(t=>t.family==='Chaos')?.only?.label).toBe('The Chaotic Offering');
   expect(categoryTiles(null).find(t=>t.family==='Masses')?.only).toBeNull();
