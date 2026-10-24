@@ -36,4 +36,8 @@ The v2 simulator drew fixed Poisson event counts per wave and gave a 60 s × spe
 - With no data, the model's relative ordering roughly matches community grades: Puffing, Colossal Fiends, and the Spire multipliers are strong, and Massing is weak alone. That's reassuring, but it isn't validation.
 - **Banes that threaten survival are flagged, never priced** (owner decision, 2026-10-23). Only banes that cost time enter the estimate. Each offer's documented bane carries a danger reading in `catalog.ts`: *high* for hazards aimed at the player, *some* for more incoming damage. The UI shows a badge and warns when the best offer is high danger. Dying carries no penalty in the owner's experience, so there is no revive-limit warning either.
 - **A review pass (2026-10-23) fixed several bugs.** Synergy arms now hold equal stack sizes. Colossal converts every Fiend. The Pact is not priced against unmodeled offers. Loss wording follows the cause. Net-negative offers lead with the loss. Spawn-on-death events cost no travel.
+- **3.1 (2026-10-23): best-first event choice.** Waiting events are taken by Aether per second instead of spawn order.
+  - More waiting events now mean better picks, so faster spawning has value even when the player is backed up.
+  - The Anchored Masses no longer nets a loss inside a Mass engine, because the player defers its Soulspires for Puffing Masses.
+  - The player still never skips an event to keep filling the bar, so offers that add slow events at wave start (The Rising Spires) can still show a loss.
 - When recorded runs show which offers appear (`offers_presented` keeps every choice set), the Pact and synergy analyses can graduate to expected values estimated from that evidence, with the sample size shown.

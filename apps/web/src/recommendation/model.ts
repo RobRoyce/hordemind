@@ -6,10 +6,10 @@
  * offers are reported as such and never scored as zero.
  */
 import type {CharacterProfile} from '../domain/schema';
-import {BASE,mechanicsFor,MECHANICS,type Effect,type EventKind,type Param} from './mechanics';
+import {BASE,mechanicsFor,MECHANICS,WAR_PLAN_EFFECTS,type Effect,type EventKind,type Param} from './mechanics';
 import {simulateRun,hash,emptyBreakdown,type Assumptions,type Breakdown,BASELINE} from './simulate';
 
-export const RECOMMENDER_VERSION='s15-timeflow-3.0-experimental';
+export const RECOMMENDER_VERSION='s15-timeflow-3.1-experimental';
 
 /** `decisionWave` is the wave the offer precedes; the chosen offer applies from that wave on. */
 export interface Scenario{
@@ -109,7 +109,14 @@ function payoffOnly(offer:string):EventKind|null{
  return adds.length&&!spawns?(adds[0] as {event:EventKind}).event:null;
 }
 
-function explain(offer:string,s:Scenario,d:Draws):string[]{
+/** What a faster-spawning offer would be worth without Impending Doom, when Doom costs it at least 5 Aether. */
+function withoutDoom(offer:string,s:Scenario,d:Draws,samples:number):number|null{
+ if(!s.profile.warPlanNodes.includes('Impending Doom')||!mechanicsFor(offer)?.effects.some(e=>e.kind==='eventRate'))return null;
+ const mean=marginal({...s,profile:{...s.profile,warPlanNodes:s.profile.warPlanNodes.filter(x=>x!=='Impending Doom')}},offer,samples).mean;
+ return mean-d.mean>=5?mean:null;
+}
+
+function explain(offer:string,s:Scenario,d:Draws,noDoom:number|null=null):string[]{
  const m=mechanicsFor(offer)!,remain=remainingWaves(s),reasons:string[]=[];
  if(remain===0)return ['No waves remain, so no offer changes your Aether.'];
  // Only name effects clearly larger than simulation noise (three standard errors).
@@ -138,10 +145,16 @@ function explain(offer:string,s:Scenario,d:Draws):string[]{
   const kinds=new Set(m.effects.map(e=>e.kind));
   reasons.push(m.category==='Chaos'?`Replacing the normal wave gives up its Aether from ${parts(losses)}.`:
    kinds.has('convert')?`Converted events no longer pay as before: ${parts(losses)}.`:
-   // Offers that only add or speed up events can only lose Aether elsewhere by running out of time.
-   ['timeMult','timeAdd','startEvents','onComplete','withEvents','replaceElites','hellfireSpawns','groupAdd','eventRate','weightAdd','eliteRate'].some(k=>kinds.has(k as Effect['kind']))?`Time spent on its events costs you Aether from ${parts(losses)}.`:
+   // Faster spawning adds no event time, so a category drops only when better events replace it.
+   kinds.size===1&&kinds.has('eventRate')?`With more events to choose from, you skip some for better-paying ones, so you get less from ${parts(losses)}.`:
+   // Offers that add or slow events lose Aether elsewhere by running out of time.
+   ['timeMult','timeAdd','startEvents','onComplete','withEvents','replaceElites','hellfireSpawns','groupAdd','weightAdd','eliteRate'].some(k=>kinds.has(k as Effect['kind']))?`Time spent on its events costs you Aether from ${parts(losses)}.`:
    kinds.has('weightMult')?`It changes which events appear, so you get less from ${parts(losses)}.`:
    `It lowers Aether from ${parts(losses)}.`);
+ }
+ if(noDoom!==null){
+  const late=(s.profile.splinterRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?WAR_PLAN_EFFECTS.doomSplinterSeconds.value:WAR_PLAN_EFFECTS.doomSeconds.value;
+  reasons.push(`Impending Doom spawns events on a timer in the last ${late} seconds of each wave, and faster spawning can't speed those up. Without Impending Doom this would be worth about +${Math.round(noDoom)}.`);
  }
  const effects=m.effects.map(describe).filter((x):x is string=>x!==null);
  if(effects.length)reasons.push(effects.join(' '));
@@ -206,7 +219,7 @@ export function compareScenario(input:Scenario,candidates:string[],samples=400,o
    continue;
   }
   const d=marginal(s,offer,n);
-  modeled.push({offer,modeled:true,...d,reasons:explain(offer,s,d),assumptions:provenanceNotes(offer),sensitivity:[],
+  modeled.push({offer,modeled:true,...d,reasons:explain(offer,s,d,withoutDoom(offer,s,d,n)),assumptions:provenanceNotes(offer),sensitivity:[],
    synergies:options.synergy===false?[]:synergiesFor(offer,s)});
  }
  modeled.sort((a,b)=>b.mean-a.mean);
