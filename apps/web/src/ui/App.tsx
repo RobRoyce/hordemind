@@ -5,7 +5,7 @@ import {validateProfile} from '../domain/profile';
 import {createLocalRepository,downloadExport,STORAGE_KEY} from '../storage/local';
 import {mergeStates,reconcile,sameState} from '../domain/merge';
 import {StrategyLab} from './StrategyLab';
-import {LiveRun} from './LiveRun';
+import {LiveRun} from './live/LiveRun';
 import {Insights} from './Insights';
 import {useSync,type SyncState} from './useSync';
 import {REPO_URL,newIssueUrl} from './report';
@@ -145,7 +145,7 @@ export function App(){
   </div>}
   <main className={cx(s.main,s[view])}>
    {view==='character'&&<StrategyLab profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
-   {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoStrategy={()=>navigate('character')}/>}
+   {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoCharacter={()=>navigate('character')}/>}
    {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(old=>({...old,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
   </main>
   <Footer reportUrl={newIssueUrl} sourceUrl={REPO_URL}/>

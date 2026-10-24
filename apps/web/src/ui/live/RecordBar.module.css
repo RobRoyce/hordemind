@@ -1,0 +1,25 @@
+.bar{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:var(--hm-space-3) var(--hm-space-4);
+}
+
+.keys{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+@media (max-width:699px){
+ .bar{
+  position:sticky;
+  bottom:calc(52px + env(safe-area-inset-bottom));
+  z-index:5;
+  margin:0 calc(-1 * var(--hm-space-4));
+  padding:var(--hm-space-3) var(--hm-space-4);
+  border-top:1px solid var(--hm-rule);
+  background:var(--hm-bg);
+ }
+ .bar > button{flex:1}
+ .keys{display:none}
+}

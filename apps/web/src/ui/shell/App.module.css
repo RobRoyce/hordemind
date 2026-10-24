@@ -39,6 +39,10 @@
   padding-bottom:calc(52px + env(safe-area-inset-bottom));
   --hm-toast-offset:calc(52px + var(--hm-space-3));
  }
+ /* Live Run's record bar sticks above the tabs, so toasts rise above it too. */
+ .app:has([data-record-bar]){
+  --hm-toast-offset:calc(52px + 69px + var(--hm-space-3));
+ }
  .main{
   --gutter:var(--hm-space-4);
   padding-top:var(--hm-space-5);

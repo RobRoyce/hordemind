@@ -1,0 +1,124 @@
+/* Wide: numeral | name | estimate | clear. The category line and anything the picker opens sit below the name. */
+.row{
+ display:grid;
+ grid-template-columns:44px minmax(0,1fr) auto 44px;
+ grid-auto-flow:row dense;
+ align-items:center;
+ gap:2px var(--hm-space-3);
+ padding:var(--hm-space-2) 0;
+ border-bottom:1px solid var(--hm-hair);
+}
+
+.pact{
+ margin-left:calc(-1 * var(--hm-space-3));
+ padding-left:calc(var(--hm-space-3) - 2px);
+ border-left:2px solid var(--hm-rubric);
+}
+
+.numeral{
+ grid-column:1;
+ grid-row:1;
+ display:grid;
+ place-items:center;
+ width:44px;
+ height:44px;
+ padding:0;
+ border:1px solid transparent;
+ background:none;
+ color:var(--hm-rubric);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-5);
+ font-weight:700;
+ line-height:1;
+ cursor:pointer;
+}
+.numeral:disabled{
+ opacity:0.45;
+ cursor:default;
+}
+.selected .numeral{
+ border-color:var(--hm-gold);
+ background:var(--hm-gold);
+ color:var(--hm-bg);
+}
+
+.meta{
+ grid-column:2;
+ grid-row:2;
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:var(--hm-space-1) var(--hm-space-3);
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+.pactLabel{color:var(--hm-ink)}
+
+.estimate{
+ grid-column:3;
+ grid-row:1;
+ min-height:44px;
+ padding:0 var(--hm-space-1);
+ border:0;
+ background:none;
+ color:var(--hm-ink);
+ font:inherit;
+ font-size:var(--hm-text-3);
+ font-weight:600;
+ font-variant-numeric:lining-nums tabular-nums;
+ text-align:right;
+ transition:opacity var(--hm-motion);
+}
+button.estimate{cursor:pointer}
+button.estimate:hover{
+ text-decoration:underline;
+ text-underline-offset:3px;
+}
+.none{
+ display:inline-flex;
+ align-items:center;
+ justify-content:flex-end;
+ color:var(--hm-muted);
+}
+.best .estimate{color:var(--hm-gold)}
+.unmodeled,.best .unmodeled{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+ font-weight:400;
+}
+.dim{opacity:0.55}
+
+.clear{
+ grid-column:4;
+ grid-row:1;
+ width:44px;
+ height:44px;
+ padding:0;
+ border:0;
+ background:none;
+ color:var(--hm-muted);
+ font-size:var(--hm-text-4);
+ cursor:pointer;
+}
+.clear:hover{color:var(--hm-ink)}
+
+.details{
+ grid-column:2 / -1;
+ padding:var(--hm-space-2) 0 var(--hm-space-3);
+}
+.reason{margin:0 0 var(--hm-space-2)}
+.report{
+ color:var(--hm-gold);
+ font-size:var(--hm-text-1);
+}
+
+/* Phones: numeral | name | clear, then the category line with the estimate at its right. */
+@media (max-width:699px){
+ .row{grid-template-columns:44px minmax(0,1fr) auto}
+ .clear{grid-column:3}
+ .estimate{
+  grid-column:3;
+  grid-row:2;
+  min-height:32px;
+ }
+}

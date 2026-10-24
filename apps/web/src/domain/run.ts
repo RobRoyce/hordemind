@@ -152,12 +152,12 @@ function lastDecision(run:RunRecord){
  return {selected,presented,reading,legacy};
 }
 
-export interface DecisionDraft{offered:string[];chosenIndex:number;specialSlotIndex:number|null;observation:Observation|null}
+export interface DecisionDraft{offered:string[];chosenIndex:number;specialSlotIndex:number|null;choiceSource:'default'|'picked'|null;observation:Observation|null}
 export function decisionDraft(run:RunRecord):DecisionDraft|null{
  const last=lastDecision(run);
  if(!last?.presented)return null;
  const {payload}=last.presented,reading=last.reading?.payload;
- return {offered:[...payload.offered],chosenIndex:last.selected.payload.chosenIndex,specialSlotIndex:payload.specialSlotIndex??null,
+ return {offered:[...payload.offered],chosenIndex:last.selected.payload.chosenIndex,specialSlotIndex:payload.specialSlotIndex??null,choiceSource:last.selected.payload.choiceSource,
   observation:reading?{totalAether:reading.totalAether,...(reading.eventCounts?{eventCounts:{...reading.eventCounts}}:{})}:null};
 }
 

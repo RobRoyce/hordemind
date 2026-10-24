@@ -93,7 +93,7 @@ describe('undo and corrections',()=>{
  it('undoes the Aether reading entered with that decision and offers it back for editing',()=>{
   let r=recordDecision(newRun(blackPact(),8),{offered:['A','B'],chosenIndex:0});
   r=recordDecision(r,{offered:['C','D','E'],chosenIndex:2,specialSlotIndex:1,observation:{totalAether:75,eventCounts:{mass:4}}});
-  expect(decisionDraft(r)).toEqual({offered:['C','D','E'],chosenIndex:2,specialSlotIndex:1,observation:{totalAether:75,eventCounts:{mass:4}}});
+  expect(decisionDraft(r)).toEqual({offered:['C','D','E'],chosenIndex:2,specialSlotIndex:1,choiceSource:null,observation:{totalAether:75,eventCounts:{mass:4}}});
   r=undoChoice(r);
   expect(project(r).nextWave).toBe(2);
   expect(project(r).lastTotalAether).toBeNull();
@@ -140,6 +140,10 @@ describe('choice source: was the recorded row the untouched default?',()=>{
  it('records a picked row as picked',()=>{
   const r=recordDecision(newRun(newProfile('Paladin','Paladin'),3),{offered:['A','B'],chosenIndex:1,choiceSource:'picked'});
   expect(project(r).chosen[0]?.payload.choiceSource).toBe('picked');
+ });
+ it('offers the choice source back for editing after an undo',()=>{
+  const r=recordDecision(newRun(newProfile('Paladin','Paladin'),3),{offered:['A','B'],chosenIndex:0,choiceSource:'default'});
+  expect(decisionDraft(r)?.choiceSource).toBe('default');
  });
  it('stores null when the caller says nothing',()=>{
   const r=recordDecision(newRun(newProfile('Paladin','Paladin'),3),{offered:['A','B'],chosenIndex:0});

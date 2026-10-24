@@ -44,9 +44,10 @@ async function journey(viewport){
  const offer=n=>page.getByRole('combobox',{name:`Offer ${n}`});
  const estimates=()=>page.getByLabel(/^Estimate for /);
  const decisionHeading=()=>page.getByRole('heading',{name:/Offers before wave/});
+ const chosenEvents=async()=>(await stored()).runs[0].events.filter(e=>e.type==='offer_chosen');
  async function pick(n,query,label){
   await offer(n).fill(query);
-  await page.getByRole('option',{name:new RegExp(label)}).first().waitFor();
+  await page.getByRole('option',{name:new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))}).first().waitFor();
   await offer(n).press('Enter');
   assert.equal(await offer(n).inputValue(),label);
  }
@@ -137,19 +138,30 @@ async function journey(viewport){
   assert.equal(report.searchParams.get('template'),'wrong-game-info.yml','each estimate links to the wrong-info form');
   assert(report.searchParams.get('context').includes('Before wave 1 of'),'the report carries the run context');
 
+  step('the best offer is pre-selected before any choice');
+  const best=await recommendation.getByRole('heading',{level:2}).innerText();
+  let bestRow=0;
+  for(const n of [1,2,3])if(await offer(n).inputValue()===best)bestRow=n;
+  assert(bestRow>0,'the best offer is one of the rows');
+  assert.equal(await page.getByRole('button',{name:`Choose offer ${bestRow}: ${best}`}).getAttribute('aria-pressed'),'true');
+
   step('choose with the keyboard and record');
   await decisionHeading().click();
   await page.keyboard.press('1');
   assert.equal(await page.getByRole('button',{name:/Choose offer 1/}).getAttribute('aria-pressed'),'true');
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
+  assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
 
-  step('wave 2: reading taken on the offer screen, Pact offer marked and taken');
+  step('wave 2: reading taken on the offer screen, Pact offer added and taken');
   await page.getByLabel(/Aether after wave 1/).fill('85');
   await pick(1,'burst','The Bursting Masses');
-  await pick(2,'anch','The Anchored Masses');
-  await page.getByRole('button',{name:'Mark offer 2 as the Black Pact offer'}).click();
-  await page.getByRole('button',{name:/Choose offer 2/}).click();
+  // The Pact row's picker opens at the last pick's category, Masses.
+  await page.getByRole('button',{name:'Add the Black Pact offer'}).click();
+  await page.getByRole('button',{name:/^The Anchored Masses/}).click();
+  assert.equal(await offer(4).inputValue(),'The Anchored Masses');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:/Choose offer 4/}).click();
   await page.getByLabel('Black Pact advice').waitFor({timeout:25000});
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
@@ -158,12 +170,12 @@ async function journey(viewport){
   const reading=run.events.find(e=>e.type==='aether_observed');
   assert.deepEqual(reading.payload,{afterWave:1,totalAether:85});
 
-  step('undo brings the last wave back for editing');
-  await page.getByRole('button',{name:'Undo last decision'}).click();
+  step('undo from the toast brings the last wave back for editing');
+  await page.getByRole('button',{name:'Undo',exact:true}).click();
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
-  assert.equal(await offer(2).inputValue(),'The Anchored Masses');
+  assert.equal(await offer(4).inputValue(),'The Anchored Masses');
   assert.equal(await page.getByLabel(/Aether after wave 1/).inputValue(),'85');
-  assert.equal(await page.getByRole('button',{name:/Choose offer 2/}).getAttribute('aria-pressed'),'true');
+  assert.equal(await page.getByRole('button',{name:/Choose offer 4/}).getAttribute('aria-pressed'),'true');
   await page.getByRole('button',{name:/Choose offer 1/}).click();
   await page.getByRole('button',{name:/Take The Bursting Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
@@ -182,9 +194,31 @@ async function journey(viewport){
   assert.equal(afterTabs,3,'both tabs kept every recorded choice, including the undone one');
   assert.equal((await stored()).profiles[0].buildName,'Blessed Shield (tab 2)');
 
+  step('wave 3 by taps only, taking the pre-selected best');
+  await offer(1).click();
+  for(const [family,name] of [['Spires','The Rising Spires'],['Spires','The Draining Spires'],['Hellfire','The Burning Rain']]){
+   await page.getByRole('button',{name:new RegExp('^'+family)}).click();
+   await page.getByRole('button',{name:new RegExp('^'+name)}).click();
+  }
+  assert.equal(await offer(3).inputValue(),'The Burning Rain');
+  await page.getByRole('button',{name:/^Take The /}).click();
+  await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
+  const third=(await chosenEvents()).at(-1).payload;
+  assert.equal(third.choiceSource,'default','taking the pre-selected offer is recorded as the default');
+  assert.equal(third.chosen,third.recommendedOffer);
+
   step('end the run early; shortcuts cannot record the hidden decision');
   await pick(1,'rising','The Rising Spires');
   await pick(2,'draining','The Draining Spires');
+  // Number keys are suspended while a picker is open, even with focus on a tile.
+  const unselected=await page.getByRole('button',{name:/^Choose offer 2/}).getAttribute('aria-pressed')==='true'?1:2;
+  await offer(3).click();
+  await page.getByRole('button',{name:/^Masses/}).focus();
+  await page.keyboard.press(String(unselected));
+  assert.equal(await page.getByRole('button',{name:new RegExp(`^Choose offer ${unselected}`)}).getAttribute('aria-pressed'),'false');
+  await page.keyboard.press('Escape');
+  await pick(3,'hunting','The Summoned Hellborne (hunting you)');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'a long offer name never scrolls the page sideways');
   await decisionHeading().click();
   await page.keyboard.press('1');
   await page.getByRole('button',{name:'End run early'}).click();
@@ -201,12 +235,12 @@ async function journey(viewport){
   step('Insights lists the run and exports the full journal');
   await navTo(page,/^Insights/);
   await page.getByRole('heading',{name:'Insights'}).waitFor();
-  await page.getByText(/2\s*recorded choices/i).first().waitFor();
+  await page.getByText(/3\s*recorded choices/i).first().waitFor();
   const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:/Export (data|all runs)/}).click()]);
   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
   // The export is the raw append-only journal: the undone offer set stays, suppressed by a correction.
   const events=exported.state.runs[0].events;
-  assert.equal(events.filter(e=>e.type==='offers_presented').length,3);
+  assert.equal(events.filter(e=>e.type==='offers_presented').length,4);
   assert.equal(events.filter(e=>e.type==='correction').length,1);
 
   assert.deepEqual(errors,[],'Browser emitted errors');
