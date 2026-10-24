@@ -1,0 +1,99 @@
+/* HordeMind design tokens. Component CSS reads these and never hard-codes values. */
+
+:root{
+ color-scheme:dark;
+
+ --hm-bg:#1a1510;
+ --hm-raised:#221b14;
+ --hm-sheet:#201912;
+ --hm-ink:#ebe1cc;
+ --hm-muted:#a5957a;
+ --hm-faint:#7d6d57;
+ --hm-rule:#4a3c2b;
+ --hm-hair:#30271b;
+ --hm-gold:#e7c47c;
+ --hm-amber:#d9a35c;
+ --hm-ember:#f0a24a;
+ --hm-rubric:#c4473a;
+ --hm-danger:#e0604d;
+
+ /* Category pigments color the diamond beside a category name, never the text. */
+ --hm-fam-masses:#5fae95;
+ --hm-fam-spires:#7f9de2;
+ --hm-fam-hellborne:#e3708a;
+ --hm-fam-fiends:#58b4c8;
+ --hm-fam-lords:#dcb25c;
+ --hm-fam-monsters:#a39d93;
+ --hm-fam-hellfire:#ee8b3f;
+ --hm-fam-player:#a9c56b;
+ --hm-fam-council:#c47fc3;
+ --hm-fam-special:#d24d5c;
+ --hm-fam-chaos:#a88ef0;
+
+ /* Blackletter only at 20px and up. */
+ --hm-font-display:'Grenze Gotisch', 'Spectral', Georgia, serif;
+ --hm-font-text:'Spectral', Georgia, serif;
+
+ --hm-space-1:4px;
+ --hm-space-2:8px;
+ --hm-space-3:12px;
+ --hm-space-4:16px;
+ --hm-space-5:24px;
+ --hm-space-6:32px;
+ --hm-space-7:48px;
+
+ --hm-text-1:13px;
+ --hm-text-2:15px;
+ --hm-text-3:17px;
+ --hm-text-4:21px;
+ --hm-text-5:26px;
+ --hm-text-6:32px;
+ --hm-text-7:42px;
+
+ /* The carved gold frame around the pick: a bevelled edge over an ember-dark fill. */
+ --hm-frame-edge-top:#c99a52;
+ --hm-frame-edge-bottom:#6e5130;
+ --hm-frame-fill-top:#451a14;
+ --hm-frame-fill-bottom:#21130e;
+
+ --hm-motion:150ms;
+ --hm-ember-glow:0 0 18px rgb(240 162 74 / 0.35);
+}
+
+body{
+ margin:0;
+ background:var(--hm-bg);
+ color:var(--hm-ink);
+ font-family:var(--hm-font-text);
+ font-size:var(--hm-text-2);
+ line-height:1.5;
+ font-variant-numeric:lining-nums tabular-nums;
+}
+
+@media (min-width:700px){
+ body{font-size:16px}
+}
+
+:focus-visible{
+ outline:2px solid var(--hm-gold);
+ outline-offset:2px;
+}
+
+.hm-visually-hidden{
+ position:absolute;
+ width:1px;
+ height:1px;
+ padding:0;
+ margin:-1px;
+ overflow:hidden;
+ clip:rect(0 0 0 0);
+ white-space:nowrap;
+ border:0;
+}
+
+@media (prefers-reduced-motion:reduce){
+ *,*::before,*::after{
+  transition-duration:0s !important;
+  animation-duration:0s !important;
+ }
+}

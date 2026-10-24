@@ -1,0 +1,125 @@
+.field{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-1);
+ min-width:0;
+}
+
+.labelRow{
+ display:flex;
+ align-items:center;
+ gap:var(--hm-space-1);
+}
+
+.label{
+ color:var(--hm-ink);
+ font-weight:500;
+}
+
+/* A 44px target around a small diamond, pulled in so the label row stays compact. */
+.helpToggle{
+ display:inline-grid;
+ place-items:center;
+ min-width:44px;
+ min-height:44px;
+ margin:-12px -10px;
+ padding:0;
+ border:0;
+ background:none;
+ color:var(--hm-muted);
+ cursor:pointer;
+}
+.diamond{
+ position:relative;
+ display:grid;
+ place-items:center;
+ width:18px;
+ height:18px;
+ font-size:var(--hm-text-1);
+ font-weight:600;
+ line-height:1;
+}
+/* The square turns; the question mark stays upright. */
+.diamond::before{
+ content:"";
+ position:absolute;
+ inset:2px;
+ border:1px solid currentColor;
+ transform:rotate(45deg);
+ transition:border-color var(--hm-motion);
+}
+.helpToggle:hover,.helpToggle[aria-expanded="true"]{color:var(--hm-gold)}
+
+.tip{
+ margin:0;
+ max-width:60ch;
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+ font-style:italic;
+}
+
+.hint{
+ margin:0;
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.error{
+ margin:0;
+ color:var(--hm-danger);
+ font-size:var(--hm-text-1);
+}
+
+.input,.select{
+ box-sizing:border-box;
+ width:100%;
+ min-height:44px;
+ padding:0 var(--hm-space-3);
+ border:1px solid var(--hm-rule);
+ border-radius:0;
+ background:var(--hm-raised);
+ color:var(--hm-ink);
+ font:inherit;
+ transition:border-color var(--hm-motion);
+}
+.input::placeholder{color:var(--hm-muted)}
+.input:hover,.select:hover{border-color:var(--hm-muted)}
+.input:focus,.select:focus{border-color:var(--hm-gold)}
+.input[aria-invalid="true"],.select[aria-invalid="true"]{border-color:var(--hm-danger)}
+
+.selectWrap{
+ position:relative;
+ display:block;
+}
+.select{
+ appearance:none;
+ padding-right:var(--hm-space-6);
+ cursor:pointer;
+}
+/* Chevron drawn from two borders, so it takes the token color. */
+.selectWrap::after{
+ content:"";
+ position:absolute;
+ top:50%;
+ right:var(--hm-space-3);
+ width:7px;
+ height:7px;
+ border-right:1.5px solid var(--hm-muted);
+ border-bottom:1.5px solid var(--hm-muted);
+ transform:translateY(-70%) rotate(45deg);
+ pointer-events:none;
+}
+
+.checkbox{
+ display:inline-flex;
+ align-items:center;
+ gap:var(--hm-space-2);
+ min-height:44px;
+ cursor:pointer;
+}
+.checkbox input{
+ width:18px;
+ height:18px;
+ margin:0;
+ accent-color:var(--hm-gold);
+}

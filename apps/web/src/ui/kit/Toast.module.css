@@ -1,0 +1,40 @@
+/* Phones lift toasts above the record bar and tabs by setting --hm-toast-offset. */
+.region{
+ position:fixed;
+ left:0;
+ right:0;
+ bottom:calc(var(--hm-toast-offset,var(--hm-space-5)) + env(safe-area-inset-bottom));
+ z-index:30;
+ display:flex;
+ justify-content:center;
+ padding:0 var(--hm-space-4);
+ pointer-events:none;
+}
+
+.toast{
+ display:flex;
+ align-items:center;
+ gap:var(--hm-space-4);
+ max-width:560px;
+ min-height:44px;
+ padding:0 var(--hm-space-2) 0 var(--hm-space-4);
+ border:1px solid var(--hm-rule);
+ border-left:2px solid var(--hm-gold);
+ background:var(--hm-raised);
+ color:var(--hm-ink);
+ box-shadow:0 10px 28px rgb(0 0 0 / 0.5);
+ pointer-events:auto;
+}
+
+.action{
+ min-height:44px;
+ padding:0 var(--hm-space-3);
+ border:0;
+ background:none;
+ color:var(--hm-gold);
+ font:inherit;
+ font-weight:600;
+ text-decoration:underline;
+ text-underline-offset:3px;
+ cursor:pointer;
+}

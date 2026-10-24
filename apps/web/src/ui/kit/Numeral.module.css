@@ -1,0 +1,41 @@
+.numeral{
+ display:flex;
+ flex-direction:column;
+ gap:2px;
+}
+
+.label{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.line{
+ display:flex;
+ align-items:baseline;
+ gap:var(--hm-space-2);
+}
+
+.value{
+ color:var(--hm-ink);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-6);
+ font-weight:700;
+ line-height:1;
+ font-variant-numeric:lining-nums tabular-nums;
+}
+
+.of{color:var(--hm-muted)}
+
+.note{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+
+.ember .value{
+ color:var(--hm-ember);
+ text-shadow:var(--hm-ember-glow);
+}
+
+@media (min-width:700px){
+ .value{font-size:var(--hm-text-7)}
+}

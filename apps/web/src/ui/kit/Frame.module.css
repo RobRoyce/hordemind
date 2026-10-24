@@ -1,0 +1,21 @@
+/* Two clipped layers draw the bevel: the gold edge, then the fill 1px inside it. */
+.frame{
+ position:relative;
+ isolation:isolate;
+ padding:var(--hm-space-4) var(--hm-space-5) var(--hm-space-4);
+}
+
+.frame::before,.frame::after{
+ content:"";
+ position:absolute;
+ z-index:-1;
+ clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 11px,100% calc(100% - 11px),calc(100% - 11px) 100%,11px 100%,0 calc(100% - 11px),0 11px);
+}
+.frame::before{
+ inset:0;
+ background:linear-gradient(180deg,var(--hm-frame-edge-top),var(--hm-frame-edge-bottom));
+}
+.frame::after{
+ inset:1px;
+ background:radial-gradient(120% 90% at 50% 0%,var(--hm-frame-fill-top) 0%,var(--hm-frame-fill-bottom) 75%);
+}

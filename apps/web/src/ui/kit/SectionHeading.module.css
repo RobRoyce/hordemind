@@ -1,0 +1,22 @@
+.row{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:baseline;
+ justify-content:space-between;
+ gap:var(--hm-space-2) var(--hm-space-4);
+ margin:0 0 var(--hm-space-2);
+}
+
+.heading{
+ margin:0;
+ color:color-mix(in srgb,var(--hm-gold) 55%,var(--hm-ink));
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-5);
+ font-weight:500;
+ line-height:1.15;
+}
+
+.aside{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}

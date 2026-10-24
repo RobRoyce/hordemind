@@ -24,7 +24,7 @@ function Card({item,rank,best,chosen,special,onChoose,reportContext}:{item:Offer
     {ref?.danger&&<span className={'danger danger-'+ref.danger.level} title={ref.danger.why}>{ref.danger.level==='high'?'High danger':'Some danger'}</span>}
     {special&&<span className="pact-tag">Pact · one use</span>}
    </div>
-   <div className="recommend-metric">
+   <div className="recommend-metric" aria-label={'Estimate for '+item.offer}>
     {item.modeled?<><b>{signed(item.mean)}</b><small>Aether, modeled</small></>:<><b>Not modeled</b><small>not a +0 estimate</small></>}
    </div>
   </div>
@@ -60,8 +60,8 @@ function Verdict({result}:{result:Comparison}){
  const warning=danger?.level==='high'&&<p className="verdict close">{result.recommended} has a dangerous bane: {danger.why}. The estimate ignores danger, so weigh it yourself.</p>;
  if(result.robust===null)return warning||null;
  return <>{warning}{result.robust?
-  <p className="verdict robust">{result.recommended} stays best under every timing assumption tested.</p>:
-  <p className="verdict close">Close call: the best offer changes under other plausible timing assumptions. Expand an offer to compare.</p>}</>;
+  <p className="verdict robust" aria-label="Robustness">{result.recommended} stays best under every timing assumption tested.</p>:
+  <p className="verdict close" aria-label="Robustness">Close call: the best offer changes under other plausible timing assumptions. Expand an offer to compare.</p>}</>;
 }
 
 export function OfferRecommendations({state,slots,chosen,special,remainingWaves,onChoose,reportContext}:Props){
@@ -78,7 +78,7 @@ export function OfferRecommendations({state,slots,chosen,special,remainingWaves,
   {result&&<>
    {result.conditional&&<p className="recommend-alert">Some offers aren't modeled yet, so the best modeled offer may not be the best offer.</p>}
    <Verdict result={result}/>
-   {result.pact&&<div className="pact-advice" role="note"><strong>Black Pact</strong><p>{result.pact.advice}</p></div>}
+   {result.pact&&<div className="pact-advice" role="note" aria-label="Black Pact advice"><strong>Black Pact</strong><p>{result.pact.advice}</p></div>}
    {result.assessments.map((item,index)=>{
     const slot=slotOf(item.offer);
     return <Card key={item.offer} item={item} rank={index+1} best={index===0&&item.modeled}

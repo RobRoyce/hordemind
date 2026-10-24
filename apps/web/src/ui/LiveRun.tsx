@@ -67,7 +67,7 @@ function StartRun({profile,onStart,onGoStrategy}:Pick<Props,'profile'|'onStart'|
 }
 
 function CharacterSummary({profile}:{profile:CharacterProfile}){
- return <dl className="character-summary">
+ return <dl className="character-summary" aria-label="Character summary">
   <div><dt>Class</dt><dd>{profile.className}</dd></div>
   <div><dt>Difficulty</dt><dd>{profile.difficulty}</dd></div>
   <div><dt>Realm</dt><dd>{profile.realm}</dd></div>

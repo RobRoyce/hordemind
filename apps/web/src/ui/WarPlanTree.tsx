@@ -44,11 +44,11 @@ function Branch({branch,learned,onToggle,onShow}:{branch:typeof BRANCHES[number]
 
 function Detail({id,learned}:{id:string|null;learned:readonly string[]}){
  const n=id?nodeById(id):null;
- if(!n)return <div className="wp-detail" id="wp-detail"><p className="micro">Hover or focus an upgrade to read its in-game tooltip and how HordeMind uses it.</p></div>;
+ if(!n)return <div className="wp-detail" id="wp-detail" role="region" aria-label="Upgrade details"><p className="micro">Hover or focus an upgrade to read its in-game tooltip and how HordeMind uses it.</p></div>;
  const isLearned=learned.includes(n.id),open=available(learned,n.id);
  const status=n.branch==='rewards'?'Not tracked: rewards only.':isLearned?'Learned.':open?'Available: click to learn.':
   `Locked: learn ${n.parents.join(' or ')} first.`;
- return <div className="wp-detail" id="wp-detail" aria-live="polite">
+ return <div className="wp-detail" id="wp-detail" role="region" aria-label="Upgrade details" aria-live="polite">
   <h4>{n.id}</h4>
   <p className="wp-tooltip">{n.tooltip}</p>
   {n.exclusive&&<p className="micro">Choose one: learning it replaces {n.exclusive}.</p>}

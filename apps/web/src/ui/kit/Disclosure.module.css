@@ -1,0 +1,33 @@
+.disclosure{min-width:0}
+
+.summary{
+ display:inline-flex;
+ align-items:center;
+ gap:var(--hm-space-2);
+ min-height:44px;
+ color:var(--hm-muted);
+ text-decoration:underline;
+ text-decoration-color:var(--hm-rule);
+ text-underline-offset:3px;
+ cursor:pointer;
+ list-style:none;
+ transition:color var(--hm-motion);
+}
+.summary::-webkit-details-marker{display:none}
+.summary:hover{color:var(--hm-ink)}
+
+/* A small diamond that fills when the section is open. */
+.summary::before{
+ content:"";
+ flex:none;
+ width:6px;
+ height:6px;
+ border:1px solid currentColor;
+ transform:rotate(45deg);
+ transition:background-color var(--hm-motion);
+}
+.disclosure[open]>.summary::before{background:currentColor}
+
+.body{
+ padding:var(--hm-space-1) 0 var(--hm-space-3);
+}

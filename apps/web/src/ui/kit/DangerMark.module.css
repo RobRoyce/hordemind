@@ -1,0 +1,6 @@
+.danger{
+ color:var(--hm-danger);
+ font-weight:500;
+ white-space:nowrap;
+}
+.high{font-weight:600}

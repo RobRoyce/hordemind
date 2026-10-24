@@ -1,0 +1,48 @@
+.button{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:var(--hm-space-2);
+ min-height:44px;
+ padding:0 var(--hm-space-5);
+ border:1px solid transparent;
+ border-radius:0;
+ font:inherit;
+ font-weight:600;
+ line-height:1.2;
+ cursor:pointer;
+ transition:background-color var(--hm-motion),border-color var(--hm-motion),color var(--hm-motion),filter var(--hm-motion);
+}
+
+.primary{
+ background:linear-gradient(180deg,var(--hm-gold),var(--hm-amber));
+ border-color:var(--hm-gold);
+ color:var(--hm-bg);
+}
+.primary:hover:not(:disabled){filter:brightness(1.08)}
+
+.secondary{
+ background:transparent;
+ border-color:var(--hm-gold);
+ color:var(--hm-gold);
+}
+.secondary:hover:not(:disabled){background:color-mix(in srgb,var(--hm-gold) 12%,transparent)}
+
+.text{
+ min-height:44px;
+ padding:0 var(--hm-space-1);
+ background:none;
+ color:var(--hm-muted);
+ font-weight:500;
+ text-decoration:underline;
+ text-underline-offset:3px;
+}
+.text:hover:not(:disabled){color:var(--hm-ink)}
+
+.button:disabled{
+ background:none;
+ border-color:var(--hm-hair);
+ color:var(--hm-faint);
+ cursor:not-allowed;
+}
+.text:disabled{border-color:transparent}

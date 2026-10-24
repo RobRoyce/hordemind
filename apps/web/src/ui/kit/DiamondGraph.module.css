@@ -1,0 +1,58 @@
+.graph{
+ position:relative;
+ max-width:100%;
+}
+
+.svg{
+ position:absolute;
+ inset:0;
+ overflow:visible;
+}
+
+.edge{
+ fill:none;
+ stroke:var(--hm-rule);
+ stroke-width:1.5;
+ transition:stroke var(--hm-motion);
+}
+.lit{stroke:var(--hm-gold)}
+
+.diamond{
+ stroke-width:1.5;
+ transition:fill var(--hm-motion),stroke var(--hm-motion);
+}
+.ring{
+ fill:none;
+ stroke:color-mix(in srgb,var(--hm-gold) 45%,transparent);
+ stroke-width:1;
+}
+
+.learned .diamond{fill:var(--hm-frame-fill-top);stroke:var(--hm-gold)}
+.open .diamond{fill:var(--hm-bg);stroke:var(--hm-ink)}
+.locked .diamond{fill:var(--hm-bg);stroke:var(--hm-faint);stroke-dasharray:3 3}
+
+.label{font-family:var(--hm-font-text)}
+.name{
+ fill:var(--hm-ink);
+ font-size:var(--hm-text-2);
+}
+.learned .name{fill:var(--hm-gold)}
+.locked .name{fill:var(--hm-muted)}
+.note{
+ fill:var(--hm-muted);
+ font-size:var(--hm-text-1);
+ font-style:italic;
+}
+
+.hit{
+ position:absolute;
+ padding:0;
+ border:0;
+ background:none;
+ cursor:pointer;
+}
+.hit[aria-disabled="true"]{cursor:not-allowed}
+
+@media (max-width:699px){
+ .name{font-size:var(--hm-text-1)}
+}

@@ -1,0 +1,20 @@
+.header{margin:0 0 var(--hm-space-5)}
+
+.title{
+ margin:0;
+ color:var(--hm-ink);
+ font-family:var(--hm-font-display);
+ font-size:var(--hm-text-6);
+ font-weight:700;
+ line-height:1.05;
+}
+
+.lead{
+ margin:var(--hm-space-2) 0 0;
+ max-width:60ch;
+ color:var(--hm-muted);
+}
+
+@media (min-width:700px){
+ .title{font-size:var(--hm-text-7)}
+}

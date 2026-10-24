@@ -49,6 +49,7 @@ if (( WITH_BROWSER )); then
   done
   if (( ! ready )); then echo "Preview server failed; log:" >&2; cat "$log" >&2; exit 1; fi
   E2E_BASE_URL="http://127.0.0.1:$PORT/" node tests/e2e.mjs
+  E2E_BASE_URL="http://127.0.0.1:$PORT/" node tests/kit.mjs
   cleanup
   trap - EXIT
 fi
