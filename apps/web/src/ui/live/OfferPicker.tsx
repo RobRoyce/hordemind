@@ -8,6 +8,28 @@ import s from './OfferPicker.module.css';
 const picked=(offer:OfferRef):Slot=>({text:offer.label,offer:offer.label,unlisted:false});
 const unlisted=(text:string):Slot=>({text,offer:text.trim(),unlisted:true});
 
+let pressing=false;
+if(typeof window!=='undefined'){
+ window.addEventListener('pointerdown',()=>{pressing=true},true);
+ for(const type of ['pointerup','pointercancel'])window.addEventListener(type,()=>{pressing=false},true);
+}
+
+/**
+ * Runs `fn` now, or once the current press ends. Closing a picker shrinks the page, and
+ * mid-press that moves the button under the pointer, so the click lands elsewhere.
+ */
+function afterPress(fn:()=>void){
+ if(!pressing){fn();return}
+ const done=()=>{
+  window.removeEventListener('pointerup',done,true);
+  window.removeEventListener('pointercancel',done,true);
+  // The click fires after pointerup in the same task, so this runs once it has landed.
+  setTimeout(fn,0);
+ };
+ window.addEventListener('pointerup',done,true);
+ window.addEventListener('pointercancel',done,true);
+}
+
 export const pickerTitle=(index:number,total:number)=>`Offer ${index+1} of ${total}`;
 
 /** The active option of a results list, kept in view. */
@@ -204,8 +226,11 @@ export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker
 
  return <div ref={root} className={s.picker} onBlur={e=>{
   if(inside(e.relatedTarget))return;
-  setListOpen(false);
-  if(open&&!narrow)onOpenChange(false);
+  afterPress(()=>{
+   if(inside(document.activeElement))return;
+   setListOpen(false);
+   if(open&&!narrow)onOpenChange(false);
+  });
  }}>
   <input
    ref={input} role="combobox" aria-label={`Offer ${index+1}`}
