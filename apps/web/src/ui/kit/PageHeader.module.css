@@ -11,7 +11,7 @@
 
 .lead{
  margin:var(--hm-space-2) 0 0;
- max-width:60ch;
+ max-width:70ch;
  color:var(--hm-muted);
 }
 

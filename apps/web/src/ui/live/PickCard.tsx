@@ -31,6 +31,7 @@ export function PickCard({result,busy,reportContext}:Props){
    {danger?.level==='high'&&<p className={s.danger}>Bane: {danger.why}. The estimate ignores danger.</p>}
    <Disclosure summary="Why this estimate">
     <EstimateDetails estimate={best} reportUrl={estimateReportUrl(best,reportContext)} skipFirstReason/>
+    <p className={s.small}>Model {result.modelVersion}, {result.samples} simulated runs.</p>
    </Disclosure>
   </div>
  </Frame>;

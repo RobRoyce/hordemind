@@ -217,8 +217,9 @@ async function journey(viewport){
   await page.clock.runFor(100);
   assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
   await page.clock.resume();
-  const counts=page.getByText('Event counts for wave 1',{exact:true});
+  const counts=page.getByRole('button',{name:'Event counts',exact:true});
   await counts.click();
+  assert.equal(await counts.getAttribute('aria-expanded'),'true','Event counts opens');
   await noZoomingFields(page,'Live Run with event counts open');
   await counts.click();
   await pick(1,'burst','The Bursting Masses');

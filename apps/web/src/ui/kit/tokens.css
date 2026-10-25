@@ -15,6 +15,8 @@
  --hm-amber:#d9a35c;
  --hm-ember:#f0a24a;
  --hm-rubric:#c4473a;
+ /* Red ink light enough for text. */
+ --hm-rubric-ink:#e08a7c;
  --hm-danger:#e0604d;
 
  /* Category pigments color the diamond beside a category name, never the text. */
@@ -61,6 +63,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
 
 body{
  margin:0;

@@ -1,5 +1,12 @@
 .bar{
  display:flex;
- flex-direction:column;
- gap:var(--hm-space-4);
+ flex-wrap:wrap;
+ align-items:flex-end;
+ gap:var(--hm-space-4) var(--hm-space-5);
+}
+
+.waves{width:22rem}
+
+@media (max-width:699px){
+ .waves{width:100%}
 }

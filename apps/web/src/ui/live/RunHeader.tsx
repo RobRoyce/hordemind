@@ -1,6 +1,7 @@
+import {useId,useState} from 'react';
 import {resolveOffer} from '../../catalog';
 import type {CharacterProfile} from '../../domain/schema';
-import {Button,CategoryMark,Disclosure,Numeral,WaveTrack} from '../kit';
+import {Button,CategoryMark,DisclosureToggle,Numeral,WaveTrack} from '../kit';
 import s from './RunHeader.module.css';
 
 export function CharacterSummary({profile}:{profile:CharacterProfile}){
@@ -31,19 +32,25 @@ interface Props{
 }
 
 export function RunHeader({profile,wave,totalWaves,deciding,aether,observedWave,taken,pactStatus,onEditCharacter}:Props){
+ const setupId=useId();
+ const [setupOpen,setSetupOpen]=useState(false);
  return <header className={s.header}>
-  <p className={s.who}><strong>{profile.name}</strong> <span>{[profile.className,profile.difficulty,profile.realm].join(', ')}</span></p>
-  <Disclosure summary="Run setup">
+  <div className={s.who}>
+   <p><strong>{profile.name}</strong> <span>{[profile.className,profile.difficulty,profile.realm].join(', ')}</span></p>
+   <DisclosureToggle open={setupOpen} onToggle={()=>setSetupOpen(o=>!o)} controls={setupId}>Run setup</DisclosureToggle>
+  </div>
+  <div id={setupId} className={s.setup} hidden={!setupOpen}>
    <CharacterSummary profile={profile}/>
    <p className={s.note}>Saved when this run started. Editing your character changes future runs only.</p>
-   <Button variant="text" onClick={onEditCharacter}>Edit character</Button>
-  </Disclosure>
+   <Button variant="link" onClick={onEditCharacter}>Edit character</Button>
+  </div>
   <div className={s.numbers} aria-live="polite">
    <Numeral label={deciding?'Before wave':'Wave'} value={wave} of={totalWaves}/>
    <Numeral label="Aether" value={aether} tone="ember" {...(observedWave!==null?{note:`after wave ${observedWave}`}:{})}/>
   </div>
   <WaveTrack total={totalWaves} taken={taken.map(t=>t.offer)} deciding={deciding}/>
   {(taken.length>0||pactStatus)&&<div className={s.taken}>
+   {taken.length>0&&<span className={s.muted} aria-hidden="true">Taken</span>}
    {taken.length>0&&<ul className={s.takenList} aria-label="Offers taken">
     {taken.map(t=><li key={t.id}>
      <CategoryMark family={resolveOffer(t.offer)?.family??null} label={t.offer}/>

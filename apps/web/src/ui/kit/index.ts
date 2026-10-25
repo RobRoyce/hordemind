@@ -4,7 +4,7 @@ export {Button} from './Button';
 export {Field,TextField,NumberField,Select,Checkbox,type FieldWire} from './Field';
 export {Segmented} from './Segmented';
 export {Tabs} from './Tabs';
-export {Disclosure} from './Disclosure';
+export {Disclosure,DisclosureToggle} from './Disclosure';
 export {SectionHeading} from './SectionHeading';
 export {PageHeader} from './PageHeader';
 export {Notice} from './Notice';

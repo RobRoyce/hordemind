@@ -50,16 +50,16 @@ function Editor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pick<Props
   <section className={s.section} aria-label="War Plan setup">
    <SectionHeading>Infernal Hordes War Plan</SectionHeading>
    <p className={s.lead}>{WAR_PLAN_HOME}. Learn the same upgrades you have in game.</p>
-   <div className={s.splinter}>
-    <Field label="Splinter of Terror rank" help={TIPS.splinter}>
-     {w=><NumberField wire={w} min={0} max={20} placeholder="Not set" value={profile.splinterRank??''}
-      onChange={e=>{const v=e.target.value===''?null:Math.max(0,Math.min(20,Math.round(Number(e.target.value))));if(v===null||Number.isFinite(v))update({splinterRank:v})}}/>}
-    </Field>
-   </div>
-   <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}/>
+   <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}>
+    <div className={s.splinter}>
+     <Field label="Splinter of Terror rank" help={TIPS.splinter}>
+      {w=><NumberField wire={w} min={0} max={20} placeholder="Not set" value={profile.splinterRank??''}
+       onChange={e=>{const v=e.target.value===''?null:Math.max(0,Math.min(20,Math.round(Number(e.target.value))));if(v===null||Number.isFinite(v))update({splinterRank:v})}}/>}
+     </Field>
+    </div>
+   </WarPlanTree>
   </section>
   <section className={s.section} aria-label="Start a run">
-   <SectionHeading>Ready for the Hordes?</SectionHeading>
    <StartRunBar onStart={waves=>onStart(profile,waves)}/>
   </section>
  </>;

@@ -4,9 +4,9 @@
  gap:2px;
 }
 
-.label{
+.label,.of{
  color:var(--hm-muted);
- font-size:var(--hm-text-1);
+ font-size:var(--hm-text-2);
 }
 
 .line{
@@ -24,8 +24,6 @@
  font-variant-numeric:lining-nums tabular-nums;
 }
 
-.of{color:var(--hm-muted)}
-
 .note{
  color:var(--hm-muted);
  font-size:var(--hm-text-1);
@@ -38,4 +36,13 @@
 
 @media (min-width:700px){
  .value{font-size:var(--hm-text-7)}
+}
+
+/* A missing number is a quiet dash, not a glowing bar. */
+.ember .missing,.missing{
+ color:var(--hm-faint);
+ font-family:var(--hm-font-text);
+ font-size:var(--hm-text-4);
+ font-weight:400;
+ text-shadow:none;
 }

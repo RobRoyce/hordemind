@@ -27,6 +27,13 @@
  border-bottom-color:var(--hm-gold);
 }
 
+.trailing{
+ display:flex;
+ align-items:center;
+ margin-left:auto;
+}
+.trailing button{color:var(--hm-amber)}
+
 .detail{
  color:var(--hm-muted);
  font-size:var(--hm-text-1);

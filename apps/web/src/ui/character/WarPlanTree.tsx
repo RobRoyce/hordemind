@@ -1,11 +1,16 @@
-import {useId,useMemo,useState} from 'react';
+import {useId,useMemo,useState,type ReactNode} from 'react';
 import {WAR_PLAN_POINTS,nodeById,unsupported} from '../../domain/warplan';
 import {COMPACT_LAYOUT,DEFAULT_LAYOUT,DiamondGraph,Notice,cx,useNarrow} from '../kit';
 import {wrongInfoUrl} from '../report';
 import {countedUpgrades,nodeState,warPlanGraphNodes,type DrawnBranch} from './warPlanView';
 import s from './WarPlanTree.module.css';
 
-interface Props{learned:readonly string[];onToggle:(id:string)=>void}
+interface Props{
+ learned:readonly string[];
+ onToggle:(id:string)=>void;
+ /** Shown left of the upgrade counter, such as the Splinter rank field. */
+ children?:ReactNode;
+}
 
 const BRANCHES:readonly {id:DrawnBranch;title:string;note:string}[]=[
  {id:'offers',title:'Offers and Chaos',note:'Changes the offers you see and Chaos Waves.'},
@@ -32,7 +37,7 @@ function Detail({id,shown,learned}:{id:string;shown:string|null;learned:readonly
 }
 
 /** The Offers and Aether events branches, drawn from the game's rows and columns. Rewards only changes loot, so it isn't drawn. */
-export function WarPlanTree({learned,onToggle}:Props){
+export function WarPlanTree({learned,onToggle,children}:Props){
  const narrow=useNarrow();
  const detailId=useId();
  const [shown,setShown]=useState<string|null>(null);
@@ -44,9 +49,12 @@ export function WarPlanTree({learned,onToggle}:Props){
  const them=stranded.length===1?'it':'them';
 
  return <div className={s.tree}>
-  <p className={cx(s.counter,over&&s.over)}>
-   {counted} {counted===1?'upgrade':'upgrades'} learned here. The game allows {WAR_PLAN_POINTS} points across all branches, Rewards included.{over&&' Check your tree.'}
-  </p>
+  <div className={s.top}>
+   {children}
+   <p className={cx(s.counter,over&&s.over)}>
+    <span className={s.count}>{counted}</span> {counted===1?'upgrade':'upgrades'} learned here. The game allows {WAR_PLAN_POINTS} points across all branches, Rewards included.{over&&' Check your tree.'}
+   </p>
+  </div>
   {stranded.length>0&&<Notice tone="warning">
    <p>Saved before HordeMind followed the tree: {stranded.join(', ')}. Learn an upgrade above {them}, or click {them} to remove.</p>
   </Notice>}

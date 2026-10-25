@@ -112,6 +112,11 @@ button.estimate:hover{
  font-size:var(--hm-text-1);
 }
 
+/* Wide: the numeral, estimate and clear center on the name and category lines together. */
+@media (min-width:700px){
+ .numeral,.estimate,.clear{grid-row:1 / span 2}
+}
+
 /* Phones: numeral | name | clear, then the category line with the estimate at its right. */
 @media (max-width:699px){
  .row{grid-template-columns:44px minmax(0,1fr) auto}

@@ -1,10 +1,10 @@
-import {useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useId,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import type {CharacterProfile,RunRecord} from '../../domain/schema';
 import {MAX_OFFERS} from '../../domain/schema';
 import {decisionDraft,endRun,project,recordDecision,undoChoice,type Observation} from '../../domain/run';
 import {remainingWaves} from '../../recommendation/model';
 import {scenarioFromRun} from '../../recommendation/scenario';
-import {Button,Disclosure,Field,Notice,NumberField,SectionHeading,useNarrow} from '../kit';
+import {Button,DisclosureToggle,Field,Notice,NumberField,SectionHeading,useNarrow} from '../kit';
 import {useRecommendations} from '../useRecommendations';
 import {EndRunPanel} from './EndRunPanel';
 import {OfferPicker,PickerSheet,pickerTitle} from './OfferPicker';
@@ -72,6 +72,9 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const [aether,setAether]=useState('');
  const [counts,setCounts]=useState<Record<string,string>>({});
  const [ending,setEnding]=useState(false);
+ const [countsOpen,setCountsOpen]=useState(false);
+ const [notesOpen,setNotesOpen]=useState(false);
+ const countsId=useId(),notesId=useId();
  const [error,setError]=useState('');
  const [openRow,setOpenRow]=useState<number|null>(null);
  const narrow=useNarrow();
@@ -239,7 +242,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const remaining=remainingWaves({totalWaves:p.totalWaves,decisionWave:p.nextWave});
  const pactStatus=p.profile.specialOfferingAvailable?usedSpecial?`Black Pact used before wave ${usedSpecial.payload.wave}`:'Black Pact unused':null;
  const general=result?.warnings.filter(w=>!w.startsWith('Some offers')&&!w.startsWith('The best offer changes'))??[];
- const footnote=result?`${result.samples} simulated runs, model ${result.modelVersion}, ${remaining} waves left`:null;
+ const footnote=result?`${result.samples} simulated runs, ${remaining} waves left`:null;
  const reportContext=`Before wave ${p.nextWave} of ${p.totalWaves}. Taken so far: ${p.chosen.map(x=>x.payload.chosen).join(', ')||'none'}. On screen: ${offers.join(', ')}. War Plan: ${p.profile.warPlanNodes.join(', ')||'none'}. Clear speed ${p.profile.killSpeed}, mobility ${p.profile.mobility}.`;
  const titleFor=(i:number)=>i===special?PACT_TITLE:pickerTitle(i,slots.length);
 
@@ -250,18 +253,23 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
 
   {run.status!=='in_progress'?<RunEnded run={run} profile={profile} onStart={onStart} headingRef={panelHeading}/>:
    deciding&&!ending?<>
-    {p.wavesPlayedAtNextStep>0&&<div className={s.reading}>
-     <Field label={`Aether after wave ${p.wavesPlayedAtNextStep} (optional)`}>
-      {wire=><NumberField wire={wire} min={0} placeholder="Total shown in game" value={aether} onChange={e=>setAether(e.target.value)}/>}
-     </Field>
-     <Disclosure summary={`Event counts for wave ${p.wavesPlayedAtNextStep}`}>
+    {p.wavesPlayedAtNextStep>0&&<div>
+     <div className={s.reading}>
+      <div className={s.aether}>
+       <Field label={`Aether after wave ${p.wavesPlayedAtNextStep} (optional)`}>
+        {wire=><NumberField wire={wire} min={0} placeholder="Total shown in game" value={aether} onChange={e=>setAether(e.target.value)}/>}
+       </Field>
+      </div>
+      <DisclosureToggle open={countsOpen} onToggle={()=>setCountsOpen(o=>!o)} controls={countsId}>Event counts</DisclosureToggle>
+     </div>
+     <div id={countsId} className={s.countsPanel} hidden={!countsOpen}>
       <div className={s.counts}>
        {OBSERVABLES.map(([id,label])=><Field key={id} label={label}>
         {wire=><NumberField wire={wire} min={0} placeholder="Not counted" value={counts[id]??''} onChange={e=>setCounts(x=>({...x,[id]:e.target.value}))}/>}
        </Field>)}
       </div>
-      <p className={s.note}>Leave a field blank when you didn't count it. Blank means unknown, not zero.</p>
-     </Disclosure>
+      <p className={s.note}>Event counts for wave {p.wavesPlayedAtNextStep}. Leave a field blank when you didn't count it. Blank means unknown, not zero.</p>
+     </div>
     </div>}
 
     <div>
@@ -280,9 +288,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
      </ol>
      <div className={s.add}>
       {slots.length<MAX_OFFERS&&<Button variant="text" onClick={addRow}>Add another offer</Button>}
-      {p.specialRemaining&&special===null&&slots.length<MAX_OFFERS&&<Button variant="text" onClick={addPact}>
-       <span className={s.pactMark} aria-hidden="true"/>Add the Black Pact offer
-      </Button>}
+      {p.specialRemaining&&special===null&&slots.length<MAX_OFFERS&&<Button variant="text" className={s.addPact} onClick={addPact}>Add the Black Pact offer</Button>}
      </div>
     </div>
 
@@ -305,12 +311,17 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
     onFinish={()=>finish('completed')} onEnd={()=>finish('abandoned')} onKeep={()=>{setEnding(false);setError('')}}
     error={error} headingRef={panelHeading}/>}
 
-  {inProgress&&<div className={s.quiet}>
-   <Button variant="text" onClick={undo} disabled={p.chosen.length===0}>Undo last decision</Button>
-   {!ending&&<Button variant="text" onClick={()=>{setEnding(true);setError('')}}>End run early</Button>}
-   {footnote&&deciding&&!ending&&(general.length?<div className={s.footnote}>
-    <Disclosure summary={footnote}>{general.map((w,i)=><p key={i}>{w}</p>)}</Disclosure>
-   </div>:<span className={s.footnote}>{footnote}</span>)}
+  {inProgress&&<div>
+   <div className={s.quiet}>
+    <Button variant="text" onClick={undo} disabled={p.chosen.length===0}>Undo last decision</Button>
+    {!ending&&<Button variant="text" onClick={()=>{setEnding(true);setError('')}}>End run early</Button>}
+    {footnote&&deciding&&!ending&&<span className={s.footnote}>
+     {general.length?<DisclosureToggle open={notesOpen} onToggle={()=>setNotesOpen(o=>!o)} controls={notesId}>{footnote}</DisclosureToggle>:footnote}
+    </span>}
+   </div>
+   {footnote&&deciding&&!ending&&general.length>0&&<div id={notesId} className={s.notes} hidden={!notesOpen}>
+    {general.map((w,i)=><p key={i}>{w}</p>)}
+   </div>}
   </div>}
  </div>;
 }

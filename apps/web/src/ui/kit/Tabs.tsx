@@ -17,6 +17,6 @@ export function Tabs({label,items,current,onSelect,trailing}:Props){
    {item.label}
    {item.detail&&<span className={s.detail}>{item.detail}</span>}
   </button>)}
-  {trailing}
+  {trailing&&<span className={s.trailing}>{trailing}</span>}
  </div>;
 }
