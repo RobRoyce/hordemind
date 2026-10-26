@@ -1,0 +1,7 @@
+.row{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:var(--hm-space-2) var(--hm-space-4);
+}
+.input{min-width:12rem}

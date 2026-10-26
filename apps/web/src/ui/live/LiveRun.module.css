@@ -4,14 +4,6 @@
  gap:var(--hm-space-4);
 }
 
-.reading{
- display:flex;
- flex-wrap:wrap;
- align-items:flex-end;
- gap:var(--hm-space-2) var(--hm-space-4);
-}
-.aether{min-width:12rem}
-
 .countsPanel{padding-top:var(--hm-space-3)}
 
 .counts{
@@ -39,7 +31,6 @@
  padding-left:calc(44px + var(--hm-space-3));
 }
 
-.add .addPact{color:var(--hm-rubric-ink)}
 
 .waiting{
  margin:0;

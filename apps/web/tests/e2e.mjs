@@ -147,6 +147,10 @@ async function journey(viewport){
   await page.getByRole('button',{name:/^Start (live run|a \d+-wave run)$/}).click();
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
+  // The character has the Black Pact, so its row waits below the three offer rows from the start.
+  assert.equal(await page.getByRole('button',{name:'Add the Black Pact offer'}).count(),0,'the Pact row needs no button');
+  assert.equal(await page.getByLabel('Offers on screen').getByText('Black Pact',{exact:true}).count(),1,'the Pact row is there');
+  assert.equal(await offer(5).count(),0,'three offer rows plus the Pact row');
 
   if(viewport.width>=700){
    step('keyboard: the open picker is exposed, one Tab stop, and Enter moves into it');
@@ -158,8 +162,9 @@ async function journey(viewport){
    await page.keyboard.press('Enter');
    assert(await categories.getByRole('button',{name:/^Masses/}).evaluate(el=>el===document.activeElement),'Enter moves to the first tile');
    await offer(1).focus();
-   for(let i=0;i<3;i++)await page.keyboard.press('Tab');
-   assert(await offer(2).evaluate(el=>el===document.activeElement),'three Tabs reach the next row: field, Close, one stop for the panel');
+   await page.keyboard.press('Tab');
+   assert(await offer(2).evaluate(el=>el===document.activeElement),'Tab goes straight to the next row');
+   await offer(1).and(page.locator('[aria-expanded="false"]')).waitFor({timeout:2000});
    await page.keyboard.press('Escape');
   }
 
@@ -240,11 +245,12 @@ async function journey(viewport){
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
   assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
-  assert(await offer(1).evaluate(el=>el===document.activeElement),'recording moves focus to the first row');
+  const aetherField=page.getByLabel(/Aether after wave 1/);
+  assert(await aetherField.evaluate(el=>el===document.activeElement),'a new round starts in the Aether field');
 
   step('wave 2: reading taken on the offer screen, Pact offer added and taken');
-  const aetherField=page.getByLabel(/Aether after wave 1/);
-  await aetherField.fill('85');
+  await page.keyboard.type('85');
+  assert.equal(await aetherField.inputValue(),'85','typing goes straight into the reading');
   await page.clock.runFor(100);
   assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
   await page.clock.resume();
@@ -261,10 +267,34 @@ async function journey(viewport){
   await counts.click();
   assert.equal(await counts.getAttribute('aria-expanded'),'true','Event counts opens');
   await noZoomingFields(page,'Live Run with event counts open');
+  const focused=locator=>locator.evaluate(el=>el===document.activeElement);
+  if(viewport.width>=700){
+   step('Tab moves forward through the entry fields only; Shift+Tab still reaches every control');
+   await aetherField.focus();
+   await page.keyboard.press('Tab');
+   assert(await focused(page.getByLabel('Masses killed')),'with Event counts open, Tab goes from the reading to the counts');
+   for(let i=0;i<5;i++)await page.keyboard.press('Tab');
+   assert(await focused(offer(1)),'and from the last count to the first offer');
+  }
   await counts.click();
+  if(viewport.width>=700){
+   await aetherField.focus();
+   await page.keyboard.press('Tab');
+   assert(await focused(offer(1)),'Tab skips Missed it and Event counts');
+   for(const n of [2,3,4]){
+    await page.keyboard.press('Tab');
+    assert(await focused(offer(n)),`Tab reaches offer ${n}`);
+   }
+   await offer(1).focus();
+   await page.keyboard.press('Shift+Tab');
+   assert(await focused(counts),'Shift+Tab walks back through the skipped controls');
+   await page.keyboard.press('Shift+Tab');
+   assert(await focused(page.getByRole('checkbox',{name:'Missed it'})),'including Missed it');
+   await page.keyboard.press('Escape');
+  }
   await pick(1,'burst','The Bursting Masses');
   // The Pact row's picker opens at the last pick's category, Masses.
-  await page.getByRole('button',{name:'Add the Black Pact offer'}).click();
+  await offer(4).click();
   await page.getByRole('button',{name:/^The Anchored Masses/}).click();
   assert.equal(await offer(4).inputValue(),'The Anchored Masses');
   await page.keyboard.press('Escape');
@@ -280,8 +310,23 @@ async function journey(viewport){
   assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','removing a row above keeps them open');
   await pactDetails.click();
   await page.getByRole('button',{name:/Choose offer 4/}).click();
+  if(viewport.width>=700){
+   await offer(4).focus();
+   await page.keyboard.press('Tab');
+   assert(await focused(page.getByRole('button',{name:/Take The Anchored Masses/})),'Tab from the last offer reaches Take');
+  }
+  // From wave 2 on, a blank reading blocks recording and takes focus.
+  await aetherField.fill('');
+  await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
+  await page.getByText('Enter the Aether total shown after wave 1, or choose Missed it.',{exact:true}).waitFor();
+  assert(await aetherField.evaluate(el=>el===document.activeElement),'a missing reading takes focus');
+  assert.equal(await aetherField.getAttribute('aria-invalid'),'true');
+  assert.equal((await chosenEvents()).length,1,'nothing is recorded without a reading');
+  await aetherField.fill('85');
+  assert.equal(await page.getByText('Enter the Aether total shown after wave 1, or choose Missed it.',{exact:true}).count(),0,'typing a reading clears the error');
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
+  assert.equal(await offer(4).count(),0,'the Pact row leaves once the Pact is taken');
   await page.getByText(/Black Pact (offer )?used before wave 2/).waitFor();
   let run=(await stored()).runs[0];
   const reading=run.events.find(e=>e.type==='aether_observed');
@@ -297,6 +342,7 @@ async function journey(viewport){
   await page.getByRole('button',{name:/Choose offer 1/}).click();
   await page.getByRole('button',{name:/Take The Bursting Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
+  assert.equal(await offer(4).inputValue(),'','an unused Pact keeps its empty row');
 
   step('progress survives a reload');
   await page.reload({waitUntil:'domcontentloaded'});
@@ -313,6 +359,10 @@ async function journey(viewport){
   assert.equal((await stored()).profiles[0].buildName,'Blessed Shield (tab 2)');
 
   step('wave 3 by taps only, taking the pre-selected best');
+  // A reading the player didn't catch is marked missed, never guessed.
+  const missed=page.getByRole('checkbox',{name:'Missed it'});
+  await missed.check();
+  assert(await page.getByLabel(/Aether after wave 2/).isDisabled(),'a missed reading locks the field');
   await offer(1).click();
   for(const [family,name] of [['Spires','The Rising Spires'],['Spires','The Draining Spires'],['Hellfire','The Burning Rain']]){
    await page.getByRole('button',{name:new RegExp('^'+family)}).click();
@@ -322,6 +372,7 @@ async function journey(viewport){
   await page.getByRole('button',{name:/^Take The /}).click();
   await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
   const third=(await chosenEvents()).at(-1).payload;
+  assert(!(await stored()).runs[0].events.some(e=>e.type==='aether_observed'&&e.payload.afterWave===2),'a missed reading saves no number');
   assert.equal(third.choiceSource,'default','taking the pre-selected offer is recorded as the default');
   assert.equal(third.chosen,third.recommendedOffer);
   // The toast's Undo belongs to this screen, so leaving dismisses it.
@@ -335,6 +386,7 @@ async function journey(viewport){
   await page.getByRole('button',{name:'Undo last decision'}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
   assert.equal(await offer(3).inputValue(),'The Burning Rain');
+  assert(await page.getByRole('checkbox',{name:'Missed it'}).isChecked(),'undo keeps a missed reading missed');
   let chosenRow=0;
   for(const n of [1,2,3])if(await offer(n).inputValue()===third.chosen)chosenRow=n;
   assert(await offer(chosenRow).evaluate(el=>el===document.activeElement),'undo puts focus on the restored choice');

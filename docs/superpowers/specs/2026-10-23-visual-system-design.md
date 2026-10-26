@@ -200,7 +200,7 @@ The footer sits at the end of the page on every screen. It holds:
    - Phones wrap the category, danger and estimate onto a second line.
 7. **Add actions:**
    - "Add another offer" while there are fewer than `MAX_OFFERS` rows.
-   - "Add the Black Pact offer" when `p.specialRemaining` is true and no Pact row exists.
+   - The Black Pact row is there from the start while `p.specialRemaining` is true (changed 2026-10-25; it replaced an "Add the Black Pact offer" button).
 8. **`PickCard`** inside a `Frame`:
    - Label: "Best pick", or "Close call" when the result isn't robust.
    - Offer name.
@@ -242,7 +242,7 @@ The footer sits at the end of the page on every screen. It holds:
 
 - **The row:** one extra row with a `rubric` left rule (a graphic, so 3:1 suffices) and the label "Black Pact" in `ink`.
 - **Recording:** recorded through `specialSlotIndex`, as today.
-- **Removing it:** clears the special slot.
+- **Clearing it:** empties the row, which stays until the Pact is taken.
 - **Picker shortcut:** its picker opens at step 2 for the last pick's category, because the tooltip says the Pact's offer shares it. Back returns to all categories.
 
 ### Other states

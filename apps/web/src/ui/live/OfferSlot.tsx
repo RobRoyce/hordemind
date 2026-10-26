@@ -49,7 +49,7 @@ export function OfferSlot({index,slot,picker,pact,selected,best,busy,assessment,
   </div>}
   {estimate}
   {(removable||slot.text)&&<button type="button" className={s.clear} onClick={onClear}
-   aria-label={pact?'Remove the Black Pact offer':removable?`Remove offer ${n}`:`Clear offer ${n}`}>×</button>}
+   aria-label={pact?'Clear the Black Pact offer':removable?`Remove offer ${n}`:`Clear offer ${n}`}>×</button>}
   {open&&assessment&&<div id={detailsId} className={s.details}>
    {assessment.modeled?<EstimateDetails estimate={assessment} reportUrl={estimateReportUrl(assessment,reportContext)}/>:<>
     <p className={s.reason}>{assessment.reason}</p>

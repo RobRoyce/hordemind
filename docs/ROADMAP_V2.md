@@ -23,7 +23,7 @@ When actively playing, enter the 3–4 offers presented, compare explainable rec
 - [x] Focus handling, 44 px targets, compact phone layout, undo with prefill, end run early
 - [x] One-step start from the selected character; no configuration while playing
 - [x] Choice rationale, unmodeled-offer notices, Black Pact slot marking and spend warning
-- [x] Optional per-wave Aether and event counts on the offer screen ([ADR 0003](adr/0003-run-timeline-and-observations.md))
+- [x] Per-wave Aether (required since 2026-10-25) and optional event counts on the offer screen ([ADR 0003](adr/0003-run-timeline-and-observations.md))
 - [x] Strategy Lab autosaves; invalid fields never reach storage; unreadable saves are never overwritten
 - [ ] Measured ten-wave mock run under two minutes on laptop and phone
 - [ ] Offline support (service worker)
