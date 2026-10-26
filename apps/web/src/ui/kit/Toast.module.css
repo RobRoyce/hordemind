@@ -1,4 +1,4 @@
-/* Phones lift toasts above the record bar and tabs by setting --hm-toast-offset. */
+/* Phones lift toasts above the record bar and tabs by setting --hm-toast-offset. Wide screens put them in the corner, off the content column. */
 .region{
  position:fixed;
  left:0;
@@ -23,7 +23,8 @@
  background:var(--hm-raised);
  color:var(--hm-ink);
  box-shadow:0 10px 28px rgb(0 0 0 / 0.5);
- pointer-events:auto;
+ /* Clicks pass through the text; only the action catches them. */
+ pointer-events:none;
 }
 
 .action{
@@ -37,4 +38,12 @@
  text-decoration:underline;
  text-underline-offset:3px;
  cursor:pointer;
+ pointer-events:auto;
+}
+
+@media (min-width:700px){
+ .region{
+  justify-content:flex-end;
+  padding:0 var(--hm-space-5);
+ }
 }

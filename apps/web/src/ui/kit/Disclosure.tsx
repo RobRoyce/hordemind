@@ -1,4 +1,5 @@
 import type {ReactNode} from 'react';
+import {cx} from './cx';
 import s from './Disclosure.module.css';
 
 export function Disclosure({summary,children,open}:{summary:ReactNode;children:ReactNode;open?:boolean}){
@@ -8,9 +9,15 @@ export function Disclosure({summary,children,open}:{summary:ReactNode;children:R
  </details>;
 }
 
-interface ToggleProps{open:boolean;onToggle:()=>void;controls:string;children:ReactNode}
+interface ToggleProps{
+ open:boolean;onToggle:()=>void;controls:string;children:ReactNode;
+ /** Accessible name when the visible text repeats, as in "Details for The Burning Rain". */
+ label?:string;
+ className?:string;
+}
 
 /** A disclosure trigger whose panel the caller places, so an inline trigger can open a full-width panel below. */
-export function DisclosureToggle({open,onToggle,controls,children}:ToggleProps){
- return <button type="button" className={s.toggle} aria-expanded={open} aria-controls={controls} onClick={onToggle}>{children}</button>;
+export function DisclosureToggle({open,onToggle,controls,children,label,className}:ToggleProps){
+ return <button type="button" className={cx(s.toggle,className)} aria-expanded={open} aria-controls={controls} aria-label={label}
+  onClick={onToggle}>{children}</button>;
 }

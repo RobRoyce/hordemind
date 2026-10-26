@@ -19,7 +19,8 @@ const BRANCHES:readonly {id:DrawnBranch;title:string;note:string}[]=[
 
 function Detail({id,shown,learned}:{id:string;shown:string|null;learned:readonly string[]}){
  const n=shown?nodeById(shown):null;
- return <div id={id} className={s.detail} role="region" aria-label="Upgrade details" aria-live="polite">
+ // Not a live region: each node's aria-describedby already reads these details on focus.
+ return <div id={id} className={s.detail} role="region" aria-label="Upgrade details">
   {!n?<p className={s.muted}>Hover or focus an upgrade to read its in-game tooltip and how HordeMind uses it.</p>:<>
    <h4 className={s.detailName}>{n.id}</h4>
    <p className={s.tooltip}>{n.tooltip}</p>

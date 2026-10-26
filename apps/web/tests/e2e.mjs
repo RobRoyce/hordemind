@@ -98,6 +98,10 @@ async function journey(viewport){
   for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await warPlan(name).click();
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'true');
   assert((await page.getByRole('region',{name:'Upgrade details'}).innerText()).includes('An ominous altar appears between waves'));
+  // The focused node's description carries the details, so the panel stays quiet instead of announcing every hover.
+  assert.equal(await page.getByRole('region',{name:'Upgrade details'}).getAttribute('aria-live'),null,'the details panel is not a live region');
+  const description=await warPlan('The Black Pact').evaluate(el=>(el.getAttribute('aria-describedby')??'').split(' ').map(id=>document.getElementById(id)?.textContent??'').join(' '));
+  assert(description.includes('An ominous altar appears between waves'),'a focused upgrade is described by its tooltip');
   const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'War Plan',exact:true}));
   assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
   assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
@@ -122,6 +126,12 @@ async function journey(viewport){
   assert.equal(await choiceOf(page,'Difficulty'),'Torment XII');
   assert.equal(await choiceOf(page,'Mobility'),'Low');
   assert.equal(await choiceOf(page,'Realm'),'Eternal');
+  // Back moves between tabs instead of leaving the app.
+  await navTo(page,/^Insights/);
+  await page.getByRole('heading',{name:'Insights',exact:true}).waitFor();
+  await page.goBack();
+  await page.getByLabel('Character name',{exact:true}).waitFor();
+  assert.equal(new URL(page.url()).hash,'#character','Back returns to Character');
 
   // A second tab opened now holds this state while the first tab records a run.
   const other=await context.newPage();
@@ -134,6 +144,18 @@ async function journey(viewport){
   await page.getByRole('button',{name:/^Start (live run|a \d+-wave run)$/}).click();
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
+  {
+   // Toasts keep off the content column on wide screens, and their text never blocks a click.
+   // Measured in one pass while the toast shows, since it leaves on a timer.
+   const toast=await (await page.waitForFunction(()=>{
+    const text=[...document.querySelectorAll('[role="status"] span')].find(el=>el.textContent==='Run started');
+    if(!text)return null;
+    const t=text.getBoundingClientRect(),rows=document.querySelector('[aria-label="Offers on screen"]').getBoundingClientRect();
+    return {right:t.left>rows.left+rows.width/2,hit:document.elementFromPoint(t.left+t.width/2,t.top+t.height/2)?.textContent??''};
+   })).jsonValue();
+   if(viewport.width>=700)assert(toast.right,'the toast sits to the right, not over the middle of the column');
+   assert.notEqual(toast.hit,'Run started','a click on toast text passes through to the page');
+  }
 
   if(viewport.width>=700){
    step('keyboard: the open picker is exposed, one Tab stop, and Enter moves into it');
@@ -204,13 +226,26 @@ async function journey(viewport){
   assert.equal(await page.getByRole('button',{name:`Choose offer ${bestRow}: ${best}`}).getAttribute('aria-pressed'),'true');
   await noSeriousViolations(page,'Live Run with offers entered');
 
+  step('each offer opens its own details from a visible link');
+  const otherRow=bestRow===1?2:1;
+  const otherOffer=await offer(otherRow).inputValue();
+  const details=page.getByRole('button',{name:`Details for ${otherOffer}`,exact:true});
+  await details.click();
+  assert.equal(await details.getAttribute('aria-expanded'),'true');
+  const panel=page.locator(`[id="${await details.getAttribute('aria-controls')}"]`);
+  assert((await panel.innerText()).includes('Simulated 5–95% range'),'the breakdown opens under its own row');
+  await noSeriousViolations(page,'Live Run with offer details open');
+  await details.click();
+  assert.equal(await panel.count(),0,'Details closes again');
+
   step('choose with the keyboard and record');
   await decisionHeading().click();
   await page.keyboard.press('1');
   assert.equal(await page.getByRole('button',{name:/Choose offer 1/}).getAttribute('aria-pressed'),'true');
   // Frozen timers stand in for a busy main thread, which can delay a deferred focus past the player's next action.
-  // The page's Date can trail the clock after an idle stretch, so pause a second past either reading.
-  await page.clock.pauseAt(Math.max(await page.evaluate(()=>Date.now()),Date.now())+1000);
+  // pauseAt moves every page's clock, including the background tab, and they drift apart. Pause past the furthest.
+  const clocks=await Promise.all(page.context().pages().map(pg=>pg.evaluate(()=>Date.now())));
+  await page.clock.pauseAt(Math.max(Date.now(),...clocks)+1000);
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
   assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
@@ -244,6 +279,16 @@ async function journey(viewport){
   await page.keyboard.press('Escape');
   await page.getByRole('button',{name:/Choose offer 4/}).click();
   await page.getByLabel('Black Pact advice').waitFor({timeout:25000});
+  // Each row keeps its own state when a row is added or removed above it.
+  const pactDetails=page.getByRole('button',{name:'Details for The Anchored Masses',exact:true});
+  await pactDetails.click();
+  await page.getByRole('button',{name:'Add another offer'}).click();
+  if(viewport.width<700)await page.keyboard.press('Escape');
+  assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','adding a row above keeps the Pact row details open');
+  await page.getByRole('button',{name:'Remove offer 4'}).click();
+  assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','removing a row above keeps them open');
+  await pactDetails.click();
+  await page.getByRole('button',{name:/Choose offer 4/}).click();
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
   await page.getByText(/Black Pact (offer )?used before wave 2/).waitFor();
