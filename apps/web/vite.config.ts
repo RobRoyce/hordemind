@@ -1,7 +1,17 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, type Plugin } from 'vitest/config';
+import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({
-  plugins: [react()],
+
+/** Stamps each page with its commit, so the release check can confirm what is live. Local builds say "dev". */
+function commitMeta(commit: string): Plugin {
+  return {
+    name: 'hordemind-commit',
+    transformIndexHtml: () => [{ tag: 'meta', attrs: { name: 'hordemind-commit', content: commit }, injectTo: 'head' }]
+  };
+}
+
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), commitMeta(loadEnv(mode, '.', 'GITHUB_SHA').GITHUB_SHA || 'dev')],
   // Repository Pages path will be used after v2 replaces the current app.
   base: './',
   build: {
@@ -12,4 +22,4 @@ export default defineConfig({
   },
   // Vitest skips CSS it does not include; the token tests read stylesheets as text.
   test: { css: { include: [/tokens\.css/, /\.module\.css/] } }
-});
+}));
