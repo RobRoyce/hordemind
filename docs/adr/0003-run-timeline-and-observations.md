@@ -38,7 +38,8 @@ The owner confirmed in Season 15 play that the first offer comes before wave 1 s
 
 ## Update (2026-10-25): readings are required
 
-- The owner made the Aether reading required. Live Run blocks recording a decision from wave 2 on until the reading is entered, so every wave's gain is known.
-- The final total is required when a run completes. It stays optional for a run ended early, which may stop mid-wave without a reading.
+- The owner made the Aether reading required. Live Run blocks recording a decision from wave 2 on until the reading is entered or marked "Missed it".
+- A missed reading is saved as no reading, which already means unknown. A guess would look like a real number, so the option keeps guesses out of the data.
+- The final total is required when a run completes, with the same Missed it option. It stays optional for a run ended early, which may stop mid-wave without a reading.
 - Event counts stay optional.
 - The schema still allows a missing `totalAether`, so earlier runs stay valid. The requirement lives in the UI.

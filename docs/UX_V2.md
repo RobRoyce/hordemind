@@ -7,7 +7,7 @@
    - Header shows wave *k* of *N*, the latest Aether reading, the taken-offer stack, and the Black Pact status.
    - Up to five offer rows use a searchable combobox (name, family, mechanic; recent offers first). Picking moves focus to the next row.
    - Each screen starts with three offer rows, or four with Reign in Hell. While the Black Pact is unused, its row sits below them. Empty rows are ignored.
-   - A required "Aether after wave *k−1*" field and collapsed, optional event counts sit above the offers. Recording is blocked until the reading is entered.
+   - A required "Aether after wave *k−1*" field and collapsed, optional event counts sit above the offers. Recording is blocked until the reading is entered or marked "Missed it", which saves no number.
    - The recommendation sits beside the offers on wide screens. On narrow screens it sits below, with a one-line summary by the record button.
    - Keys: 1–5 choose a row, Ctrl/⌘+Enter records. Undo prefills the last wave. Ending early is always available.
    - Offers with a dangerous bane show a *High danger* or *Some danger* badge with the bane text. Danger never changes the estimate.

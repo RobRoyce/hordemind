@@ -287,12 +287,12 @@ async function journey(viewport){
   // From wave 2 on, a blank reading blocks recording and takes focus.
   await aetherField.fill('');
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
-  await page.getByText('Enter the Aether total shown after wave 1.',{exact:true}).waitFor();
+  await page.getByText('Enter the Aether total shown after wave 1, or choose Missed it.',{exact:true}).waitFor();
   assert(await aetherField.evaluate(el=>el===document.activeElement),'a missing reading takes focus');
   assert.equal(await aetherField.getAttribute('aria-invalid'),'true');
   assert.equal((await chosenEvents()).length,1,'nothing is recorded without a reading');
   await aetherField.fill('85');
-  assert.equal(await page.getByText('Enter the Aether total shown after wave 1.',{exact:true}).count(),0,'typing a reading clears the error');
+  assert.equal(await page.getByText('Enter the Aether total shown after wave 1, or choose Missed it.',{exact:true}).count(),0,'typing a reading clears the error');
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
   assert.equal(await offer(4).count(),0,'the Pact row leaves once the Pact is taken');
@@ -328,7 +328,10 @@ async function journey(viewport){
   assert.equal((await stored()).profiles[0].buildName,'Blessed Shield (tab 2)');
 
   step('wave 3 by taps only, taking the pre-selected best');
-  await page.getByLabel(/Aether after wave 2/).fill('140');
+  // A reading the player didn't catch is marked missed, never guessed.
+  const missed=page.getByRole('checkbox',{name:'Missed it'});
+  await missed.check();
+  assert(await page.getByLabel(/Aether after wave 2/).isDisabled(),'a missed reading locks the field');
   await offer(1).click();
   for(const [family,name] of [['Spires','The Rising Spires'],['Spires','The Draining Spires'],['Hellfire','The Burning Rain']]){
    await page.getByRole('button',{name:new RegExp('^'+family)}).click();
@@ -338,6 +341,7 @@ async function journey(viewport){
   await page.getByRole('button',{name:/^Take The /}).click();
   await page.getByRole('heading',{name:'Offers before wave 4'}).waitFor();
   const third=(await chosenEvents()).at(-1).payload;
+  assert(!(await stored()).runs[0].events.some(e=>e.type==='aether_observed'&&e.payload.afterWave===2),'a missed reading saves no number');
   assert.equal(third.choiceSource,'default','taking the pre-selected offer is recorded as the default');
   assert.equal(third.chosen,third.recommendedOffer);
   // The toast's Undo belongs to this screen, so leaving dismisses it.
@@ -351,6 +355,7 @@ async function journey(viewport){
   await page.getByRole('button',{name:'Undo last decision'}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
   assert.equal(await offer(3).inputValue(),'The Burning Rain');
+  assert(await page.getByRole('checkbox',{name:'Missed it'}).isChecked(),'undo keeps a missed reading missed');
   let chosenRow=0;
   for(const n of [1,2,3])if(await offer(n).inputValue()===third.chosen)chosenRow=n;
   assert(await offer(chosenRow).evaluate(el=>el===document.activeElement),'undo puts focus on the restored choice');

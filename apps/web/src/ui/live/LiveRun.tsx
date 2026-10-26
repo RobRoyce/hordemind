@@ -6,6 +6,7 @@ import {remainingWaves} from '../../recommendation/model';
 import {scenarioFromRun} from '../../recommendation/scenario';
 import {Button,DisclosureToggle,Field,Notice,NumberField,SectionHeading,useNarrow} from '../kit';
 import {useRecommendations} from '../useRecommendations';
+import {AetherInput} from './AetherInput';
 import {EndRunPanel} from './EndRunPanel';
 import {OfferPicker,PickerSheet,pickerTitle} from './OfferPicker';
 import {OfferSlot} from './OfferSlot';
@@ -48,7 +49,7 @@ export function LiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}
  return <ActiveRun key={run.id} run={run} profile={profile} recentOffers={recentOffers} saveRun={saveRun} onStart={onStart} onGoCharacter={onGoCharacter}/>;
 }
 
-interface Form{slots:Slot[];special:number|null;selection:Selection;aether:string;counts:Record<string,string>}
+interface Form{slots:Slot[];special:number|null;selection:Selection;aether:string;missed:boolean;counts:Record<string,string>}
 
 function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Props&{run:RunRecord}){
  const p=useMemo(()=>project(run),[run]);
@@ -62,6 +63,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const [special,setSpecial]=useState<number|null>(()=>freshForm(p.specialRemaining).special);
  const [selection,setSelection]=useState<Selection>(NO_SELECTION);
  const [aether,setAether]=useState('');
+ const [aetherMissed,setAetherMissed]=useState(false);
  const [aetherError,setAetherError]=useState('');
  const aetherInput=useRef<HTMLInputElement>(null);
  const [counts,setCounts]=useState<Record<string,string>>({});
@@ -97,9 +99,10 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  function resetForm(next:Partial<Form>={},pactOpen=p.specialRemaining){
   const fresh=freshForm(pactOpen);
   setSlots((next.slots??fresh.slots).map(keyed));setSpecial(next.slots?next.special??null:fresh.special);setSelection(next.selection??NO_SELECTION);
-  setAether(next.aether??'');setAetherError('');setCounts(next.counts??{});setError('');setOpenRow(null);
+  setAether(next.aether??'');setAetherMissed(next.missed??false);setAetherError('');setCounts(next.counts??{});setError('');setOpenRow(null);
  }
  function changeAether(text:string){setAether(text);setAetherError('')}
+ function markMissed(missed:boolean){setAetherMissed(missed);setAetherError('');if(missed)setAether('')}
  /** Shows a reading's error on its field and moves focus there. */
  function aetherProblem(e:unknown){setError('');setAetherError(message(e));aetherInput.current?.focus()}
  function updateSlot(i:number,slot:Slot){
@@ -153,9 +156,11 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    if(current.slot===null||!chosenOffer)throw new Error('Choose the offer you took.');
    let observation:Observation|null=null;
    if(p.wavesPlayedAtNextStep>0){
-    let totalAether:number|null;
-    try{totalAether=parseAether(aether,'Aether',`Enter the Aether total shown after wave ${p.wavesPlayedAtNextStep}.`)}
-    catch(e){aetherProblem(e);return}
+    let totalAether:number|null=null;
+    if(!aetherMissed){
+     try{totalAether=parseAether(aether,'Aether',`Enter the Aether total shown after wave ${p.wavesPlayedAtNextStep}, or choose Missed it.`)}
+     catch(e){aetherProblem(e);return}
+    }
     const eventCounts=parseCounts(counts);
     observation={totalAether,...(eventCounts?{eventCounts}:{})};
    }
@@ -180,7 +185,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    const back=undoChoice(now);
    saveRun(back,'Last decision undone; its offers are back for editing');
    setEnding(false);
-   const pactOpen=project(back).specialRemaining;
+   const restored=project(back),pactOpen=restored.specialRemaining;
    if(!draft){resetForm({},pactOpen);fillAfterRender.current={row:0,open:false};return}
    const sp=draft.specialSlotIndex;
    const rows:Slot[]=[],rowOf=new Map<number,number>();
@@ -196,16 +201,21 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    resetForm({slots:rows,special:pactRow,
     selection:chosenRow===undefined||draft.choiceSource==='default'?NO_SELECTION:pick(chosenRow),
     aether:reading?.totalAether?.toString()??'',
+    // Recording required a reading from wave 2 on, so a decision without one was marked missed.
+    missed:restored.wavesPlayedAtNextStep>0&&(reading?.totalAether??null)===null,
     counts:Object.fromEntries(Object.entries(reading?.eventCounts??{}).map(([k,v])=>[k,String(v)]))});
    // The toast that held Undo is gone, so focus goes to the restored choice.
    fillAfterRender.current={row:chosenRow??0,open:false};
   }catch(e){setError(message(e))}
  }
  function finish(outcome:'completed'|'abandoned'){
-  // A finished run needs its final reading. A run ended early may not have one.
-  let total:number|null;
-  try{total=parseAether(aether,'Final Aether',outcome==='completed'?'Enter your final Aether total.':undefined)}
-  catch(e){aetherProblem(e);return}
+  // A finished run needs its final reading or Missed it. A run ended early may not have one.
+  const completed=outcome==='completed';
+  let total:number|null=null;
+  if(!(completed&&aetherMissed)){
+   try{total=parseAether(aether,'Final Aether',completed?'Enter your final Aether total, or choose Missed it.':undefined)}
+   catch(e){aetherProblem(e);return}
+  }
   try{
    saveRun(endRun(run,outcome,total),outcome==='completed'?'Run completed and saved':'Run ended and saved');
    setEnding(false);setError('');
@@ -264,14 +274,10 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
   {run.status!=='in_progress'?<RunEnded run={run} profile={profile} onStart={onStart} headingRef={panelHeading}/>:
    deciding&&!ending?<>
     {p.wavesPlayedAtNextStep>0&&<div>
-     {/* The toggle shares the input's row, so an error line under both never shifts it. */}
      <Field label={`Aether after wave ${p.wavesPlayedAtNextStep}`} error={aetherError}>
-      {wire=><div className={s.reading}>
-       <div className={s.aether}>
-        <NumberField wire={wire} ref={aetherInput} min={0} required placeholder="Total shown in game" value={aether} onChange={e=>changeAether(e.target.value)}/>
-       </div>
+      {wire=><AetherInput wire={wire} inputRef={aetherInput} value={aether} onChange={changeAether} missed={aetherMissed} onMissed={markMissed}>
        <DisclosureToggle open={countsOpen} onToggle={()=>setCountsOpen(o=>!o)} controls={countsId}>Event counts</DisclosureToggle>
-      </div>}
+      </AetherInput>}
      </Field>
      <div id={countsId} className={s.countsPanel} hidden={!countsOpen}>
       <div className={s.counts}>
@@ -318,7 +324,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
     <RecordBar offer={chosenOffer} rows={slots.length} onRecord={record}/>
    </>:
    <EndRunPanel mode={ending?'ending':'final'} totalWaves={p.totalWaves} aether={aether} onAether={changeAether}
-    aetherError={aetherError} aetherRef={aetherInput}
+    aetherError={aetherError} aetherRef={aetherInput} missed={aetherMissed} onMissed={markMissed}
     onFinish={()=>finish('completed')} onEnd={()=>finish('abandoned')} onKeep={()=>{setEnding(false);setError('');setAetherError('')}}
     error={error} headingRef={panelHeading}/>}
 
