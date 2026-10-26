@@ -41,17 +41,19 @@ Success means two things:
 
 | Token | Value | Use |
 |---|---|---|
-| `bg` | #1a1510 | Page |
+| `bg` | #141210 | Page |
+| `glow` | #1f1913 | Light at the top of the page, a radial gradient into `bg` within 300px. Text passes on its brightest point (muted 5.9:1). |
 | `raised` | #221b14 | Inputs, menus, sheets |
-| `ink` | #ebe1cc | Body text (14.0:1) |
-| `muted` | #a5957a | Secondary text (6.2:1) |
-| `faint` | #7d6d57 | Disabled and decoration only (3.6:1), never essential text |
+| `ink` | #ebe1cc | Body text (14.4:1) |
+| `muted` | #a5957a | Secondary text (6.4:1) |
+| `faint` | #7d6d57 | Disabled and decoration only (3.7:1), never essential text |
 | `rule` | #4a3c2b | Section dividers |
 | `hair` | #30271b | Row dividers |
 | `gold` | #e7c47c | Pick, primary action, focus ring |
 | `amber` | #d9a35c | "Best pick" label |
 | `ember` | #f0a24a | Aether values only |
-| `rubric` | #c4473a | Red-ink numerals at display size only (3.7:1, large text) |
+| `rubric` | #c4473a | Red-ink numerals at display size only (3.8:1, large text) |
+| `rubric-ink` | #e08a7c | Red ink as text, such as "Add the Black Pact offer" (7.2:1) |
 | `danger` | #e0604d | Danger flags, errors. The only red at small sizes. |
 
 ### Category pigments
