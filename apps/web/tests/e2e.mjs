@@ -162,8 +162,9 @@ async function journey(viewport){
    await page.keyboard.press('Enter');
    assert(await categories.getByRole('button',{name:/^Masses/}).evaluate(el=>el===document.activeElement),'Enter moves to the first tile');
    await offer(1).focus();
-   for(let i=0;i<3;i++)await page.keyboard.press('Tab');
-   assert(await offer(2).evaluate(el=>el===document.activeElement),'three Tabs reach the next row: field, Close, one stop for the panel');
+   await page.keyboard.press('Tab');
+   assert(await offer(2).evaluate(el=>el===document.activeElement),'Tab goes straight to the next row');
+   await offer(1).and(page.locator('[aria-expanded="false"]')).waitFor({timeout:2000});
    await page.keyboard.press('Escape');
   }
 
@@ -244,11 +245,12 @@ async function journey(viewport){
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
   assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
-  assert(await offer(1).evaluate(el=>el===document.activeElement),'recording moves focus to the first row');
+  const aetherField=page.getByLabel(/Aether after wave 1/);
+  assert(await aetherField.evaluate(el=>el===document.activeElement),'a new round starts in the Aether field');
 
   step('wave 2: reading taken on the offer screen, Pact offer added and taken');
-  const aetherField=page.getByLabel(/Aether after wave 1/);
-  await aetherField.fill('85');
+  await page.keyboard.type('85');
+  assert.equal(await aetherField.inputValue(),'85','typing goes straight into the reading');
   await page.clock.runFor(100);
   assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
   await page.clock.resume();
@@ -265,7 +267,31 @@ async function journey(viewport){
   await counts.click();
   assert.equal(await counts.getAttribute('aria-expanded'),'true','Event counts opens');
   await noZoomingFields(page,'Live Run with event counts open');
+  const focused=locator=>locator.evaluate(el=>el===document.activeElement);
+  if(viewport.width>=700){
+   step('Tab moves forward through the entry fields only; Shift+Tab still reaches every control');
+   await aetherField.focus();
+   await page.keyboard.press('Tab');
+   assert(await focused(page.getByLabel('Masses killed')),'with Event counts open, Tab goes from the reading to the counts');
+   for(let i=0;i<5;i++)await page.keyboard.press('Tab');
+   assert(await focused(offer(1)),'and from the last count to the first offer');
+  }
   await counts.click();
+  if(viewport.width>=700){
+   await aetherField.focus();
+   await page.keyboard.press('Tab');
+   assert(await focused(offer(1)),'Tab skips Missed it and Event counts');
+   for(const n of [2,3,4]){
+    await page.keyboard.press('Tab');
+    assert(await focused(offer(n)),`Tab reaches offer ${n}`);
+   }
+   await offer(1).focus();
+   await page.keyboard.press('Shift+Tab');
+   assert(await focused(counts),'Shift+Tab walks back through the skipped controls');
+   await page.keyboard.press('Shift+Tab');
+   assert(await focused(page.getByRole('checkbox',{name:'Missed it'})),'including Missed it');
+   await page.keyboard.press('Escape');
+  }
   await pick(1,'burst','The Bursting Masses');
   // The Pact row's picker opens at the last pick's category, Masses.
   await offer(4).click();
@@ -284,6 +310,11 @@ async function journey(viewport){
   assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','removing a row above keeps them open');
   await pactDetails.click();
   await page.getByRole('button',{name:/Choose offer 4/}).click();
+  if(viewport.width>=700){
+   await offer(4).focus();
+   await page.keyboard.press('Tab');
+   assert(await focused(page.getByRole('button',{name:/Take The Anchored Masses/})),'Tab from the last offer reaches Take');
+  }
   // From wave 2 on, a blank reading blocks recording and takes focus.
   await aetherField.fill('');
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();

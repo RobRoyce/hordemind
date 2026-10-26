@@ -15,7 +15,7 @@ interface Props{
 export function AetherInput({wire,value,onChange,missed,onMissed,inputRef,children}:Props){
  return <div className={s.row}>
   <div className={s.input}>
-   <NumberField wire={wire} ref={inputRef} min={0} required={Boolean(onMissed)&&!missed} disabled={missed}
+   <NumberField wire={wire} ref={inputRef} data-entry min={0} required={Boolean(onMissed)&&!missed} disabled={missed}
     placeholder={missed?'Not read':'Total shown in game'} value={missed?'':value} onChange={e=>onChange(e.target.value)}/>
   </div>
   {onMissed&&<Checkbox label="Missed it" checked={missed} onChange={onMissed}/>}

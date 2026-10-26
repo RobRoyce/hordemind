@@ -237,7 +237,7 @@ export const OfferPicker=forwardRef<HTMLInputElement,Props>(function OfferPicker
    aria-expanded={showList||panel} aria-controls={showList?listId:panel?panelId:undefined} aria-autocomplete="list"
    aria-activedescendant={showList?`${listId}-${nav.active}`:undefined}
    aria-invalid={unresolved||undefined} aria-describedby={unresolved&&!showList?noteId:undefined}
-   autoComplete="off" spellCheck={false} inputMode={narrow?'none':undefined}
+   autoComplete="off" spellCheck={false} inputMode={narrow?'none':undefined} data-entry
    placeholder={narrow?'Tap to choose':'Choose, or type to search'}
    className={cx(s.field,!empty&&!unresolved&&s.filled)}
    value={slot.text}

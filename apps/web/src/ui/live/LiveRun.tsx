@@ -1,4 +1,4 @@
-import {useEffect,useId,useLayoutEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useId,useLayoutEffect,useMemo,useRef,useState,type KeyboardEvent as ReactKeyboardEvent} from 'react';
 import type {CharacterProfile,RunRecord} from '../../domain/schema';
 import {MAX_OFFERS} from '../../domain/schema';
 import {decisionDraft,endRun,project,recordDecision,undoChoice,type Observation} from '../../domain/run';
@@ -78,7 +78,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const pickerReturn=useRef<HTMLElement|null>(null);
  const panelHeading=useRef<HTMLHeadingElement>(null);
  /** A row to fill once the next render commits: focused, or with its phone sheet open. Filled rows just take focus. */
- const fillAfterRender=useRef<{row:number;open:boolean}|null>(null);
+ const fillAfterRender=useRef<{row:number|'aether';open:boolean}|null>(null);
  const inProgress=run.status==='in_progress';
  const deciding=inProgress&&!p.decisionsComplete;
 
@@ -174,7 +174,8 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
    });
    saveRun(next,`Wave ${p.nextWave}: ${chosenOffer} recorded`,undo);
    resetForm({},project(next).specialRemaining);
-   fillAfterRender.current={row:0,open:false};
+   // A new round starts in the Aether field, which every screen after the first has.
+   fillAfterRender.current={row:'aether',open:false};
   }catch(e){setError(message(e))}
  }
  /** Reverses the last decision and puts its offers back in the rows. Reads the newest run, so the toast's Undo works too. */
@@ -241,7 +242,8 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
   const fill=fillAfterRender.current;
   if(!fill)return;
   fillAfterRender.current=null;
-  if(fill.open)openPicker(fill.row,true);
+  if(fill.row==='aether'){aetherInput.current?.focus();aetherInput.current?.select()}
+  else if(fill.open)openPicker(fill.row,true);
   else inputs.current[fill.row]?.focus();
  });
 
@@ -266,7 +268,20 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const offerRows=slots.length-(special===null?0:1);
  const titleFor=(i:number)=>i===special?PACT_TITLE:pickerTitle(i,offerRows);
 
- return <div className={s.run}>
+ /** Tab moves forward through the entry fields only. Shift+Tab keeps the page order, so every control stays reachable. */
+ function tabToNextEntry(e:ReactKeyboardEvent<HTMLDivElement>){
+  if(e.key!=='Tab'||e.shiftKey||e.altKey||e.ctrlKey||e.metaKey||e.defaultPrevented)return;
+  const from=e.target as HTMLElement;
+  // The phone sheet is portaled, but its key events still bubble here.
+  if(!from.matches('[data-entry]')||from.closest('[role="dialog"]'))return;
+  const fields=[...e.currentTarget.querySelectorAll<HTMLInputElement|HTMLButtonElement>('[data-entry]')].filter(el=>!el.disabled&&!el.closest('[hidden]'));
+  const next=fields[fields.indexOf(from as HTMLInputElement)+1];
+  if(!next)return;
+  e.preventDefault();
+  next.focus();
+ }
+
+ return <div className={s.run} onKeyDown={tabToNextEntry}>
   <RunHeader profile={p.profile} wave={Math.min(p.nextWave,p.totalWaves)} totalWaves={p.totalWaves} deciding={deciding}
    aether={p.lastTotalAether} observedWave={p.lastObservedWave} pactStatus={pactStatus} onEditCharacter={onGoCharacter}
    taken={p.chosen.map(x=>({id:x.id,offer:x.payload.chosen,pact:x.payload.usedSpecial}))}/>
@@ -282,7 +297,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
      <div id={countsId} className={s.countsPanel} hidden={!countsOpen}>
       <div className={s.counts}>
        {OBSERVABLES.map(([id,label])=><Field key={id} label={label}>
-        {wire=><NumberField wire={wire} min={0} placeholder="Not counted" value={counts[id]??''} onChange={e=>setCounts(x=>({...x,[id]:e.target.value}))}/>}
+        {wire=><NumberField wire={wire} data-entry min={0} placeholder="Not counted" value={counts[id]??''} onChange={e=>setCounts(x=>({...x,[id]:e.target.value}))}/>}
        </Field>)}
       </div>
       <p className={s.note}>Event counts for wave {p.wavesPlayedAtNextStep}. Leave a field blank when you didn't count it. Blank means unknown, not zero.</p>
