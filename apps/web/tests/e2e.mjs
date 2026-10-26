@@ -221,8 +221,9 @@ async function journey(viewport){
   await page.keyboard.press('1');
   assert.equal(await page.getByRole('button',{name:/Choose offer 1/}).getAttribute('aria-pressed'),'true');
   // Frozen timers stand in for a busy main thread, which can delay a deferred focus past the player's next action.
-  // The page's Date can trail the clock after an idle stretch, so pause a second past either reading.
-  await page.clock.pauseAt(Math.max(await page.evaluate(()=>Date.now()),Date.now())+1000);
+  // pauseAt moves every page's clock, including the background tab, and they drift apart. Pause past the furthest.
+  const clocks=await Promise.all(page.context().pages().map(pg=>pg.evaluate(()=>Date.now())));
+  await page.clock.pauseAt(Math.max(Date.now(),...clocks)+1000);
   await page.keyboard.press('Control+Enter');
   await page.getByRole('heading',{name:'Offers before wave 2'}).waitFor();
   assert.equal((await chosenEvents())[0].payload.choiceSource,'picked','a number key is a deliberate choice');
