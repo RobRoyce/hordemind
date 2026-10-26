@@ -6,9 +6,13 @@
 
 .reading{
  display:flex;
- flex-direction:column;
- gap:var(--hm-space-2);
+ flex-wrap:wrap;
+ align-items:flex-end;
+ gap:var(--hm-space-2) var(--hm-space-4);
 }
+.aether{min-width:12rem}
+
+.countsPanel{padding-top:var(--hm-space-3)}
 
 .counts{
  display:grid;
@@ -35,14 +39,7 @@
  padding-left:calc(44px + var(--hm-space-3));
 }
 
-.pactMark{
- display:inline-block;
- width:7px;
- height:7px;
- margin-right:var(--hm-space-2);
- background:var(--hm-rubric);
- transform:rotate(45deg);
-}
+.add .addPact{color:var(--hm-rubric-ink)}
 
 .waiting{
  margin:0;
@@ -63,6 +60,13 @@
  color:var(--hm-muted);
  font-size:var(--hm-text-1);
 }
+
+.notes{
+ padding-top:var(--hm-space-2);
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+.notes p{margin:0 0 var(--hm-space-1)}
 
 .ended{
  display:flex;

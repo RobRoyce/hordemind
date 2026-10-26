@@ -17,7 +17,7 @@ export function StartRun({profile,onStart,onGoCharacter}:Props){
    <h2 className={s.heading}>{profile.name}</h2>
    <CharacterSummary profile={profile}/>
    <StartRunBar onStart={waves=>onStart(profile,waves)}/>
-   <div><Button variant="text" onClick={onGoCharacter}>Edit character</Button></div>
+   <div><Button variant="link" onClick={onGoCharacter}>Edit character</Button></div>
   </section>}
  </div>;
 }

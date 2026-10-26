@@ -26,6 +26,9 @@
  background:none;
 }
 .filled:hover{border-bottom-color:var(--hm-rule)}
+@media (min-width:700px){
+ .filled{min-height:30px}
+}
 
 .below{grid-column:2 / -1}
 

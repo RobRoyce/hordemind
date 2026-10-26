@@ -20,3 +20,4 @@
  color:var(--hm-muted);
  font-size:var(--hm-text-1);
 }
+.aside button{font-size:var(--hm-text-2)}

@@ -1,17 +1,20 @@
 .group{
- display:flex;
- flex-wrap:wrap;
- width:fit-content;
- max-width:100%;
+ display:grid;
+ grid-auto-columns:minmax(0,1fr);
+ grid-auto-flow:column;
+ width:100%;
  border:1px solid var(--hm-rule);
 }
 
 .option{
- flex:1 0 auto;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
  min-height:44px;
- padding:0 var(--hm-space-4);
+ padding:var(--hm-space-1) var(--hm-space-2);
  border:0;
- border-right:1px solid var(--hm-rule);
+ border-right:1px solid var(--hm-hair);
  border-radius:0;
  background:transparent;
  color:var(--hm-muted);
@@ -22,22 +25,24 @@
 .option:last-child{border-right:0}
 .option:hover{color:var(--hm-ink)}
 .option[aria-checked="true"]{
- background:color-mix(in srgb,var(--hm-gold) 16%,transparent);
- color:var(--hm-ink);
+ background:color-mix(in srgb,var(--hm-gold) 12%,transparent);
+ color:var(--hm-gold);
  box-shadow:inset 0 -2px 0 var(--hm-gold);
 }
 .option:focus-visible{outline-offset:-2px}
 
-/* Phones: equal columns across the full width, so a long option wraps its own label instead of the row. */
+.tall .option{
+ min-height:52px;
+ line-height:1.15;
+}
+
+.detail{
+ color:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
+.option[aria-checked="true"] .detail{color:var(--hm-amber)}
+
+/* A long option wraps its own label instead of the row. */
 @media (max-width:699px){
- .group{
-  display:grid;
-  grid-auto-columns:minmax(0,1fr);
-  grid-auto-flow:column;
-  width:100%;
- }
- .option{
-  padding:var(--hm-space-1) var(--hm-space-2);
-  line-height:1.2;
- }
+ .option{line-height:1.2}
 }

@@ -3,7 +3,9 @@
 :root{
  color-scheme:dark;
 
- --hm-bg:#1a1510;
+ --hm-bg:#141210;
+ /* Warm light at the top of the page, fading into bg. */
+ --hm-glow:#1f1913;
  --hm-raised:#221b14;
  --hm-sheet:#201912;
  --hm-ink:#ebe1cc;
@@ -15,6 +17,8 @@
  --hm-amber:#d9a35c;
  --hm-ember:#f0a24a;
  --hm-rubric:#c4473a;
+ /* Red ink light enough for text. */
+ --hm-rubric-ink:#e08a7c;
  --hm-danger:#e0604d;
 
  /* Category pigments color the diamond beside a category name, never the text. */
@@ -61,10 +65,11 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
 
 body{
  margin:0;
- background:var(--hm-bg);
+ background:radial-gradient(110% 300px at 50% 0,var(--hm-glow),var(--hm-bg) 70%) no-repeat var(--hm-bg);
  color:var(--hm-ink);
  font-family:var(--hm-font-text);
  font-size:var(--hm-text-2);

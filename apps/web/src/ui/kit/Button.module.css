@@ -28,16 +28,18 @@
 }
 .secondary:hover:not(:disabled){background:color-mix(in srgb,var(--hm-gold) 12%,transparent)}
 
-.text{
+.text,.link{
  min-height:44px;
  padding:0 var(--hm-space-1);
  background:none;
  color:var(--hm-muted);
- font-weight:500;
+ font-weight:400;
+}
+.link{
  text-decoration:underline;
  text-underline-offset:3px;
 }
-.text:hover:not(:disabled){color:var(--hm-ink)}
+.text:hover:not(:disabled),.link:hover:not(:disabled){color:var(--hm-ink)}
 
 .button:disabled{
  background:none;
@@ -45,4 +47,4 @@
  color:var(--hm-faint);
  cursor:not-allowed;
 }
-.text:disabled{border-color:transparent}
+.text:disabled,.link:disabled{border-color:transparent}

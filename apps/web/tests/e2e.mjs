@@ -217,8 +217,18 @@ async function journey(viewport){
   await page.clock.runFor(100);
   assert(await aetherField.evaluate(el=>el===document.activeElement),'recording never pulls focus back once the player moves on');
   await page.clock.resume();
-  const counts=page.getByText('Event counts for wave 1',{exact:true});
+  const counts=page.getByRole('button',{name:'Event counts',exact:true});
+  if(viewport.width>=700){
+   // A press that moves focus out of the open tap picker still lands, though the page shrinks and scrolls under it.
+   await offer(1).focus();
+   assert.equal(await offer(1).getAttribute('aria-expanded'),'true','focusing an empty row opens its picker');
+   await page.evaluate(top=>window.scrollTo(0,top),await counts.evaluate(el=>el.getBoundingClientRect().top+window.scrollY-40));
+   await counts.click();
+   assert.equal(await counts.getAttribute('aria-expanded'),'true','a press above an open picker opens Event counts');
+   await counts.click();
+  }
   await counts.click();
+  assert.equal(await counts.getAttribute('aria-expanded'),'true','Event counts opens');
   await noZoomingFields(page,'Live Run with event counts open');
   await counts.click();
   await pick(1,'burst','The Bursting Masses');

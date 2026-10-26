@@ -12,8 +12,8 @@
 }
 
 .label{
- color:var(--hm-ink);
- font-weight:500;
+ color:var(--hm-muted);
+ font-size:var(--hm-text-2);
 }
 
 /* A 44px target around a small diamond, pulled in so the label row stays compact. */

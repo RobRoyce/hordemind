@@ -1,7 +1,7 @@
 import type {RunRecord} from '../../domain/schema';
 import {effectiveEvents} from '../../domain/run';
 import {downloadExport} from '../../storage/local';
-import {Button,PageHeader} from '../kit';
+import {Button,PageHeader,SectionHeading} from '../kit';
 import type {SyncControls,SyncState} from '../useSync';
 import {ResearchNote} from './ResearchNote';
 import {RunHistory} from './RunHistory';
@@ -20,8 +20,10 @@ export function Insights({runs,selectRun,onExport,sync,syncControls}:Props){
   <p className={s.summary}>
    {plural(runs.length,'run','runs')}, {plural(totalDecisions,'recorded choice','recorded choices')}, and {plural(counted,'wave with event counts','waves with event counts')}.
   </p>
-  <RunHistory runs={runs} selectRun={selectRun}/>
-  <div><Button variant="secondary" onClick={()=>downloadExport(onExport())} disabled={runs.length===0}>Export all runs</Button></div>
+  <section aria-labelledby="run-history">
+   <SectionHeading id="run-history" aside={<Button variant="secondary" onClick={()=>downloadExport(onExport())} disabled={runs.length===0}>Export all runs</Button>}>Run history</SectionHeading>
+   <RunHistory runs={runs} selectRun={selectRun}/>
+  </section>
   <SyncPanel sync={sync} controls={syncControls}/>
   <ResearchNote/>
  </div>;

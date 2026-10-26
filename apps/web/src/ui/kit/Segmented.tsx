@@ -1,10 +1,12 @@
 import {useRef,type KeyboardEvent} from 'react';
+import {cx} from './cx';
 import s from './Segmented.module.css';
 
 interface Props<T extends string>{
  label:string;
  value:T;
- options:readonly {value:T;label:string}[];
+ /** A detail sits small under the label, as in "10" over "Legendary". */
+ options:readonly {value:T;label:string;detail?:string}[];
  onChange:(value:T)=>void;
  /** Id of a hint that describes the group. */
  describedBy?:string|undefined;
@@ -28,9 +30,11 @@ export function Segmented<T extends string>({label,value,options,onChange,descri
   refs.current[to]?.focus();
  }
 
- return <div role="radiogroup" aria-label={label} aria-describedby={describedBy} className={s.group}>
+ return <div role="radiogroup" aria-label={label} aria-describedby={describedBy} className={cx(s.group,options.some(o=>o.detail)&&s.tall)}>
   {options.map((o,i)=><button key={o.value} ref={el=>{refs.current[i]=el}} type="button" role="radio"
    aria-checked={o.value===value} tabIndex={i===tabStop?0:-1} className={s.option}
-   onClick={()=>onChange(o.value)} onKeyDown={e=>onKeyDown(e,i)}>{o.label}</button>)}
+   onClick={()=>onChange(o.value)} onKeyDown={e=>onKeyDown(e,i)}>
+   {o.label}{o.detail&&<>{' '}<small className={s.detail}>{o.detail}</small></>}
+  </button>)}
  </div>;
 }
