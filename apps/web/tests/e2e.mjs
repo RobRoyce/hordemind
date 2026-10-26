@@ -142,12 +142,15 @@ async function journey(viewport){
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
   {
    // Toasts keep off the content column on wide screens, and their text never blocks a click.
-   const toast=page.getByText('Run started',{exact:true});
-   await toast.waitFor();
-   const t=await toast.boundingBox(),rows=await page.getByRole('list',{name:'Offers on screen'}).boundingBox();
-   if(viewport.width>=700)assert(t.x>rows.x+rows.width/2,'the toast sits to the right, not over the middle of the column');
-   const hit=await page.evaluate(([x,y])=>document.elementFromPoint(x,y)?.textContent??'',[t.x+t.width/2,t.y+t.height/2]);
-   assert.notEqual(hit,'Run started','a click on toast text passes through to the page');
+   // Measured in one pass while the toast shows, since it leaves on a timer.
+   const toast=await (await page.waitForFunction(()=>{
+    const text=[...document.querySelectorAll('[role="status"] span')].find(el=>el.textContent==='Run started');
+    if(!text)return null;
+    const t=text.getBoundingClientRect(),rows=document.querySelector('[aria-label="Offers on screen"]').getBoundingClientRect();
+    return {right:t.left>rows.left+rows.width/2,hit:document.elementFromPoint(t.left+t.width/2,t.top+t.height/2)?.textContent??''};
+   })).jsonValue();
+   if(viewport.width>=700)assert(toast.right,'the toast sits to the right, not over the middle of the column');
+   assert.notEqual(toast.hit,'Run started','a click on toast text passes through to the page');
   }
 
   if(viewport.width>=700){
