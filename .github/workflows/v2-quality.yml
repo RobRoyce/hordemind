@@ -141,12 +141,15 @@ jobs:
         run: |
           set -euo pipefail
           base="https://robroyce.github.io/hordemind/"
-          for attempt in $(seq 1 30); do
+          # The build stamps its commit into the page. Wait until Pages serves this run's commit.
+          live=""
+          for attempt in $(seq 1 45); do
             if html="$(curl --fail --silent --show-error --location --max-time 12 "${base}?version=${GITHUB_SHA}")" && grep -q '<title>HordeMind</title>' <<< "$html"; then
-              break
+              live="$(grep -oE 'name="hordemind-commit" content="[^"]*"' <<< "$html" | cut -d '"' -f4 || true)"
+              [ "$live" = "$GITHUB_SHA" ] && break
             fi
-            if [ "$attempt" -eq 30 ]; then
-              echo "::error::Published page did not return v2 HTML."
+            if [ "$attempt" -eq 45 ]; then
+              echo "::error::Pages serves commit '${live:-none}', expected ${GITHUB_SHA}."
               exit 1
             fi
             sleep 5
@@ -156,4 +159,4 @@ jobs:
           curl --fail --silent --show-error --location --max-time 15 "${base}${js_path#./}" --output /tmp/hordemind-v2-live.js
           bytes="$(wc -c < /tmp/hordemind-v2-live.js)"
           test "$bytes" -gt 3000 || { echo "::error::Live JavaScript bundle is unexpectedly small."; exit 1; }
-          echo "Verified public HordeMind v2 HTML and ${bytes}-byte JS bundle."
+          echo "Verified public HordeMind at commit ${GITHUB_SHA} with a ${bytes}-byte JS bundle."

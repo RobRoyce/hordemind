@@ -78,6 +78,11 @@ async function journey(viewport){
  try{
   await page.goto(base+'#strategy',{waitUntil:'domcontentloaded'});
 
+  step('the build names the commit it came from');
+  // The public release check compares this with the commit it deployed.
+  const commit=await page.locator('meta[name="hordemind-commit"]').getAttribute('content');
+  assert.match(commit??'',/^([0-9a-f]{40}|dev)$/,`build commit is ${commit}`);
+
   step('create a Paladin and configure it without any save button');
   await page.getByLabel('Character name',{exact:true}).fill('CI Paladin');
   await page.getByRole('button',{name:'Create character'}).click();
