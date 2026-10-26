@@ -98,6 +98,10 @@ async function journey(viewport){
   for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await warPlan(name).click();
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'true');
   assert((await page.getByRole('region',{name:'Upgrade details'}).innerText()).includes('An ominous altar appears between waves'));
+  // The focused node's description carries the details, so the panel stays quiet instead of announcing every hover.
+  assert.equal(await page.getByRole('region',{name:'Upgrade details'}).getAttribute('aria-live'),null,'the details panel is not a live region');
+  const description=await warPlan('The Black Pact').evaluate(el=>(el.getAttribute('aria-describedby')??'').split(' ').map(id=>document.getElementById(id)?.textContent??'').join(' '));
+  assert(description.includes('An ominous altar appears between waves'),'a focused upgrade is described by its tooltip');
   const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'War Plan',exact:true}));
   assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
   assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
