@@ -122,6 +122,12 @@ async function journey(viewport){
   assert.equal(await choiceOf(page,'Difficulty'),'Torment XII');
   assert.equal(await choiceOf(page,'Mobility'),'Low');
   assert.equal(await choiceOf(page,'Realm'),'Eternal');
+  // Back moves between tabs instead of leaving the app.
+  await navTo(page,/^Insights/);
+  await page.getByRole('heading',{name:'Insights',exact:true}).waitFor();
+  await page.goBack();
+  await page.getByLabel('Character name',{exact:true}).waitFor();
+  assert.equal(new URL(page.url()).hash,'#character','Back returns to Character');
 
   // A second tab opened now holds this state while the first tab records a run.
   const other=await context.newPage();

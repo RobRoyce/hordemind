@@ -103,8 +103,8 @@ export function App(){
   window.clearTimeout(toastTimer.current);
   setToast(null);
  }
- // A toast's action belongs to the screen that raised it.
- function navigate(tab:View){dismiss();setView(tab);history.replaceState(null,'','#'+tab)}
+ // A toast's action belongs to the screen that raised it. Each tab change is a history entry, so Back returns to the last tab.
+ function navigate(tab:View){dismiss();setView(tab);if(window.location.hash!=='#'+tab)window.location.hash=tab}
  function selectProfile(id:string){
   setData(s=>({...s,activeProfileId:id,activeRunId:runProfileId(s.runs.find(r=>r.id===s.activeRunId))===id?s.activeRunId:null}));
  }
