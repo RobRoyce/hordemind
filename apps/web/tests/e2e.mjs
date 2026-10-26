@@ -204,6 +204,18 @@ async function journey(viewport){
   assert.equal(await page.getByRole('button',{name:`Choose offer ${bestRow}: ${best}`}).getAttribute('aria-pressed'),'true');
   await noSeriousViolations(page,'Live Run with offers entered');
 
+  step('each offer opens its own details from a visible link');
+  const otherRow=bestRow===1?2:1;
+  const otherOffer=await offer(otherRow).inputValue();
+  const details=page.getByRole('button',{name:`Details for ${otherOffer}`,exact:true});
+  await details.click();
+  assert.equal(await details.getAttribute('aria-expanded'),'true');
+  const panel=page.locator(`[id="${await details.getAttribute('aria-controls')}"]`);
+  assert((await panel.innerText()).includes('Simulated 5–95% range'),'the breakdown opens under its own row');
+  await noSeriousViolations(page,'Live Run with offer details open');
+  await details.click();
+  assert.equal(await panel.count(),0,'Details closes again');
+
   step('choose with the keyboard and record');
   await decisionHeading().click();
   await page.keyboard.press('1');

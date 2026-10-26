@@ -1,7 +1,7 @@
 import {useId,useState,type ReactNode} from 'react';
 import {resolveOffer} from '../../catalog';
 import type {OfferAssessment} from '../../recommendation/model';
-import {CategoryMark,DangerMark,cx} from '../kit';
+import {CategoryMark,DangerMark,DisclosureToggle,cx} from '../kit';
 import {wrongInfoUrl} from '../report';
 import {EstimateDetails,estimateReportUrl,signed} from './EstimateDetails';
 import type {Slot} from './slot';
@@ -33,7 +33,7 @@ export function OfferSlot({index,slot,picker,pact,selected,best,busy,assessment,
   const value=assessment.modeled?signed(assessment.mean):'not modeled';
   estimate=<button type="button" className={cx(s.estimate,!assessment.modeled&&s.unmodeled,busy&&s.dim)}
    aria-label={`Estimate for ${assessment.offer}: ${assessment.modeled?`${value} Aether`:value}`}
-   aria-expanded={open} aria-controls={detailsId} onClick={()=>setOpen(o=>!o)}>{value}</button>;
+   aria-expanded={open} aria-controls={detailsId} tabIndex={-1} onClick={()=>setOpen(o=>!o)}>{value}</button>;
  }
 
  return <li className={cx(s.row,selected&&s.selected,best&&s.best,pact&&s.pact)}>
@@ -44,6 +44,8 @@ export function OfferSlot({index,slot,picker,pact,selected,best,busy,assessment,
    {pact&&<span className={s.pactLabel}>Black Pact</span>}
    {slot.offer&&<CategoryMark family={ref?.family??null}/>}
    {ref?.danger&&<DangerMark danger={ref.danger}/>}
+   {assessment&&<DisclosureToggle open={open} onToggle={()=>setOpen(o=>!o)} controls={detailsId}
+    label={`Details for ${assessment.offer}`} className={s.detailsLink}>Details</DisclosureToggle>}
   </div>}
   {estimate}
   {(removable||slot.text)&&<button type="button" className={s.clear} onClick={onClear}

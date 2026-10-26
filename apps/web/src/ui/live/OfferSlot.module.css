@@ -54,6 +54,9 @@
 }
 .pactLabel{color:var(--hm-ink)}
 
+/* Sized to the category line, so the row stays tight. */
+.meta .detailsLink{min-height:24px}
+
 .estimate{
  grid-column:3;
  grid-row:1;
@@ -119,6 +122,7 @@ button.estimate:hover{
 
 /* Phones: numeral | name | clear, then the category line with the estimate at its right. */
 @media (max-width:699px){
+ .meta .detailsLink{min-height:32px}
  .row{grid-template-columns:44px minmax(0,1fr) auto}
  .clear{grid-column:3}
  .estimate{
