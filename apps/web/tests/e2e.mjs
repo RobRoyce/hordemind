@@ -275,6 +275,16 @@ async function journey(viewport){
   await page.keyboard.press('Escape');
   await page.getByRole('button',{name:/Choose offer 4/}).click();
   await page.getByLabel('Black Pact advice').waitFor({timeout:25000});
+  // Each row keeps its own state when a row is added or removed above it.
+  const pactDetails=page.getByRole('button',{name:'Details for The Anchored Masses',exact:true});
+  await pactDetails.click();
+  await page.getByRole('button',{name:'Add another offer'}).click();
+  if(viewport.width<700)await page.keyboard.press('Escape');
+  assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','adding a row above keeps the Pact row details open');
+  await page.getByRole('button',{name:'Remove offer 4'}).click();
+  assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','removing a row above keeps them open');
+  await pactDetails.click();
+  await page.getByRole('button',{name:/Choose offer 4/}).click();
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
   await page.getByText(/Black Pact (offer )?used before wave 2/).waitFor();

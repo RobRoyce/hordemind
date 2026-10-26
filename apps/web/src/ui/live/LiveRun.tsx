@@ -32,6 +32,11 @@ const OBSERVABLES:[CountKey,string][]=[['mass','Masses killed'],['fiend','Fiends
 const PACT_TITLE='Black Pact offer';
 
 const freshSlots=(n:number)=>Array.from({length:n},emptySlot);
+
+/** A row's key outlives index shifts, so its open details and picker state stay with it. */
+type Row=Slot&{key:number};
+let lastRowKey=0;
+const keyed=(slot:Slot):Row=>({...slot,key:++lastRowKey});
 /** Offer rows a wave starts with: Reign in Hell adds one, Total Chaos removes one (tooltips). */
 export const regularOffers=(warPlanNodes:readonly string[])=>warPlanNodes.includes('Reign in Hell')?4:warPlanNodes.includes('Total Chaos')?2:3;
 const message=(e:unknown)=>e instanceof Error?e.message:String(e);
@@ -65,7 +70,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const baseSlots=regularOffers(p.profile.warPlanNodes);
  const latest=useRef(run);
  latest.current=run;
- const [slots,setSlots]=useState<Slot[]>(()=>freshSlots(baseSlots));
+ const [slots,setSlots]=useState<Row[]>(()=>freshSlots(baseSlots).map(keyed));
  /** The Black Pact row, which stays last. */
  const [special,setSpecial]=useState<number|null>(null);
  const [selection,setSelection]=useState<Selection>(NO_SELECTION);
@@ -100,11 +105,11 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  const chosenOffer=current.slot!==null?slots[current.slot]?.offer??null:null;
 
  function resetForm(next:Partial<Form>={}){
-  setSlots(next.slots??freshSlots(baseSlots));setSpecial(next.special??null);setSelection(next.selection??NO_SELECTION);
+  setSlots((next.slots??freshSlots(baseSlots)).map(keyed));setSpecial(next.special??null);setSelection(next.selection??NO_SELECTION);
   setAether(next.aether??'');setCounts(next.counts??{});setError('');setOpenRow(null);
  }
  function updateSlot(i:number,slot:Slot){
-  setSlots(all=>all.map((x,j)=>j===i?slot:x));
+  setSlots(all=>all.map((x,j)=>j===i?{...slot,key:x.key}:x));
   // A picked row whose offer changes stops being the player's pick.
   if(selection.slot===i&&slot.offer!==slots[i]?.offer)setSelection(NO_SELECTION);
  }
@@ -124,13 +129,13 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
  }
  function addRow(){
   const at=special??slots.length;
-  setSlots(all=>[...all.slice(0,at),emptySlot(),...all.slice(at)]);
+  setSlots(all=>[...all.slice(0,at),keyed(emptySlot()),...all.slice(at)]);
   if(special!==null)setSpecial(special+1);
   setSelection(sel=>sel.slot!==null&&sel.slot>=at?{...sel,slot:sel.slot+1}:sel);
   fillSoon(at);
  }
  function addPact(){
-  setSlots(all=>[...all,emptySlot()]);
+  setSlots(all=>[...all,keyed(emptySlot())]);
   setSpecial(slots.length);
   fillSoon(slots.length);
  }
@@ -277,7 +282,7 @@ function ActiveRun({run,profile,recentOffers,saveRun,onStart,onGoCharacter}:Prop
      <ol className={s.rows} aria-label="Offers on screen">
       {slots.map((slot,i)=>{
        const pactRow=i===special,removable=pactRow||i>=baseSlots;
-       return <OfferSlot key={i} index={i} slot={slot} pact={pactRow} selected={current.slot===i} best={bestSlot===i}
+       return <OfferSlot key={slot.key} index={i} slot={slot} pact={pactRow} selected={current.slot===i} best={bestSlot===i}
         busy={rec.busy} assessment={slot.offer&&result?result.assessments.find(a=>a.offer===slot.offer)??null:null}
         reportContext={reportContext} removable={removable}
         onSelect={()=>setSelection(pick(i))} onClear={()=>removable?removeRow(i):updateSlot(i,emptySlot())}
