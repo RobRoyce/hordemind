@@ -144,18 +144,6 @@ async function journey(viewport){
   await page.getByRole('button',{name:/^Start (live run|a \d+-wave run)$/}).click();
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
-  {
-   // Toasts keep off the content column on wide screens, and their text never blocks a click.
-   // Measured in one pass while the toast shows, since it leaves on a timer.
-   const toast=await (await page.waitForFunction(()=>{
-    const text=[...document.querySelectorAll('[role="status"] span')].find(el=>el.textContent==='Run started');
-    if(!text)return null;
-    const t=text.getBoundingClientRect(),rows=document.querySelector('[aria-label="Offers on screen"]').getBoundingClientRect();
-    return {right:t.left>rows.left+rows.width/2,hit:document.elementFromPoint(t.left+t.width/2,t.top+t.height/2)?.textContent??''};
-   })).jsonValue();
-   if(viewport.width>=700)assert(toast.right,'the toast sits to the right, not over the middle of the column');
-   assert.notEqual(toast.hit,'Run started','a click on toast text passes through to the page');
-  }
 
   if(viewport.width>=700){
    step('keyboard: the open picker is exposed, one Tab stop, and Enter moves into it');

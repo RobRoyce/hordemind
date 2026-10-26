@@ -65,6 +65,18 @@ async function check(viewport){
    assert.deepEqual(overlaps,[],`${name} overlaps`);
   }
 
+  step('toasts keep to the corner on wide screens, and only their action catches clicks');
+  // The gallery's toast stays until Undo, so nothing here races a timer.
+  await page.getByRole('button',{name:'Show a toast'}).click();
+  const toast=await page.getByText('Wave 2: The Anchored Masses recorded',{exact:true}).evaluate(text=>{
+   const t=text.getBoundingClientRect();
+   return {left:t.left,hit:document.elementFromPoint(t.left+t.width/2,t.top+t.height/2)?.textContent??''};
+  });
+  if(viewport.width>=700)assert(toast.left>viewport.width/2,'the toast sits in the right half, off the content column');
+  assert.notEqual(toast.hit,'Wave 2: The Anchored Masses recorded','a click on toast text passes through to the page');
+  await page.getByRole('button',{name:'Undo',exact:true}).click();
+  assert.equal(await page.getByText('Wave 2: The Anchored Masses recorded',{exact:true}).count(),0,'the toast action still takes clicks');
+
   if(viewport.width<700){
    step('the phone sheet traps focus, closes on Escape and returns focus');
    const opener=page.getByRole('button',{name:'Open the sheet'});
