@@ -7,16 +7,11 @@
  * Private sync never touches research_contributions; contributing is a separate choice.
  */
 import {createClient,type SupabaseClient} from '@supabase/supabase-js';
+import type {SyncConfig} from './config';
 import type {CharacterProfile,LocalState,RunRecord} from '../domain/schema';
 import {mergeStates} from '../domain/merge';
 import {eventToRow,profileFromRow,profileToRow,runFromRows,runToRow,type EventRow,type ProfileRow,type RunRow} from './rows';
 
-export interface SyncConfig{url:string;key:string}
-/** Sync is available only in builds configured with a Supabase URL and publishable key. */
-export function syncConfig():SyncConfig|null{
- const url=import.meta.env.VITE_SUPABASE_URL as string|undefined,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string|undefined;
- return url&&key?{url,key}:null;
-}
 export interface SyncUser{id:string;email:string|null}
 export interface SyncReport{at:string;profiles:number;runs:number;events:number}
 export class SyncConflictError extends Error{
