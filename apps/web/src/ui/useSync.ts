@@ -1,9 +1,12 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {LocalState} from '../domain/schema';
-import {SupabaseSync,syncConfig,type SyncReport,type SyncUser} from '../sync/supabase';
+import {syncConfig} from '../sync/config';
+import type {SupabaseSync,SyncReport,SyncUser} from '../sync/supabase';
 
 const config=syncConfig();
-const client=config?SupabaseSync.create(config):null;
+
+// The Supabase client loads in its own chunk, and only in builds with sync configured.
+const client:Promise<SupabaseSync>|null=config?import('../sync/supabase').then(m=>m.SupabaseSync.create(config)):null;
 const AUTO_KEY='hordemind-sync-auto';
 const AUTO_DELAY_MS=4000;
 
@@ -25,13 +28,13 @@ const readAuto=()=>{try{return localStorage.getItem(AUTO_KEY)==='1'}catch{return
  * account's records into local state through `adopt`, which never discards local events.
  */
 export function useSync(data:LocalState,adopt:(remote:LocalState)=>void,enabled:boolean):[SyncState,SyncControls]{
- const [state,setState]=useState<SyncState>({phase:client?'signed-out':'unavailable',server:client?.url??null,user:null,last:null,error:'',auto:readAuto()});
+ const [state,setState]=useState<SyncState>({phase:client?'signed-out':'unavailable',server:config?.url??null,user:null,last:null,error:'',auto:readAuto()});
  const latest=useRef(data);latest.current=data;
  const running=useRef(false);
 
  useEffect(()=>{
   if(!client)return;
-  client.user().then(user=>setState(s=>({...s,user,phase:user?'idle':'signed-out'}))).catch(()=>{});
+  client.then(c=>c.user()).then(user=>setState(s=>({...s,user,phase:user?'idle':'signed-out'}))).catch(()=>{});
  },[]);
 
  const syncNow=useCallback(async()=>{
@@ -39,7 +42,7 @@ export function useSync(data:LocalState,adopt:(remote:LocalState)=>void,enabled:
   running.current=true;
   setState(s=>({...s,phase:'syncing',error:''}));
   try{
-   const {state:merged,report}=await client.sync(latest.current);
+   const {state:merged,report}=await (await client).sync(latest.current);
    adopt(merged);
    setState(s=>({...s,phase:'synced',last:report,error:''}));
   }catch(e){
@@ -51,15 +54,15 @@ export function useSync(data:LocalState,adopt:(remote:LocalState)=>void,enabled:
  const controls:SyncControls={
   async signIn(email,password){
    if(!client)return;
-   try{await signedIn(await client.signIn(email,password))}catch(e){setState(s=>({...s,error:e instanceof Error?e.message:String(e)}))}
+   try{await signedIn(await (await client).signIn(email,password))}catch(e){setState(s=>({...s,error:e instanceof Error?e.message:String(e)}))}
   },
   async signUp(email,password){
    if(!client)return;
-   try{await signedIn(await client.signUp(email,password))}catch(e){setState(s=>({...s,error:e instanceof Error?e.message:String(e)}))}
+   try{await signedIn(await (await client).signUp(email,password))}catch(e){setState(s=>({...s,error:e instanceof Error?e.message:String(e)}))}
   },
   async signOut(){
    if(!client)return;
-   try{await client.signOut();setState(s=>({...s,user:null,phase:'signed-out',last:null,error:''}))}
+   try{await (await client).signOut();setState(s=>({...s,user:null,phase:'signed-out',last:null,error:''}))}
    catch(e){setState(s=>({...s,error:e instanceof Error?e.message:String(e)}))}
   },
   syncNow,

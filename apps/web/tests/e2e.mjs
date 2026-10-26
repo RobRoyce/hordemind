@@ -63,6 +63,9 @@ async function journey(viewport){
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text())});
+ // Every script the page downloads, so a build without sync can prove it never fetched the client.
+ const scripts=[];
+ page.on('response',r=>{if(r.request().resourceType()==='script')scripts.push(r.text().catch(()=>''))});
  const stored=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('hordemind-v2-local-v1')));
  const offer=n=>page.getByRole('combobox',{name:`Offer ${n}`});
  const estimates=()=>page.getByLabel(/^Estimate for /);
@@ -377,6 +380,11 @@ async function journey(viewport){
   await page.getByRole('heading',{name:'Insights'}).waitFor();
   await page.getByText(/3\s*recorded choices/i).first().waitFor();
   await noSeriousViolations(page,'Insights');
+
+  step('the Supabase client downloads only in builds with sync configured');
+  const configured=await page.getByText('This build has no database configured',{exact:false}).count()===0;
+  const fetched=(await Promise.all(scripts)).some(body=>body.includes('GoTrueClient'));
+  assert.equal(fetched,configured,configured?'a build with sync loads its client':'a build without sync never downloads the Supabase client');
   const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:/Export (data|all runs)/}).click()]);
   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
   // The export is the raw append-only journal: the undone offer set stays, suppressed by a correction.
