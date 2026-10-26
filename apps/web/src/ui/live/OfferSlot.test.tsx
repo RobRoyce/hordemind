@@ -8,8 +8,8 @@ const estimate:Estimate={
  reasons:['Mostly from Hellfire (+140) over 10 waves.'],assumptions:[],sensitivity:[],synergies:[]
 };
 
-const row=(assessment:OfferAssessment|null)=>renderToStaticMarkup(<OfferSlot index={1}
- slot={{text:'The Burning Rain',offer:'The Burning Rain',unlisted:false}} picker={null} pact={false}
+const row=(assessment:OfferAssessment|null,pact=false,text='The Burning Rain')=>renderToStaticMarkup(<OfferSlot index={1}
+ slot={{text,offer:text||null,unlisted:false}} picker={null} pact={pact}
  selected={false} best={false} busy={false} assessment={assessment} reportContext="" removable={false}
  onSelect={()=>{}} onClear={()=>{}}/>);
 
@@ -25,5 +25,14 @@ describe('offer row details',()=>{
  });
  it('a row still waiting for its estimate has no Details link',()=>{
   expect(row(null)).not.toContain('Details');
+ });
+});
+
+describe('the Black Pact row',()=>{
+ it('clears its offer but never removes the row',()=>{
+  expect(row(null,true)).toContain('aria-label="Clear the Black Pact offer"');
+ });
+ it('shows no clear button while empty',()=>{
+  expect(row(null,true,'')).not.toContain('Clear the Black Pact offer');
  });
 });

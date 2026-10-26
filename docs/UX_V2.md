@@ -6,7 +6,8 @@
 2. **Live Run**: one screen per wave, offers before wave *k*.
    - Header shows wave *k* of *N*, the latest Aether reading, the taken-offer stack, and the Black Pact status.
    - Up to five offer rows use a searchable combobox (name, family, mechanic; recent offers first). Picking moves focus to the next row.
-   - An optional "Aether after wave *k−1*" field and collapsed event counts sit above the offers.
+   - Each screen starts with three offer rows, or four with Reign in Hell. While the Black Pact is unused, its row sits below them. Empty rows are ignored.
+   - A required "Aether after wave *k−1*" field and collapsed, optional event counts sit above the offers. Recording is blocked until the reading is entered.
    - The recommendation sits beside the offers on wide screens. On narrow screens it sits below, with a one-line summary by the record button.
    - Keys: 1–5 choose a row, Ctrl/⌘+Enter records. Undo prefills the last wave. Ending early is always available.
    - Offers with a dangerous bane show a *High danger* or *Some danger* badge with the bane text. Danger never changes the estimate.
@@ -27,7 +28,7 @@
 
 - Choice set shown, chosen offer and selection time.
 - War Plan and profile snapshot at run start, game patch, model version.
-- Optional cumulative Aether / event counts per wave.
+- Cumulative Aether per wave (required) and optional event counts.
 - On eventual shared uploads, collect a per-user consent record separately and prohibit accidental automatic submission.
 
 ## Prototype acceptance test

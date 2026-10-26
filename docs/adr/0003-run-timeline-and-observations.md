@@ -35,3 +35,10 @@ The owner confirmed in Season 15 play that the first offer comes before wave 1 s
 - Every recommendation for a run gains one wave of horizon relative to v2-foundation.
 - Existing local runs keep working. Their legacy readings show without a wave label.
 - Supabase migration `20261023000200` adds `aether_observed` to the `event_type` check.
+
+## Update (2026-10-25): readings are required
+
+- The owner made the Aether reading required. Live Run blocks recording a decision from wave 2 on until the reading is entered, so every wave's gain is known.
+- The final total is required when a run completes. It stays optional for a run ended early, which may stop mid-wave without a reading.
+- Event counts stay optional.
+- The schema still allows a missing `totalAether`, so earlier runs stay valid. The requirement lives in the UI.

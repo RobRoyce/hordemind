@@ -147,6 +147,10 @@ async function journey(viewport){
   await page.getByRole('button',{name:/^Start (live run|a \d+-wave run)$/}).click();
   await page.getByRole('heading',{name:'Offers before wave 1'}).waitFor();
   assert.equal(await page.getByText('Aether after wave',{exact:false}).count(),0,'no reading before wave 1');
+  // The character has the Black Pact, so its row waits below the three offer rows from the start.
+  assert.equal(await page.getByRole('button',{name:'Add the Black Pact offer'}).count(),0,'the Pact row needs no button');
+  assert.equal(await page.getByLabel('Offers on screen').getByText('Black Pact',{exact:true}).count(),1,'the Pact row is there');
+  assert.equal(await offer(5).count(),0,'three offer rows plus the Pact row');
 
   if(viewport.width>=700){
    step('keyboard: the open picker is exposed, one Tab stop, and Enter moves into it');
@@ -264,7 +268,7 @@ async function journey(viewport){
   await counts.click();
   await pick(1,'burst','The Bursting Masses');
   // The Pact row's picker opens at the last pick's category, Masses.
-  await page.getByRole('button',{name:'Add the Black Pact offer'}).click();
+  await offer(4).click();
   await page.getByRole('button',{name:/^The Anchored Masses/}).click();
   assert.equal(await offer(4).inputValue(),'The Anchored Masses');
   await page.keyboard.press('Escape');
@@ -280,8 +284,18 @@ async function journey(viewport){
   assert.equal(await pactDetails.getAttribute('aria-expanded'),'true','removing a row above keeps them open');
   await pactDetails.click();
   await page.getByRole('button',{name:/Choose offer 4/}).click();
+  // From wave 2 on, a blank reading blocks recording and takes focus.
+  await aetherField.fill('');
+  await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
+  await page.getByText('Enter the Aether total shown after wave 1.',{exact:true}).waitFor();
+  assert(await aetherField.evaluate(el=>el===document.activeElement),'a missing reading takes focus');
+  assert.equal(await aetherField.getAttribute('aria-invalid'),'true');
+  assert.equal((await chosenEvents()).length,1,'nothing is recorded without a reading');
+  await aetherField.fill('85');
+  assert.equal(await page.getByText('Enter the Aether total shown after wave 1.',{exact:true}).count(),0,'typing a reading clears the error');
   await page.getByRole('button',{name:/Take The Anchored Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
+  assert.equal(await offer(4).count(),0,'the Pact row leaves once the Pact is taken');
   await page.getByText(/Black Pact (offer )?used before wave 2/).waitFor();
   let run=(await stored()).runs[0];
   const reading=run.events.find(e=>e.type==='aether_observed');
@@ -297,6 +311,7 @@ async function journey(viewport){
   await page.getByRole('button',{name:/Choose offer 1/}).click();
   await page.getByRole('button',{name:/Take The Bursting Masses/}).click();
   await page.getByRole('heading',{name:'Offers before wave 3'}).waitFor();
+  assert.equal(await offer(4).inputValue(),'','an unused Pact keeps its empty row');
 
   step('progress survives a reload');
   await page.reload({waitUntil:'domcontentloaded'});
@@ -313,6 +328,7 @@ async function journey(viewport){
   assert.equal((await stored()).profiles[0].buildName,'Blessed Shield (tab 2)');
 
   step('wave 3 by taps only, taking the pre-selected best');
+  await page.getByLabel(/Aether after wave 2/).fill('140');
   await offer(1).click();
   for(const [family,name] of [['Spires','The Rising Spires'],['Spires','The Draining Spires'],['Hellfire','The Burning Rain']]){
    await page.getByRole('button',{name:new RegExp('^'+family)}).click();
