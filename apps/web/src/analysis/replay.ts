@@ -11,7 +11,7 @@ export interface ReplayWave{wave:number;stack:string[];chaos:boolean;newPickInde
 /** Why a run's Aether cannot be compared: its War Plan changes Aether in ways the model skips. */
 export type LeftOut='pulse'|'events';
 export interface RunReadings{
- runId:string;profileId:string;difficulty:CharacterProfile['difficulty'];createdAt:string;status:RunRecord['status'];
+ runId:string;profileId:string;difficulty:CharacterProfile['difficulty'];createdAt:string;status:RunRecord['status'];totalWaves:number;
  profile:PlayerProfile;lairBossNodes:string[];waves:ReplayWave[];spans:Span[];scored:Span[];
  skipped:{falling:number;legacy:number;varshanChaos:number};leftOut:LeftOut|null;
 }
@@ -32,6 +32,7 @@ export function readRun(run:RunRecord):RunReadings{
  for(const e of events){
   if(e.type==='aether_observed')raw.push({wave:e.payload.afterWave,total:e.payload.totalAether});
   else if(e.type==='wave_observed')legacy++;
+  // an abandoned run's final total has no known wave, so it is not a reading
   else if(e.type==='run_finished'&&e.payload.outcome==='completed')raw.push({wave:totalWaves,total:e.payload.finalAether});
  }
  raw.sort((a,b)=>a.wave-b.wave);
@@ -52,7 +53,7 @@ export function readRun(run:RunRecord):RunReadings{
  const scored=lairBossNodes.includes(VARSHAN)?spans.filter(s=>!s.chaos):spans;
  const nodes=snap.warPlanNodes;
  const leftOut:LeftOut|null=nodes.some(n=>EVENT_BRANCH_NODES.includes(n))?'events':nodes.includes('Pulse of Aether')?'pulse':null;
- return {runId:run.id,profileId:snap.id,difficulty:snap.difficulty,createdAt:run.createdAt,status:run.status,profile:playerProfile(snap),lairBossNodes,waves,spans,scored,
+ return {runId:run.id,profileId:snap.id,difficulty:snap.difficulty,createdAt:run.createdAt,status:run.status,totalWaves,profile:playerProfile(snap),lairBossNodes,waves,spans,scored,
   skipped:{falling,legacy,varshanChaos:spans.length-scored.length},leftOut};
 }
 
@@ -67,20 +68,25 @@ export function seedOf(id:string):number{
  return h>>>0;
 }
 
-/** Simulated Aether per span; one pass replays every wave with that wave's recorded stack. */
+/**
+ * Simulated Aether per span; one pass replays every wave with that wave's recorded stack.
+ * Council Aether is paid on defeating the Fell Council, so it joins only a completed run's final span.
+ */
 export function replaySpans(r:RunReadings,samples:number,profile:PlayerProfile=r.profile,assumptions:Assumptions=BASELINE):SpanPrediction[]{
  const totals=r.spans.map(()=>new Array<number>(samples).fill(0));
  const spanOf=(wave:number)=>r.spans.findIndex(s=>s.fromWave<=wave&&wave<=s.toWave);
  for(let i=0;i<samples;i++){
   const seed=hash(seedOf(r.runId)+i*9733);
-  let carry:EventKind[]=[];
+  let carry:EventKind[]=[],council=0;
   for(const w of r.waves){
    const {out,leftover}=simulateWaveDetailed({index:0,stack:w.stack,genericPicks:0,chaos:w.chaos,newPickIndex:w.newPickIndex},
     profile,hash(seed+Math.imul(w.wave,0x9e3779b1)),assumptions,carry);
    carry=leftover;
    const k=spanOf(w.wave);
-   if(k>=0)totals[k]![i]!+=Object.values(out).reduce((a,v)=>a+v,0);
+   council+=out.Council;
+   if(k>=0)totals[k]![i]!+=Object.values(out).reduce((a,v)=>a+v,0)-out.Council;
   }
+  if(r.status==='completed'&&r.spans.at(-1)?.toWave===r.totalWaves)totals[r.spans.length-1]![i]!+=council;
  }
  return totals.map(t=>{
   const n=t.length,mean=n?t.reduce((a,v)=>a+v,0)/n:0;

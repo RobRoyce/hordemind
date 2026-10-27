@@ -16,10 +16,17 @@ describe('analyze',()=>{
   expect(a.character?.report?.buckets.readings).toBe(30);
  });
  it('a character without qualifying runs gets an empty state, not an error',()=>{
-  const s=LocalStateSchema.parse(seededState({runs:[{...SLOW_RUNS.runs[0]!,status:'in_progress',final:null}]}));
+  const s=LocalStateSchema.parse(seededState({runs:[{...SLOW_RUNS.runs[0]!,totals:[],status:'in_progress',final:null}]}));
   const a=analyze(s.runs,s.profiles[0]!.id,20);
   expect(a.character?.report).toBeNull();
   expect(a.character?.needed).toBe(3);
+ });
+ it('an in-progress run with enough readings qualifies',()=>{
+  const s=LocalStateSchema.parse(seededState({runs:[SLOW_RUNS.runs[0]!,SLOW_RUNS.runs[1]!,{...SLOW_RUNS.runs[2]!,status:'in_progress',final:null}]}));
+  const a=analyze(s.runs,s.profiles[0]!.id,20);
+  expect(a.character?.qualifying).toBe(3);
+  // the in-progress run has 9 readings and no final total
+  expect(a.character?.report?.buckets.readings).toBe(29);
  });
  it('an analysis for another character is discarded',()=>{
   const s=state(),a=analyze(s.runs,s.profiles[0]!.id,20);

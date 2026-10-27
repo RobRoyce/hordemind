@@ -8,8 +8,8 @@ export const REPORT_SAMPLES=150;
 export const MIN_RUNS=3;
 export const MIN_READINGS=3;
 
-/** A run counts toward the report card when it is finished enough and its Aether is comparable. */
-export const qualifies=(r:RunReadings)=>r.leftOut===null&&r.scored.length>=MIN_READINGS&&r.status!=='in_progress';
+/** A run counts toward the report card when it is comparable and has enough readings, finished or not. */
+export const qualifies=(r:RunReadings)=>r.leftOut===null&&r.scored.length>=MIN_READINGS;
 
 export interface CharacterAnalysis{
  profileId:string;qualifying:number;needed:number;report:ReportCard|null;

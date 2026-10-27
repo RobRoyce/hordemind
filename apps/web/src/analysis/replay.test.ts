@@ -67,6 +67,24 @@ describe('readRun',()=>{
 });
 
 describe('replaySpans',()=>{
+ const EC='The Exalted Council',MYSTERY='Mystery offer';
+ const base=play(prof({killSpeed:'average'}),[A,EC,C,D],[0,40,90,150]);
+ const council=(pick:string,finish:boolean)=>{
+  // the twin swaps the pick's name inside the same run, so both replay on the same seed
+  const run=JSON.parse(JSON.stringify(base).replaceAll(EC,pick)) as RunRecord;
+  return readRun(finish?endRun(run,'completed',200):endRun(run,'abandoned',null));
+ };
+ it('Council Aether lands in the final reading',()=>{
+  const real=replaySpans(council(EC,true),60),twin=replaySpans(council(MYSTERY,true),60);
+  expect(real).toHaveLength(4);
+  for(let i=0;i<3;i++)expect(real[i]!.mean).toBeCloseTo(twin[i]!.mean,9);
+  expect(real[3]!.mean-twin[3]!.mean).toBeCloseTo(25,9);
+ });
+ it('an abandoned run drops Council Aether',()=>{
+  const real=replaySpans(council(EC,false),60),twin=replaySpans(council(MYSTERY,false),60);
+  expect(real).toHaveLength(3);
+  real.forEach((p,i)=>expect(p.mean).toBeCloseTo(twin[i]!.mean,9));
+ });
  const done=()=>readRun(endRun(play(prof({killSpeed:'average'}),[A,B,C,D],[0,40,90,null]),'completed',200));
  it('replays are repeatable for the same run',()=>{
   const r=done();
