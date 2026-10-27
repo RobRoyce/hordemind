@@ -14,7 +14,7 @@
    - Offers with a dangerous bane show a *High danger* or *Some danger* badge with the bane text. Danger never changes the estimate.
 3. **Insights**: completed/in-progress runs, event completeness, calibration warnings, future community benchmarks.
    - Report card and Your choices cover the active character and open with "For {name}."; Game numbers pools every character.
-   - Report card compares how often the Aether gain landed inside the model's 80% range, with the average miss and one line per offer family. It needs 3 runs with Aether readings.
+   - Report card compares how often the Aether gain landed inside the model's 80% range, with the average miss and one line per offer family. It needs 3 runs with at least 3 Aether readings each. In-progress runs count.
    - Your choices counts pre-selected, self-picked and other offers against the recommendation, prices the other picks and lists the offers taken most over it. Overrides are disagreements to learn from, not mistakes.
    - Game numbers are plain tallies (Chaotic Offering rate, repeat-family rate, Chaos Wave pay with and without Varshan's Vengeance).
    - Each section has an empty state that names what is missing. The analysis runs in a Web Worker in the browser; nothing is uploaded.
