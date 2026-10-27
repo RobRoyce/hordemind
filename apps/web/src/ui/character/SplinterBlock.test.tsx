@@ -9,7 +9,7 @@ describe('SplinterBlock',()=>{
   const html=renderToStaticMarkup(<SplinterBlock profile={{...newProfile('A','Paladin'),activeSplinter:'terror',splinterRanks:{terror:5,destruction:20,hatred:null}}} onUpdate={()=>{}}/>);
   expect(html).toContain('Applies while active');
   expect(html).toContain('No Infernal Hordes bonus.');
-  expect(html).toContain('First node of the events branch in the Infernal Hordes War Plan');
+  expect(html).toContain('Cult of Annihilation</b>, first node of the events branch in the Infernal Hordes War Plan');
  });
  it('LairBossBlock lists every node with its Aether note',()=>{
   const html=renderToStaticMarkup(<LairBossBlock profile={newProfile('A','Paladin')} onUpdate={()=>null}/>);

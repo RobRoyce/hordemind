@@ -27,7 +27,7 @@ export function SplinterBlock({profile,onUpdate}:Props){
      {sp.bonuses.map(b=>{
       const st=bonusState(profile,sp.id,b.rank);
       return <li key={b.rank} className={cx(s.item,s[st])}>
-       <b>Rank {b.rank}: {b.node}</b>, {b.where}. {b.effect} {b.note}
+       <b>Rank {b.rank}: {b.node}</b>, {b.where.charAt(0).toLowerCase()+b.where.slice(1)}. {b.effect} {b.note}
        {st==='reached'&&<span className={s.pending}> Applies while active.</span>}
       </li>;
      })}
