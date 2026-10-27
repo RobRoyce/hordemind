@@ -15,6 +15,13 @@ describe('analyze',()=>{
   expect(a.character?.qualifying).toBe(3);
   expect(a.character?.report?.buckets.readings).toBe(30);
  });
+ it("analysis returns each qualifying run's scored spans, newest first",()=>{
+  const s=state(),a=analyze(s.runs,s.profiles[0]!.id,20),runs=a.character!.runs;
+  expect(runs).toHaveLength(3);
+  expect(runs.map(r=>r.createdAt)).toEqual([...runs.map(r=>r.createdAt)].sort().reverse());
+  expect(runs.reduce((n,r)=>n+r.scored.length,0)).toBe(a.character!.report!.buckets.readings);
+  expect(runs[0]).toMatchObject({status:'completed',totalWaves:10});
+ });
  it('a character without qualifying runs gets an empty state, not an error',()=>{
   const s=LocalStateSchema.parse(seededState({runs:[{...SLOW_RUNS.runs[0]!,totals:[],status:'in_progress',final:null}]}));
   const a=analyze(s.runs,s.profiles[0]!.id,20);

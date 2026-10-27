@@ -12,11 +12,15 @@ export const MIN_READINGS=3;
 /** A run counts toward the report card when it is comparable and has enough readings, finished or not. */
 export const qualifies=(r:RunReadings)=>r.leftOut===null&&r.scored.length>=MIN_READINGS;
 
+/** One qualifying run's scored spans, for per-wave charts. */
+export interface RunScores{runId:string;createdAt:string;status:RunRecord['status'];totalWaves:number;scored:Scored[]}
 export interface CharacterAnalysis{
  profileId:string;qualifying:number;needed:number;report:ReportCard|null;
  leftOut:{pulse:number;events:number};
  skipped:{falling:number;legacy:number;varshanChaos:number};
  overrides:OverrideSummary;
+ /** Every qualifying run, newest first. */
+ runs:RunScores[];
 }
 export interface Analysis{character:CharacterAnalysis|null;counts:GameCounts}
 
@@ -43,7 +47,7 @@ export function analyze(runs:readonly RunRecord[],profileId:string|null,samples=
  if(!profileId)return {character:null,counts};
  const mine=runs.filter(r=>profileIdOf(r)===profileId);
  const leftOut={pulse:0,events:0},skipped={falling:0,legacy:0,varshanChaos:0};
- const buckets:Scored[]=[];
+ const buckets:Scored[]=[],runScores:RunScores[]=[];
  let qualifying=0;
  const inputs=mine.map(run=>{
   const key=runKey(run);
@@ -59,6 +63,7 @@ export function analyze(runs:readonly RunRecord[],profileId:string|null,samples=
   if(!scored)return {run,scored:null};
   qualifying++;
   buckets.push(...scored);
+  runScores.push({runId:r.runId,createdAt:r.createdAt,status:r.status,totalWaves:r.totalWaves,scored});
   return {run,scored};
  });
  const price:Price|undefined=cache&&((sc,a,b,n,runId)=>{
@@ -71,7 +76,8 @@ export function analyze(runs:readonly RunRecord[],profileId:string|null,samples=
  return {character:{
   profileId,qualifying,needed:Math.max(0,MIN_RUNS-qualifying),
   report:qualifying>=MIN_RUNS?reportCard(buckets,null):null,
-  leftOut,skipped,overrides:overrideSummary(inputs,samples,price)
+  leftOut,skipped,overrides:overrideSummary(inputs,samples,price),
+  runs:runScores.sort((a,b)=>b.createdAt.localeCompare(a.createdAt))
  },counts};
 }
 

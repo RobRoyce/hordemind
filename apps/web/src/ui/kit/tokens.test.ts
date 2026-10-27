@@ -23,7 +23,7 @@ describe('design tokens',()=>{
  it('meets the spec contrast floors',()=>{
   for(const t of ['ink','muted','gold','amber','ember','danger'])
    for(const bg of ['bg','raised','sheet'])expect(contrast(tok[t],tok[bg]),`${t} on ${bg}`).toBeGreaterThanOrEqual(4.5);
-  for(const t of ['rubric','faint'])expect(contrast(tok[t],tok.bg),t).toBeGreaterThanOrEqual(3);
+  for(const t of ['rubric','cool','faint'])expect(contrast(tok[t],tok.bg),t).toBeGreaterThanOrEqual(3);
   for(const f of FAMILY_SLUGS)expect(contrast(tok['fam-'+f],tok.bg),f).toBeGreaterThanOrEqual(3);
  });
  it('keeps text legible inside the frame',()=>{
