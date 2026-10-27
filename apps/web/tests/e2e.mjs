@@ -111,6 +111,16 @@ async function journey(viewport){
   await noSeriousViolations(page,'Character');
   await noZoomingFields(page,'Character');
 
+  step('splinter ranks and Lair Bosses nodes save and survive a reload');
+  await setChoice(page,'Active splinter','Terror');
+  await page.getByLabel('Splinter of Terror rank',{exact:true}).fill('14');
+  await page.getByLabel('Splinter of Destruction rank',{exact:true}).fill('20');
+  await page.getByLabel('Infernal Deception',{exact:true}).check();
+  await page.reload();
+  await page.getByLabel('Infernal Deception',{exact:true}).waitFor();
+  const {activeSplinter,splinterRanks,lairBossNodes}=(await stored()).profiles[0];
+  assert.deepEqual({activeSplinter,splinterRanks,lairBossNodes},{activeSplinter:'terror',splinterRanks:{terror:14,destruction:20,hatred:null},lairBossNodes:['Infernal Deception']});
+
   step('a malformed build link is rejected inline and never blocks saving');
   await page.getByLabel('Build planner link',{exact:true}).fill('not a link');
   await page.getByText('does not look like a web address').waitFor();

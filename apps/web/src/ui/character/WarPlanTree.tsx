@@ -8,7 +8,7 @@ import s from './WarPlanTree.module.css';
 interface Props{
  learned:readonly string[];
  onToggle:(id:string)=>void;
- /** Shown left of the upgrade counter, such as the Splinter rank field. */
+ /** Shown beside the upgrade counter, such as the splinter block. */
  children?:ReactNode;
 }
 

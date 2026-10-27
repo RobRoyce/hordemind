@@ -2,9 +2,11 @@ import {useState} from 'react';
 import {GAME_CLASSES,type CharacterProfile} from '../../domain/schema';
 import {toggleWarPlanNode} from '../../domain/profile';
 import {WAR_PLAN_HOME} from '../../domain/warplan';
-import {Button,Field,NumberField,PageHeader,SectionHeading,Select,TextField} from '../kit';
+import {Button,Field,PageHeader,SectionHeading,Select,TextField} from '../kit';
 import {CharacterForm,TIPS} from './CharacterForm';
 import {CharacterTabs} from './CharacterTabs';
+import {LairBossBlock} from './LairBossBlock';
+import {SplinterBlock} from './SplinterBlock';
 import {StartRunBar} from './StartRunBar';
 import {WarPlanTree} from './WarPlanTree';
 import s from './Character.module.css';
@@ -51,13 +53,11 @@ function Editor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pick<Props
    <SectionHeading>Infernal Hordes War Plan</SectionHeading>
    <p className={s.lead}>{WAR_PLAN_HOME}. Learn the same upgrades you have in game.</p>
    <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}>
-    <div className={s.splinter}>
-     <Field label="Splinter of Terror rank" help={TIPS.splinter}>
-      {w=><NumberField wire={w} min={0} max={24} placeholder="Not set" value={profile.splinterRanks.terror??''}
-       onChange={e=>{const v=e.target.value===''?null:Math.max(0,Math.min(24,Math.round(Number(e.target.value))));if(v===null||Number.isFinite(v))update({splinterRanks:{...profile.splinterRanks,terror:v},...(v!==null&&!profile.activeSplinter?{activeSplinter:'terror' as const}:{})})}}/>}
-     </Field>
-    </div>
+    <SplinterBlock profile={profile} onUpdate={update}/>
    </WarPlanTree>
+  </section>
+  <section className={s.section} aria-label="Lair Bosses War Plan setup">
+   <LairBossBlock profile={profile} onUpdate={onUpdate}/>
   </section>
   <section className={s.section} aria-label="Start a run">
    <StartRunBar onStart={waves=>onStart(profile,waves)}/>

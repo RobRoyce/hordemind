@@ -2,7 +2,7 @@
 
 ## The three modes
 
-1. **Strategy Lab**: rare configuration; character, class, build URL, Torment, kill-speed estimates, War Plan names, objectives. One screen with progressive disclosure. Never block starting a run for optional fields.
+1. **Strategy Lab**: rare configuration; character, class, build URL, Torment, kill-speed estimates, War Plan names, active Season 15 splinter with a rank per splinter and the bonuses each unlocks, Lair Bosses War Plan nodes, objectives. One screen with progressive disclosure. Never block starting a run for optional fields.
 2. **Live Run**: one screen per wave, offers before wave *k*.
    - Header shows wave *k* of *N*, the latest Aether reading, the taken-offer stack, and the Black Pact status.
    - Up to five offer rows use a searchable combobox (name, family, mechanic; recent offers first). Picking moves focus to the next row.
