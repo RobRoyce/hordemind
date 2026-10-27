@@ -27,7 +27,7 @@ Success means three things:
 |---|---|
 | Feature order | Learn from your runs first, then the advisor. The owner chose "measure first". |
 | Effects without Aether | Estimates count Aether only. Belial's ambush, Varshan, extra Monster Power and unique drops are flagged and never priced. |
-| Splinter bonuses | A bonus applies only while its splinter is active. One splinter is active at a time. The app stores only the active splinter and its rank (owner, 2026-10-26). |
+| Splinter bonuses | A bonus applies only while its splinter is active. One splinter is active at a time. The app saves each splinter's rank once set and shows only the active one's (owner, 2026-10-26). |
 | Varshan's Chaos Wave Aether | Unknown. It's flagged, and Insights compares Chaos Wave gains with and without the node. |
 | Calibration switch | Turns on automatically when the fit clearly beats the bucket settings on held-out runs. Live Run shows a "Calibrated" marker, and each character has an off switch. |
 | Fit method | Grid search over two player numbers per character, then two game numbers pooled across characters |
@@ -81,10 +81,10 @@ New `CharacterProfileSchema` fields:
 | Field | Type | Default |
 |---|---|---|
 | `activeSplinter` | `'terror' \| 'destruction' \| 'hatred' \| null` | `null` |
-| `splinterRank` | the active splinter's rank, an integer 0–24, or `null` | `null` |
+| `splinterRanks` | `{terror, destruction, hatred}`, each an integer 0–24 or `null` | all `null` |
 | `lairBossNodes` | array of the six node names above | `[]` |
 
-- Old data stays readable. Before this change, `splinterRank` was always Terror's rank. A parsed profile with no `activeSplinter` key and a numeric `splinterRank` therefore gets `activeSplinter:'terror'`. An explicit `activeSplinter`, including `null`, is never changed.
+- Old data stays readable. A numeric `splinterRank` in a profile with no `splinterRanks` key moves into `splinterRanks`. It belongs to the active splinter, or to Terror when none is active. A profile with no `activeSplinter` key predates splinters, so it also gets `activeSplinter:'terror'`. An explicit `activeSplinter`, including `null`, is never changed. New saves omit `splinterRank`.
 - The same parsing applies to the profile snapshot inside `run_started`, so old runs replay with Terror active at their recorded rank.
 - `profile_schema_version` stays 1. The fields are additive JSON with defaults, and the Postgres check requires version 1.
 - Private sync stores the profile as one `jsonb` value, so no database migration is needed.
@@ -93,7 +93,7 @@ New `CharacterProfileSchema` fields:
 
 - **Splinter block.** It sits in the character settings, after Mobility, and replaces the "Splinter of Terror rank" field that sat under the Infernal Hordes War Plan tree (owner, 2026-10-26).
   - A selector picks the active splinter from Terror, Destruction and Hatred. Nothing is selected until the player picks one.
-  - One "Splinter rank" field takes 0–24 for the active splinter. An empty field means not set. The field appears once a splinter is picked.
+  - One rank field appears once a splinter is picked. Its label names the active splinter, such as "Splinter of Terror rank". It shows and edits that splinter's saved rank, 0–24, and empty means not set. Switching splinters shows the new one's saved rank, and the other ranks stay saved for spec 2's advisor.
   - Below the selector and the field, only the active splinter's Hordes bonuses are listed, from the table above, with each node's location. Each bonus shows one of three states: in effect, needs its node learned, or rank not reached. Council Coffers sits in the rewards branch, which the app doesn't track, so it never shows the needs-its-node state.
   - With Hatred active, one line says it has no Infernal Hordes bonus.
 - **Lair Bosses block.** It sits below the Infernal Hordes tree.
@@ -103,7 +103,7 @@ New `CharacterProfileSchema` fields:
 
 ### Model
 
-- A helper `terrorRank(profile)` returns `splinterRank` when Terror is active and 0 otherwise. It replaces the `splinterRank` reads in `simulate.ts` and `model.ts`.
+- A helper `terrorRank(profile)` returns `splinterRanks.terror` when Terror is active and 0 otherwise. It replaces the `splinterRank` reads in `simulate.ts` and `model.ts`.
 - The rank-14 Impending Doom trigger stays modeled as today.
 - The rank-5 Doomsayer stays unmodeled and gets a note. The rank-20 chest gets a rewards note.
 - Lair Bosses nodes change no estimate. Their notes appear on the Character screen. Varshan's note says his Chaos Wave Aether is unknown and gets compared in Insights.

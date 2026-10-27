@@ -310,6 +310,18 @@ The owner asked for one selector between the three splinters and one rank field,
 
 The full brief is `task-A4-brief.md` in the plan workspace.
 
+### Task A5: Save each splinter's rank, show the active one (owner, 2026-10-26)
+
+The owner asked to keep every rank that has been set while the screen shows only the active splinter's. Spec 2's advisor needs them to compare splinters. The owner also moved the splinter block into the character settings (commit 04dd2c3).
+
+**Interfaces:**
+- `CharacterProfile.splinterRanks:{terror,destruction,hatred}` (each `number|null`, 0–24) replaces `splinterRank`
+- `migrateSplinterRank(raw)` moves a lone numeric `splinterRank` into `splinterRanks`. It belongs to the active splinter, or to Terror when none is active. A profile with no `activeSplinter` key gets Terror.
+- `activeRank(p):number|null` and `terrorRank(p):number` in `splinters.ts`
+- `bonusState(p,bonus)` reads `activeRank(p)`, and `chooseSplinter` is removed
+
+The full brief is `task-A5-brief.md` in the plan workspace.
+
 ---
 
 ## Phase B: Replay, report card, override tracker, counts (PR 2)
