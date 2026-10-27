@@ -290,6 +290,26 @@ git commit -m "feat: splinter and Lair Bosses War Plan blocks on the Character s
 2. Serve the build on 127.0.0.1 and send the owner the URL and screenshots at 1440 and 390 px.
 3. After the owner's OK, push with `git push git@github.com:RobRoyce/hordemind.git feat/splinters-and-lair-bosses` and open PR 1.
 
+### Task A4: One rank for the active splinter (owner preview, 2026-10-26)
+
+The owner asked for one selector between the three splinters and one rank field, with help text for the active splinter only. Spec §1 is updated to match.
+
+**Files:**
+- Modify: `apps/web/src/domain/schema.ts`, `splinters.ts`, `run.ts`
+- Modify: `apps/web/src/ui/character/splinterView.ts`, `SplinterBlock.tsx`, `SplinterBlock.module.css`, `CharacterForm.tsx` (`TIPS.splinter`)
+- Modify: tests that build profiles with `splinterRanks` (`domain/merge.test.ts`, `domain/splinters.test.ts`, `recommendation/scenario.test.ts`, `ui/character/*.test.ts*`), plus `tests/e2e.mjs` and `docs/UX_V2.md`
+
+**Interfaces:**
+- `CharacterProfile.splinterRank:number|null`, the active splinter's rank from 0 to 24, replaces `splinterRanks`
+- `migrateSplinterRank(raw)` sets `activeSplinter:'terror'` only when the object has no `activeSplinter` key and `splinterRank` is a number
+- `terrorRank(p:Pick<CharacterProfile,'activeSplinter'|'splinterRank'>):number`
+- `SplinterBonus.learnedIn:'warPlanNodes'|'lairBossNodes'|null`, where Council Coffers is `null`
+- `type BonusState='active'|'unlearned'|'locked'`
+- `bonusState(p:Pick<CharacterProfile,'splinterRank'|'warPlanNodes'|'lairBossNodes'>,bonus:SplinterBonus):BonusState`
+- `chooseSplinter(p:Pick<CharacterProfile,'activeSplinter'|'splinterRank'>,id:SplinterId):Pick<CharacterProfile,'activeSplinter'|'splinterRank'>`, which clears the rank when the splinter changes
+
+The full brief is `task-A4-brief.md` in the plan workspace.
+
 ---
 
 ## Phase B: Replay, report card, override tracker, counts (PR 2)
