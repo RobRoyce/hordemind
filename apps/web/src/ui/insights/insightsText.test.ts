@@ -1,20 +1,7 @@
 import {describe,expect,it} from 'vitest';
-import {headlineParts,chaoticLine,choicesLeftOutText,costText,gapText,headline,leftOutText,missCell,missText,needsText,percent,repeatLine,rankedText,varshanLine,offerSetLabel} from './insightsText';
+import {headlineParts,chaoticLine,choicesLeftOutText,costText,gapText,headline,leftOutText,missCell,needsText,percent,repeatLine,rankedText,varshanLine,offerSetLabel} from './insightsText';
 
 const none={pulse:0,events:0},zero={falling:0,legacy:0,varshanChaos:0};
-
-describe('missText',()=>{
- it('calls small misses about right',()=>{
-  expect(missText(0)).toBe('about right on average');
-  expect(missText(4.9)).toBe('about right on average');
-  expect(missText(-4.9)).toBe('about right on average');
- });
- it('says too much for a positive miss and too little for a negative one',()=>{
-  expect(missText(7.6)).toBe('predicts 8 too much per reading');
-  expect(missText(5)).toBe('predicts 5 too much per reading');
-  expect(missText(-12.4)).toBe('predicts 12 too little per reading');
- });
-});
 
 describe('missCell',()=>{
  it('says about right under 5',()=>{

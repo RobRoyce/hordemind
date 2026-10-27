@@ -2,13 +2,6 @@ import type {Rate} from '../../analysis/counts';
 
 const n=(count:number,one:string,many:string)=>`${count} ${count===1?one:many}`;
 
-/** A mean miss under 5 Aether reads as no bias. */
-export function missText(averageMiss:number):string{
- if(Math.abs(averageMiss)<5)return 'about right on average';
- const amount=Math.round(Math.abs(averageMiss));
- return `predicts ${amount} too ${averageMiss>0?'much':'little'} per reading`;
-}
-
 /** Average miss as a plain phrase for a table cell; under 5 Aether reads as no bias. */
 export function missCell(miss:number):string{
  if(Math.abs(miss)<5)return 'about right';

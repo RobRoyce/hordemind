@@ -31,7 +31,7 @@ function Bars({offers,options}:{offers:GameCounts['offers'];options:{value:Offer
  const nameW=narrow?0:Math.min(220,width*.4),barX=narrow?22:nameW,span=width-barX-R-VALUE_ROOM;
  const {max}=niceMax(Math.min(100,rows.length?100*rows[0]!.count/total:0));
  const where=offers.reign.sets>0||offers.chaos.sets>0;
- return <div>
+ return <div className={s.block}>
   <h3 className={s.title}>How often each offer appeared</h3>
   <p className={s.note}>Share of offer sets that included each offer. Top 10.</p>
   {options.length>1&&<div className={s.setups}><Segmented label="Offer setup" value={setup} options={options} onChange={v=>{clear();setPick(v)}}/></div>}

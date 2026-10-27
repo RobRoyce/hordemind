@@ -18,7 +18,7 @@ function barPath(x0:number,cy:number,len:number,dir:1|-1,h=BAR_H){
 
 /** Geometry of the miss chart: row positions, centre line and the scale in px per Aether. */
 export function missLayout(families:ReportCard['byFamily'],width:number){
- const narrow=width<NARROW_BELOW,row=narrow?52:34,left=narrow?0:Math.min(150,width*.3);
+ const narrow=width<NARROW_BELOW,row=narrow?52:34,left=narrow?0:Math.min(180,width*.34);
  const pw=width-left-R,mid=left+pw/2,room=narrow?4:ROOM;
  const max=niceMax(Math.max(0,...families.map(f=>Math.abs(f.stats.averageMiss)))).max;
  return {narrow,row,left,mid,height:TOP+families.length*row+6,scale:(pw/2-room)/max};
@@ -34,7 +34,7 @@ function Bars({families}:{families:ReportCard['byFamily']}){
  const width=useChartWidth(ref);
  const {tip,hit}=useTip();
  const l=missLayout(families,width);
- return <div>
+ return <div className={s.block}>
   <h3 className={s.title}>After each offer family</h3>
   <p className={s.note}>How far the forecast missed per reading, on average, after you took each family's offers. Families with 5 readings or more.</p>
   <div ref={ref} className={s.wrap}>
