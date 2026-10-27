@@ -118,6 +118,10 @@ async function journey(viewport){
   await page.getByLabel('Infernal Deception',{exact:true}).check();
   await page.reload();
   await page.getByLabel('Infernal Deception',{exact:true}).waitFor();
+  assert(await page.getByLabel('Infernal Deception',{exact:true}).isChecked(),'Infernal Deception stays checked');
+  assert.equal(await page.getByLabel('Splinter of Terror rank',{exact:true}).inputValue(),'14');
+  assert.equal(await page.getByLabel('Splinter of Destruction rank',{exact:true}).inputValue(),'20');
+  assert.equal(await choiceOf(page,'Active splinter'),'Terror');
   const {activeSplinter,splinterRanks,lairBossNodes}=(await stored()).profiles[0];
   assert.deepEqual({activeSplinter,splinterRanks,lairBossNodes},{activeSplinter:'terror',splinterRanks:{terror:14,destruction:20,hatred:null},lairBossNodes:['Infernal Deception']});
 

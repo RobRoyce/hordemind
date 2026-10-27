@@ -58,9 +58,9 @@ export function Select({wire,className,children,...rest}:Wired<ComponentProps<'s
  </span>;
 }
 
-export function Checkbox({label,checked,onChange}:{label:string;checked:boolean;onChange:(checked:boolean)=>void}){
+export function Checkbox({label,checked,onChange,describedBy}:{label:string;checked:boolean;onChange:(checked:boolean)=>void;describedBy?:string}){
  return <label className={s.checkbox}>
-  <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}/>
+  <input type="checkbox" checked={checked} aria-describedby={describedBy} onChange={e=>onChange(e.target.checked)}/>
   <span>{label}</span>
  </label>;
 }

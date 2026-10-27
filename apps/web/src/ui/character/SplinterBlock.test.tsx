@@ -24,5 +24,7 @@ describe('SplinterBlock',()=>{
   expect(html).toContain('Infernal Deception');
   expect(html).toContain('No effect on Aether.');
   expect(html).toContain('Its effect on Chaos Wave Aether is unknown.');
+  const [,ref]=/aria-describedby="([^"]+)"/.exec(html)!;
+  expect(html).toContain(`id="${ref}"`);
  });
 });
