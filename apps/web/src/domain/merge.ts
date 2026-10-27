@@ -3,16 +3,22 @@ import type {LocalState,RunRecord} from './schema';
 /** True when `a`'s events are an exact prefix of `b`'s. */
 const prefixOf=(a:RunRecord,b:RunRecord)=>a.events.length<=b.events.length&&a.events.every((e,i)=>b.events[i]?.id===e.id);
 
+/** True when `a` serializes longer than `b`, or ties on length and sorts higher. */
+const fuller=(a:unknown,b:unknown)=>{
+ const x=JSON.stringify(canonical(a)),y=JSON.stringify(canonical(b));
+ return x.length!==y.length?x.length>y.length:x>y;
+};
+
 /**
  * Combines this tab's state with state another tab saved. Run journals are append-only,
  * so the longer of two copies of a run normally contains the other. Profiles keep the
- * newest edit. Active selections stay per-tab when they still exist.
+ * newest edit, and on a timestamp tie the fuller copy, so a stale app version's stripped save can't erase newer fields. Active selections stay per-tab when they still exist.
  */
 export function mergeStates(mine:LocalState,theirs:LocalState):LocalState{
  const profiles=new Map(theirs.profiles.map(p=>[p.id,p]));
  for(const p of mine.profiles){
   const other=profiles.get(p.id);
-  if(!other||p.updatedAt>other.updatedAt)profiles.set(p.id,p);
+  if(!other||p.updatedAt>other.updatedAt||p.updatedAt===other.updatedAt&&fuller(p,other))profiles.set(p.id,p);
  }
  const runs=new Map(theirs.runs.map(r=>[r.id,r]));
  for(const r of mine.runs){

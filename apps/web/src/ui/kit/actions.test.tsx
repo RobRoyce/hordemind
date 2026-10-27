@@ -38,6 +38,12 @@ describe('action and field components',()=>{
   expect(out).toContain('role="radiogroup"');
   expect(out.match(/aria-checked="true"/g)).toHaveLength(1);
  });
+ it('Segmented with no value checks nothing and makes the first option the tab stop',()=>{
+  const out=html(<Segmented<string> label="Realm" value={null} options={REALMS} onChange={()=>{}}/>);
+  expect(out).not.toContain('aria-checked="true"');
+  expect(out.match(/tabindex="0"/g)).toHaveLength(1);
+  expect(out).toMatch(/tabindex="0"[^>]*>Season 15/);
+ });
  it('Segmented keeps only the checked radio in the tab order',()=>{
   const out=html(<Segmented label="Realm" value="Eternal" options={REALMS} onChange={()=>{}}/>);
   expect(out.match(/tabindex="0"/g)).toHaveLength(1);

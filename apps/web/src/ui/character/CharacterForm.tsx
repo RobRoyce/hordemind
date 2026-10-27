@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {DIFFICULTIES,GAME_CLASSES,REALMS,type CharacterProfile} from '../../domain/schema';
 import {normalizeBuildUrl} from '../../domain/profile';
 import {Field,Segmented,Select,TextField} from '../kit';
+import {SplinterBlock} from './SplinterBlock';
 import s from './CharacterForm.module.css';
 
 export const TIPS={
@@ -12,7 +13,7 @@ export const TIPS={
  realm:'Season 15 or Eternal. This is the realm you play on, separate from the game patch the data is tagged with.',
  url:'A link to your build in a planner such as Maxroll, D4Builds or Icy Veins. Saved as a bookmark only: it does not import gear or skills or affect recommendations.',
  kill:'How long a major target such as an Aether Lord takes at this difficulty. Fast: nearly instant. Average: a few seconds. Slow: long enough to cost you other events. The simulator gives faster builds more event time per wave.',
- splinter:'Your Season 15 Splinter of Terror rank. It unlocks War Plan bonuses: rank 5 adds a Doomsayer at each wave start (Cult of Annihilation), rank 14 makes Impending Doom also trigger with 30 s left, rank 20 makes the Chest of Talismans cost 1 Aether.',
+ splinter:"Pick the Season 15 splinter you have active and enter its rank, from 0 to 24. Each splinter keeps its own saved rank. Only the active splinter's War Plan bonuses apply.",
  mobility:'How quickly you reach events spread across the arena, not your movement-speed stat. High: distant events are almost instant. Low: crossing the arena takes real time. The simulator scales available event time by this.'
 } as const;
 const KILL_HINT={fast:'Lords and elites die almost instantly',average:'Several seconds per major target',slow:'Major targets cost noticeable wave time',unknown:'Treated as average'} as const;
@@ -80,5 +81,6 @@ export function CharacterForm({profile,onUpdate}:Props){
    {w=><Segmented label="Mobility" value={profile.mobility} options={MOBILITY_OPTIONS} describedBy={w.describedBy}
     onChange={mobility=>update({mobility})}/>}
   </Field>
+  <SplinterBlock profile={profile} onUpdate={update} help={TIPS.splinter}/>
  </div>;
 }

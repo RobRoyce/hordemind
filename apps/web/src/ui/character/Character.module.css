@@ -23,9 +23,6 @@
  gap:var(--hm-space-5) var(--hm-space-6);
 }
 
-.splinter{width:16rem}
-
 @media (max-width:699px){
  .pair{grid-template-columns:minmax(0,1fr)}
- .splinter{width:100%}
 }

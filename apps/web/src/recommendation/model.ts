@@ -14,7 +14,7 @@ export const RECOMMENDER_VERSION='s15-timeflow-3.1-experimental';
 /** `decisionWave` is the wave the offer precedes; the chosen offer applies from that wave on. */
 export interface Scenario{
  history:string[];totalWaves:number;decisionWave:number;
- profile:Pick<CharacterProfile,'killSpeed'|'mobility'|'warPlanNodes'>&{splinterRank?:number|null};
+ profile:Pick<CharacterProfile,'killSpeed'|'mobility'|'warPlanNodes'>&{terrorRank?:number|null};
 }
 export const remainingWaves=(s:Pick<Scenario,'totalWaves'|'decisionWave'>)=>Math.max(0,s.totalWaves-s.decisionWave+1);
 export const hasMechanics=(name:string)=>mechanicsFor(name)!==null;
@@ -153,7 +153,7 @@ function explain(offer:string,s:Scenario,d:Draws,noDoom:number|null=null):string
    `It lowers Aether from ${parts(losses)}.`);
  }
  if(noDoom!==null){
-  const late=(s.profile.splinterRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?WAR_PLAN_EFFECTS.doomSplinterSeconds.value:WAR_PLAN_EFFECTS.doomSeconds.value;
+  const late=(s.profile.terrorRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?WAR_PLAN_EFFECTS.doomSplinterSeconds.value:WAR_PLAN_EFFECTS.doomSeconds.value;
   reasons.push(`Impending Doom spawns events on a timer in the last ${late} seconds of each wave, and faster spawning can't speed those up. Without Impending Doom this would be worth about +${Math.round(noDoom)}.`);
  }
  const effects=m.effects.map(describe).filter((x):x is string=>x!==null);

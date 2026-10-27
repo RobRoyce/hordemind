@@ -47,7 +47,7 @@ export const WAR_PLAN:readonly WarPlanNode[]=[
   use:'Live Run starts with four offer rows. No Chaotic Offering will appear.',
   tooltip:'An additional Infernal Offering appears each wave. However, you suppress Chaos Waves from appearing. You may only select one perk.'},
  {id:'Impending Doom',branch:'offers',parents:['Method and Madness'],row:1,col:1,affects:'aether',
-  use:'Simulated: Aether Events spawn at all four locations with 10 s left, and with 30 s left at Splinter rank 14. Offers that make events pay more gain from it.',
+  use:'Simulated: Aether Events spawn at all four locations with 10 s left, and with 30 s left at Splinter of Terror rank 14 while Terror is active. Offers that make events pay more gain from it.',
   tooltip:'When the current wave has 10 seconds remaining, Aether Events spawn at all locations. At Rank 14 with the Splinter of Terror, Impending Doom also triggers when the current wave has 30 seconds remaining.'},
  {id:'Total Chaos',branch:'offers',parents:['Method and Madness'],exclusive:'Reign in Hell',row:1,col:2,affects:'offers',
   use:'Live Run starts with three offer rows. Use the third for the Chaotic Offering when it appears.',

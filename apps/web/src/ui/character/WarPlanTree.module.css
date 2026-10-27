@@ -17,7 +17,6 @@
  max-width:22rem;
  color:var(--hm-muted);
  font-size:var(--hm-text-2);
- text-align:right;
 }
 .count{
  margin-right:2px;
@@ -117,5 +116,4 @@
 @media (max-width:699px){
  .branches{flex-direction:column}
  .detail{min-height:18rem}
- .counter{text-align:left}
 }

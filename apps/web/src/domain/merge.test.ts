@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {mergeStates,reconcile,sameState} from './merge';
 import {newProfile,newRun,recordDecision} from './run';
-import {EMPTY_STATE,type LocalState} from './schema';
+import {CharacterProfileSchema,EMPTY_STATE,type LocalState} from './schema';
 
 const state=(patch:Partial<LocalState>):LocalState=>({...structuredClone(EMPTY_STATE),...patch});
 
@@ -25,6 +25,37 @@ describe('merging state written by another tab',()=>{
   const p=newProfile('Paladin','Paladin'),q=newProfile('Rogue','Rogue');
   const merged=mergeStates(state({profiles:[p,q],activeProfileId:q.id}),state({profiles:[p,q],activeProfileId:p.id}));
   expect(merged.activeProfileId).toBe(q.id);
+ });
+});
+
+describe('profile ties',()=>{
+ const fuller=()=>{
+  const p=newProfile('Paladin','Paladin');
+  return {...p,activeSplinter:'terror' as const,splinterRanks:{terror:20,destruction:null,hatred:null},lairBossNodes:['Infernal Deception']};
+ };
+ const stripped=(p:ReturnType<typeof fuller>)=>({...p,activeSplinter:null,splinterRanks:{terror:null,destruction:null,hatred:null},lairBossNodes:[]});
+ it('a stripped copy with the same updatedAt never replaces a fuller profile',()=>{
+  const f=fuller(),mine=state({profiles:[f]}),theirs=state({profiles:[stripped(f)]});
+  expect(mergeStates(mine,theirs).profiles[0]).toEqual(mine.profiles[0]);
+  expect(mergeStates(theirs,mine).profiles[0]).toEqual(mine.profiles[0]);
+ });
+ it("an old version's stripped copy never flips the active splinter",()=>{
+  const f={...newProfile('Paladin','Paladin'),activeSplinter:'hatred' as const,splinterRanks:{terror:null,destruction:null,hatred:10},lairBossNodes:[]};
+  const {activeSplinter:_a,splinterRanks:_r,lairBossNodes:_l,...rest}=f;
+  const old=CharacterProfileSchema.parse({...rest,splinterRank:null});
+  const mine=state({profiles:[f]}),theirs=state({profiles:[old]});
+  expect(mergeStates(mine,theirs).profiles[0]).toEqual(f);
+  expect(mergeStates(theirs,mine).profiles[0]).toEqual(f);
+ });
+ it('reconcile writes the fuller profile back once and then settles',()=>{
+  const f=fuller(),mine=state({profiles:[f]}),theirs=state({profiles:[stripped(f)]});
+  expect(reconcile(mine,theirs).writeBack?.profiles[0]).toEqual(f);
+  expect(reconcile(mine,mine).writeBack).toBeNull();
+ });
+ it('a newer updatedAt still wins regardless of content',()=>{
+  const f=fuller(),s={...stripped(f),updatedAt:new Date(Date.parse(f.updatedAt)+1000).toISOString()};
+  expect(mergeStates(state({profiles:[f]}),state({profiles:[s]})).profiles[0]).toEqual(s);
+  expect(mergeStates(state({profiles:[s]}),state({profiles:[f]})).profiles[0]).toEqual(s);
  });
 });
 

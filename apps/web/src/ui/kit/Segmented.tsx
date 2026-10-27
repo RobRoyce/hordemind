@@ -4,7 +4,7 @@ import s from './Segmented.module.css';
 
 interface Props<T extends string>{
  label:string;
- value:T;
+ value:T|null;
  /** A detail sits small under the label, as in "10" over "Legendary". */
  options:readonly {value:T;label:string;detail?:string}[];
  onChange:(value:T)=>void;

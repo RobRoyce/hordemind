@@ -51,7 +51,7 @@ describe('War Plan: Impending Doom (tooltip, S15)',()=>{
   expect(wave(doom)).toBeGreaterThan(wave(average)+1);
  });
  it('triggers again with 30 s left at Splinter of Terror rank 14',()=>{
-  expect(wave({...doom,splinterRank:14})).toBeGreaterThan(wave({...doom,splinterRank:13})+1);
+  expect(wave({...doom,terrorRank:14})).toBeGreaterThan(wave({...doom,terrorRank:13})+1);
  });
  it('makes offers that pay per event worth more',()=>{
   const puffingGain=(p:PlayerProfile)=>wave(p,['The Puffing Masses'])-wave(p);
@@ -72,7 +72,7 @@ describe('choosing among waiting events',()=>{
  });
 
  // Impending Doom at Splinter rank 14 leaves more events waiting than an average build can finish.
- const doom:PlayerProfile={...average,warPlanNodes:['Impending Doom'],splinterRank:14};
+ const doom:PlayerProfile={...average,warPlanNodes:['Impending Doom'],terrorRank:14};
  const finished=(stack:string[],kind:'Mass'|'Fiend'|'Spire',each:number)=>mean(seed=>simulateWave({...plain,stack},doom,seed)[kind]/each);
  it('leaves Soulspires, the slowest Aether, for last when events pile up',()=>{
   expect(finished([],'Fiend',4)).toBeGreaterThan(3*finished([],'Spire',5));
