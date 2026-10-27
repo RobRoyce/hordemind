@@ -17,6 +17,16 @@ describe('splinter profile fields',()=>{
   expect(p.activeSplinter).toBe('destruction');
   expect(p.splinterRanks.terror).toBe(12);
  });
+ it('a legacy null splinterRank migrates nothing',()=>{
+  const p=CharacterProfileSchema.parse({...base(),activeSplinter:undefined,splinterRanks:undefined,splinterRank:null});
+  expect(p.activeSplinter).toBeNull();
+  expect(p.splinterRanks).toEqual({terror:null,destruction:null,hatred:null});
+ });
+ it('a legacy rank never overrides an explicit non-Terror active splinter',()=>{
+  const p=CharacterProfileSchema.parse({...base(),splinterRank:20,activeSplinter:'hatred',splinterRanks:{terror:null,destruction:null,hatred:7}});
+  expect(p.activeSplinter).toBe('hatred');
+  expect(p.splinterRanks).toEqual({terror:20,destruction:null,hatred:7});
+ });
  it('ranks stop at 24',()=>{
   expect(CharacterProfileSchema.safeParse({...base(),splinterRanks:{terror:24,destruction:null,hatred:null}}).success).toBe(true);
   expect(CharacterProfileSchema.safeParse({...base(),splinterRanks:{terror:25,destruction:null,hatred:null}}).success).toBe(false);

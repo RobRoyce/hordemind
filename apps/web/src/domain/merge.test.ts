@@ -28,6 +28,29 @@ describe('merging state written by another tab',()=>{
  });
 });
 
+describe('profile ties',()=>{
+ const fuller=()=>{
+  const p=newProfile('Paladin','Paladin');
+  return {...p,activeSplinter:'terror' as const,splinterRanks:{terror:20,destruction:null,hatred:null},lairBossNodes:['Infernal Deception']};
+ };
+ const stripped=(p:ReturnType<typeof fuller>)=>({...p,activeSplinter:null,splinterRanks:{terror:null,destruction:null,hatred:null},lairBossNodes:[]});
+ it('a stripped copy with the same updatedAt never replaces a fuller profile',()=>{
+  const f=fuller(),mine=state({profiles:[f]}),theirs=state({profiles:[stripped(f)]});
+  expect(mergeStates(mine,theirs).profiles[0]).toEqual(mine.profiles[0]);
+  expect(mergeStates(theirs,mine).profiles[0]).toEqual(mine.profiles[0]);
+ });
+ it('reconcile writes the fuller profile back once and then settles',()=>{
+  const f=fuller(),mine=state({profiles:[f]}),theirs=state({profiles:[stripped(f)]});
+  expect(reconcile(mine,theirs).writeBack?.profiles[0]).toEqual(f);
+  expect(reconcile(mine,mine).writeBack).toBeNull();
+ });
+ it('a newer updatedAt still wins regardless of content',()=>{
+  const f=fuller(),s={...stripped(f),updatedAt:new Date(Date.parse(f.updatedAt)+1000).toISOString()};
+  expect(mergeStates(state({profiles:[f]}),state({profiles:[s]})).profiles[0]).toEqual(s);
+  expect(mergeStates(state({profiles:[s]}),state({profiles:[f]})).profiles[0]).toEqual(s);
+ });
+});
+
 describe('reconciling another tab’s save',()=>{
  it('writes the union back when a stale tab saved over a newer journal',()=>{
   const p=newProfile('Paladin','Paladin');
