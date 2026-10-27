@@ -6,43 +6,43 @@ import {terrorRank} from './splinters';
 
 const base=()=>({...newProfile('A','Paladin'),updatedAt:'2026-10-26T00:00:00.000Z'});
 describe('splinter profile fields',()=>{
- it('an old splinterRank becomes an active Terror rank',()=>{
-  const p=CharacterProfileSchema.parse({...base(),activeSplinter:undefined,splinterRanks:undefined,splinterRank:20});
+ it("a legacy profile's rank makes Terror active",()=>{
+  const {activeSplinter:_a,...legacy}=base();
+  const p=CharacterProfileSchema.parse({...legacy,splinterRank:20});
   expect(p.activeSplinter).toBe('terror');
-  expect(p.splinterRanks).toEqual({terror:20,destruction:null,hatred:null});
-  expect('splinterRank' in p).toBe(false);
+  expect(p.splinterRank).toBe(20);
  });
- it('explicit splinter fields win over a legacy rank',()=>{
-  const p=CharacterProfileSchema.parse({...base(),splinterRank:5,activeSplinter:'destruction',splinterRanks:{terror:12,destruction:20,hatred:null}});
+ it('an explicit active splinter is never changed',()=>{
+  const p=CharacterProfileSchema.parse({...base(),activeSplinter:'destruction',splinterRank:14});
   expect(p.activeSplinter).toBe('destruction');
-  expect(p.splinterRanks.terror).toBe(12);
+  expect(p.splinterRank).toBe(14);
  });
- it('a legacy null splinterRank migrates nothing',()=>{
-  const p=CharacterProfileSchema.parse({...base(),activeSplinter:undefined,splinterRanks:undefined,splinterRank:null});
+ it('an explicit null active splinter stays null',()=>{
+  const p=CharacterProfileSchema.parse({...base(),activeSplinter:null,splinterRank:5});
   expect(p.activeSplinter).toBeNull();
-  expect(p.splinterRanks).toEqual({terror:null,destruction:null,hatred:null});
+  expect(p.splinterRank).toBe(5);
  });
- it('a legacy rank never overrides an explicit non-Terror active splinter',()=>{
-  const p=CharacterProfileSchema.parse({...base(),splinterRank:20,activeSplinter:'hatred',splinterRanks:{terror:null,destruction:null,hatred:7}});
-  expect(p.activeSplinter).toBe('hatred');
-  expect(p.splinterRanks).toEqual({terror:20,destruction:null,hatred:7});
+ it('a legacy null rank migrates nothing',()=>{
+  const {activeSplinter:_a,...legacy}=base();
+  const p=CharacterProfileSchema.parse({...legacy,splinterRank:null});
+  expect(p.activeSplinter).toBeNull();
  });
  it('ranks stop at 24',()=>{
-  expect(CharacterProfileSchema.safeParse({...base(),splinterRanks:{terror:24,destruction:null,hatred:null}}).success).toBe(true);
-  expect(CharacterProfileSchema.safeParse({...base(),splinterRanks:{terror:25,destruction:null,hatred:null}}).success).toBe(false);
+  expect(CharacterProfileSchema.safeParse({...base(),splinterRank:24}).success).toBe(true);
+  expect(CharacterProfileSchema.safeParse({...base(),splinterRank:25}).success).toBe(false);
  });
  it('run snapshots migrate too',()=>{
   const start=newRun(newProfile('A','Paladin'),10).events[0]!;
   const {profile}=start.payload as unknown as {profile:Record<string,unknown>};
-  const {splinterRanks:_r,activeSplinter:_a,lairBossNodes:_l,...legacy}=profile;
+  const {activeSplinter:_a,lairBossNodes:_l,...legacy}=profile;
   const legacyStart={...start,payload:{...start.payload,profile:{...legacy,splinterRank:14}}};
   const parsed=EventSchema.parse(legacyStart);
-  expect((parsed.payload as {profile:{splinterRanks:{terror:number}}}).profile.splinterRanks.terror).toBe(14);
+  expect((parsed.payload as {profile:{activeSplinter:string}}).profile.activeSplinter).toBe('terror');
  });
  it('Terror bonuses count only while Terror is active',()=>{
-  expect(terrorRank({activeSplinter:'terror',splinterRanks:{terror:14,destruction:null,hatred:null}})).toBe(14);
-  expect(terrorRank({activeSplinter:'destruction',splinterRanks:{terror:20,destruction:20,hatred:null}})).toBe(0);
-  expect(terrorRank({activeSplinter:'terror',splinterRanks:{terror:null,destruction:null,hatred:null}})).toBe(0);
+  expect(terrorRank({activeSplinter:'terror',splinterRank:14})).toBe(14);
+  expect(terrorRank({activeSplinter:'destruction',splinterRank:20})).toBe(0);
+  expect(terrorRank({activeSplinter:'terror',splinterRank:null})).toBe(0);
  });
  it('Lair Bosses nodes toggle on and off',()=>{
   const p=toggleLairBossNode(newProfile('A','Paladin'),'Infernal Deception');

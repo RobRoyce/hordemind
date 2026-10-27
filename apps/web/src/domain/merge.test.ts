@@ -31,9 +31,9 @@ describe('merging state written by another tab',()=>{
 describe('profile ties',()=>{
  const fuller=()=>{
   const p=newProfile('Paladin','Paladin');
-  return {...p,activeSplinter:'terror' as const,splinterRanks:{terror:20,destruction:null,hatred:null},lairBossNodes:['Infernal Deception']};
+  return {...p,activeSplinter:'terror' as const,splinterRank:20,lairBossNodes:['Infernal Deception']};
  };
- const stripped=(p:ReturnType<typeof fuller>)=>({...p,activeSplinter:null,splinterRanks:{terror:null,destruction:null,hatred:null},lairBossNodes:[]});
+ const stripped=(p:ReturnType<typeof fuller>)=>({...p,activeSplinter:null,splinterRank:null,lairBossNodes:[]});
  it('a stripped copy with the same updatedAt never replaces a fuller profile',()=>{
   const f=fuller(),mine=state({profiles:[f]}),theirs=state({profiles:[stripped(f)]});
   expect(mergeStates(mine,theirs).profiles[0]).toEqual(mine.profiles[0]);

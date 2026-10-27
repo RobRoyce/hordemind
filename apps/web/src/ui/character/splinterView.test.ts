@@ -1,24 +1,30 @@
 import {describe,expect,it} from 'vitest';
-import {newProfile} from '../../domain/run';
-import {bonusState,parseRank} from './splinterView';
+import {SPLINTERS} from '../../domain/splinters';
+import {bonusState,chooseSplinter,parseRank} from './splinterView';
+
+const bonus=(node:string)=>SPLINTERS.flatMap(x=>x.bonuses).find(b=>b.node===node)!;
+const rank=(splinterRank:number|null,extra:{warPlanNodes?:string[];lairBossNodes?:string[]}={})=>({splinterRank,warPlanNodes:[],lairBossNodes:[],...extra});
 
 describe('splinter view',()=>{
- const prof=(patch:object)=>({...newProfile('A','Paladin'),...patch});
- it('a bonus is active only on the active splinter at its rank with its node learned',()=>{
-  const p=prof({activeSplinter:'destruction',splinterRanks:{terror:20,destruction:14,hatred:null},lairBossNodes:['Lair of Runes']});
-  expect(bonusState(p,'destruction',14,'Lair of Runes')).toBe('active');
-  expect(bonusState(p,'destruction',20,'Exotic Armory')).toBe('locked');
-  expect(bonusState(p,'terror',5,'Cult of Annihilation')).toBe('reached');
+ it('Impending Doom is active once learned and unlearned before',()=>{
+  expect(bonusState(rank(14,{warPlanNodes:['Impending Doom']}),bonus('Impending Doom'))).toBe('active');
+  expect(bonusState(rank(14),bonus('Impending Doom'))).toBe('unlearned');
  });
- it('Terror rank 14 is unlearned until Impending Doom is in the War Plan',()=>{
-  const p=prof({activeSplinter:'terror',splinterRanks:{terror:14,destruction:null,hatred:null}});
-  expect(bonusState(p,'terror',14,'Impending Doom')).toBe('unlearned');
-  expect(bonusState({...p,warPlanNodes:['Impending Doom']},'terror',14,'Impending Doom')).toBe('active');
+ it('Council Coffers is active without rewards nodes',()=>{
+  expect(bonusState(rank(20),bonus('Council Coffers'))).toBe('active');
  });
- it('Destruction rank 20 is unlearned until Exotic Armory is in Lair Bosses',()=>{
-  const p=prof({activeSplinter:'destruction',splinterRanks:{terror:null,destruction:20,hatred:null}});
-  expect(bonusState(p,'destruction',20,'Exotic Armory')).toBe('unlearned');
-  expect(bonusState({...p,lairBossNodes:['Exotic Armory']},'destruction',20,'Exotic Armory')).toBe('active');
+ it('Exotic Armory is unlearned until it is in Lair Bosses',()=>{
+  expect(bonusState(rank(20),bonus('Exotic Armory'))).toBe('unlearned');
+  expect(bonusState(rank(20,{lairBossNodes:['Exotic Armory']}),bonus('Exotic Armory'))).toBe('active');
+ });
+ it('a bonus above the rank is locked',()=>{
+  expect(bonusState(rank(10),bonus('Impending Doom'))).toBe('locked');
+  expect(bonusState(rank(null),bonus('Impending Doom'))).toBe('locked');
+ });
+ it('choosing a splinter keeps the rank only for the same splinter',()=>{
+  expect(chooseSplinter({activeSplinter:'terror',splinterRank:14},'terror')).toEqual({activeSplinter:'terror',splinterRank:14});
+  expect(chooseSplinter({activeSplinter:'terror',splinterRank:14},'hatred')).toEqual({activeSplinter:'hatred',splinterRank:null});
+  expect(chooseSplinter({activeSplinter:null,splinterRank:5},'terror')).toEqual({activeSplinter:'terror',splinterRank:null});
  });
  it('rank input clamps to 0-24 and treats empty as not set',()=>{
   expect(parseRank('')).toBeNull();

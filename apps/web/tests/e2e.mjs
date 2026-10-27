@@ -111,19 +111,17 @@ async function journey(viewport){
   await noSeriousViolations(page,'Character');
   await noZoomingFields(page,'Character');
 
-  step('splinter ranks and Lair Bosses nodes save and survive a reload');
+  step('the active splinter, its rank and Lair Bosses nodes save and survive a reload');
   await setChoice(page,'Active splinter','Terror');
-  await page.getByLabel('Splinter of Terror rank',{exact:true}).fill('14');
-  await page.getByLabel('Splinter of Destruction rank',{exact:true}).fill('20');
+  await page.getByLabel('Splinter rank',{exact:true}).fill('14');
   await page.getByLabel('Infernal Deception',{exact:true}).check();
   await page.reload();
   await page.getByLabel('Infernal Deception',{exact:true}).waitFor();
   assert(await page.getByLabel('Infernal Deception',{exact:true}).isChecked(),'Infernal Deception stays checked');
-  assert.equal(await page.getByLabel('Splinter of Terror rank',{exact:true}).inputValue(),'14');
-  assert.equal(await page.getByLabel('Splinter of Destruction rank',{exact:true}).inputValue(),'20');
+  assert.equal(await page.getByLabel('Splinter rank',{exact:true}).inputValue(),'14');
   assert.equal(await choiceOf(page,'Active splinter'),'Terror');
-  const {activeSplinter,splinterRanks,lairBossNodes}=(await stored()).profiles[0];
-  assert.deepEqual({activeSplinter,splinterRanks,lairBossNodes},{activeSplinter:'terror',splinterRanks:{terror:14,destruction:20,hatred:null},lairBossNodes:['Infernal Deception']});
+  const {activeSplinter,splinterRank,lairBossNodes}=(await stored()).profiles[0];
+  assert.deepEqual({activeSplinter,splinterRank,lairBossNodes},{activeSplinter:'terror',splinterRank:14,lairBossNodes:['Infernal Deception']});
 
   step('a malformed build link is rejected inline and never blocks saving');
   await page.getByLabel('Build planner link',{exact:true}).fill('not a link');

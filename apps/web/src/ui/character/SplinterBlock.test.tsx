@@ -5,19 +5,29 @@ import {LairBossBlock} from './LairBossBlock';
 import {SplinterBlock} from './SplinterBlock';
 
 describe('SplinterBlock',()=>{
- it('inactive splinters say their bonuses apply while active, and Hatred says it has none',()=>{
-  const html=renderToStaticMarkup(<SplinterBlock profile={{...newProfile('A','Paladin'),activeSplinter:'terror',splinterRanks:{terror:5,destruction:20,hatred:null}}} onUpdate={()=>{}}/>);
-  expect(html).toContain('Applies while active');
-  expect(html).toContain('No Infernal Hordes bonus.');
-  expect(html).toContain('Cult of Annihilation</b>, first node of the events branch in the Infernal Hordes War Plan');
+ const profile=(patch:object)=>({...newProfile('A','Paladin'),...patch});
+ const render=(patch:object)=>renderToStaticMarkup(<SplinterBlock profile={profile(patch)} onUpdate={()=>{}}/>);
+ it('Terror active shows only Terror bonuses',()=>{
+  const html=render({activeSplinter:'terror',splinterRank:5});
+  expect(html).toContain('Cult of Annihilation</b>, first node of the events branch');
+  expect(html).not.toContain('Lair of Runes');
  });
- it('an unlearned bonus on the active splinter says to learn the node',()=>{
-  const profile={...newProfile('A','Paladin'),activeSplinter:'terror' as const,splinterRanks:{terror:14,destruction:null,hatred:null}};
-  const html=renderToStaticMarkup(<SplinterBlock profile={profile} onUpdate={()=>{}}/>);
+ it('Hatred active says it has no Hordes bonus',()=>{
+  const html=render({activeSplinter:'hatred',splinterRank:5});
+  expect(html).toContain('No Infernal Hordes bonus.');
+  expect(html).not.toContain('Rank 5:');
+ });
+ it('no active splinter shows a prompt and no rank field',()=>{
+  const html=render({});
+  expect(html).toContain('Pick the splinter you have active to enter its rank.');
+  expect(html).not.toContain('Splinter rank');
+ });
+ it('an unlearned bonus says to learn the node',()=>{
+  const p={activeSplinter:'terror' as const,splinterRank:14};
+  const html=render(p);
   expect(html).toContain('Learn Impending Doom to use it.');
   expect(html).not.toContain('Included in estimates.');
-  const learned=renderToStaticMarkup(<SplinterBlock profile={{...profile,warPlanNodes:['Impending Doom']}} onUpdate={()=>{}}/>);
-  expect(learned).toContain('Included in estimates.');
+  expect(render({...p,warPlanNodes:['Impending Doom']})).toContain('Included in estimates.');
  });
  it('LairBossBlock lists every node with its Aether note',()=>{
   const html=renderToStaticMarkup(<LairBossBlock profile={newProfile('A','Paladin')} onUpdate={()=>null}/>);
