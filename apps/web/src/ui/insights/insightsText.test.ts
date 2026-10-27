@@ -136,7 +136,7 @@ describe('chaoticLine',()=>{
  });
  it('is null with no sets',()=>expect(chaoticLine(R(0,0),R(0,0),0)).toBeNull());
  it('notes that Reign in Hell runs are left out',()=>{
-  const note=' Runs with Reign in Hell are left out, because it suppresses Chaos Waves.';
+  const note=' Runs with Reign in Hell, in the same row, are left out, because it suppresses Chaos Waves.';
   expect(chaoticLine(R(5,20),R(9,12),3)).toBe(CHAOS+'25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the second row of the offers branch in the Infernal Hordes War Plan.'+note);
   expect(chaoticLine(R(5,20),R(0,0),1)).toBe(CHAOS+'25% of 20 offer sets, all without Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).'+note);
   expect(chaoticLine(R(0,0),R(9,12),1)).toBe(CHAOS+'75% of 12 offer sets, all with Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).'+note);

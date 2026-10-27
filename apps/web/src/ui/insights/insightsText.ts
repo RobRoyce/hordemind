@@ -79,7 +79,7 @@ export function choicesLeftOutText(skippedOlder:number,gapLeftOut:number):string
 const CHAOS='The Chaotic Offering, the Chaos Wave offer, appeared in ';
 const WAR_PLAN='in the Infernal Hordes War Plan';
 const TC=`second row of the offers branch ${WAR_PLAN}`;
-const REIGN_NOTE=' Runs with Reign in Hell are left out, because it suppresses Chaos Waves.';
+const REIGN_NOTE=' Runs with Reign in Hell, in the same row, are left out, because it suppresses Chaos Waves.';
 export function chaoticLine(without:Rate,withTotalChaos:Rate,reignSets:number):string|null{
  const w=`${percent(without.hits,without.total)} of ${n(without.total,'offer set','offer sets')}`;
  const c=`${percent(withTotalChaos.hits,withTotalChaos.total)} of ${n(withTotalChaos.total,'offer set','offer sets')}`;
