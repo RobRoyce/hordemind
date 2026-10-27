@@ -1,6 +1,6 @@
 import type {CharacterAnalysis} from '../../analysis/analyze';
 import type {RangeStats} from '../../analysis/reportCard';
-import {Numeral,SectionHeading} from '../kit';
+import {SectionHeading} from '../kit';
 import {familyLine,headlineParts,leftOutText,needsText,percent} from './insightsText';
 import s from './ReportCardSection.module.css';
 
@@ -17,7 +17,7 @@ export function ReportCardSection({name,analysis}:{name:string|null;analysis:Cha
   {!analysis||!name?<p className={s.empty}>Choose a character on the Character screen to see its report card.</p>:<>
    <p className={s.scope}>For {name}.</p>
    {!report?<p className={s.empty}>{needsText(analysis.needed)}</p>:<>
-    {hp&&<div className={s.headline}><span>{hp.before}</span><Numeral label="" value={hp.percent} tone="ember"/><span>{hp.after}</span></div>}
+    {hp&&<p className={s.headline}>{hp.before}<span className={s.num}>{hp.percent}</span>{hp.after}</p>}
     <table className={s.table}>
      <thead><tr><th scope="col"><span className="hm-visually-hidden">Measure</span></th><th scope="col">Your buckets</th>{report.calibrated&&<th scope="col">Calibrated</th>}</tr></thead>
      <tbody>
