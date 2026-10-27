@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {LocalStateSchema} from '../domain/schema';
 import {seededState,SLOW_RUNS} from '../../tests/seed.mjs';
-import {analyze,analysisFor} from './analyze';
+import {analyze,analysisFor,newAnalysisCache,pruneAnalysisCache} from './analyze';
 
 const state=()=>LocalStateSchema.parse(seededState(SLOW_RUNS));
 
@@ -27,6 +27,22 @@ describe('analyze',()=>{
   expect(a.character?.qualifying).toBe(3);
   // the in-progress run has 9 readings and no final total
   expect(a.character?.report?.buckets.readings).toBe(29);
+ });
+ it('a cache changes nothing but speed',()=>{
+  const s=state();
+  // wave 3 takes the offer the recommendation did not name
+  const runs=s.runs.map((r,i)=>i?r:{...r,events:r.events.map(e=>e.type==='offer_chosen'&&e.payload.wave===3
+   ?{...e,payload:{...e.payload,recommendedOffer:'The Teeming Masses',choiceSource:'picked' as const}}:e)});
+  const id=s.profiles[0]!.id,cache=newAnalysisCache();
+  const plain=analyze(runs,id,20);
+  expect(plain.character?.overrides.tookOther).toBe(1);
+  expect(plain.character?.overrides.cost?.priced).toBe(1);
+  expect(analyze(runs,id,20,cache)).toEqual(plain);
+  expect(analyze(runs,id,20,cache)).toEqual(plain);
+  expect(cache.runs.size).toBe(3);
+  pruneAnalysisCache(cache,runs.slice(0,1));
+  expect(cache.runs.size).toBe(1);
+  expect([...cache.gaps.keys()]).toEqual([runs[0]!.id]);
  });
  it('an analysis for another character is discarded',()=>{
   const s=state(),a=analyze(s.runs,s.profiles[0]!.id,20);

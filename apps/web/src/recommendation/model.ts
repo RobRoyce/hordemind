@@ -208,6 +208,22 @@ function pactAdvice(special:string,modeled:Estimate[],unknown:Unsupported[],s:Sc
  return {offer:special,premium,bestRegular:regular.offer,remaining,advice};
 }
 
+/**
+ * Mean Aether of offer `a` minus offer `b` at the decision wave. The no-offer arm cancels,
+ * so this equals the compareScenario difference without its explanations. Null when either offer is unmodeled.
+ */
+export function offerGap(input:Scenario,a:string,b:string,samples:number):number|null{
+ if(!hasMechanics(a)||!hasMechanics(b))return null;
+ const s={...input,decisionWave:Math.min(Math.max(1,input.decisionWave),input.totalWaves+1)};
+ const n=Math.max(60,Math.min(1600,Math.round(samples))),remaining=remainingWaves(s);
+ let total=0;
+ for(let i=0;i<n;i++){
+  const seed=hash(SAMPLE_SEED+i*9733);
+  total+=sum(simulateRun(s.history,a,remaining,s.profile,seed,BASELINE))-sum(simulateRun(s.history,b,remaining,s.profile,seed,BASELINE));
+ }
+ return total/n;
+}
+
 export function compareScenario(input:Scenario,candidates:string[],samples=400,options:CompareOptions={}):Comparison{
  const s={...input,decisionWave:Math.min(Math.max(1,input.decisionWave),input.totalWaves+1)};
  const n=Math.max(60,Math.min(1600,Math.round(samples)));

@@ -19,6 +19,23 @@ const SAMPLES=40;
 const scoredSpan=(fromWave:number,toWave:number,actual=100,mean=80):Scored=>({span:{fromWave,toWave,actual,chaos:false},pred:{mean,sd:10,p10:60,p90:100},family:null});
 
 describe('overrideSummary',()=>{
+ it('prices through the function it is given',()=>{
+  const run=play([{chosen:A,rec:B,src:'picked'}]);
+  const calls:string[]=[];
+  const s=overrideSummary([input(run)],SAMPLES,(sc,a,b,n,id)=>{calls.push(`${a}|${b}|${id}|${n}|${sc.decisionWave}`);return 7});
+  expect(calls).toEqual([`${B}|${A}|${run.id}|${SAMPLES}|1`]);
+  expect(s.cost).toEqual({total:7,average:7,priced:1});
+ });
+ it('counts choices recorded without a recommendation or choice source',()=>{
+  const s=overrideSummary([input(play([{chosen:A,src:'picked'},{chosen:A,rec:B},{chosen:A,rec:B,src:'picked'}]))],SAMPLES);
+  expect(s.skippedOlder).toBe(2);
+  expect(s.tookOther).toBe(1);
+ });
+ it('counts runs with an override that could not be scored',()=>{
+  const over=play([{chosen:B,rec:A,src:'picked'}]),agree=play([{chosen:A,rec:A,src:'picked'}]);
+  expect(overrideSummary([input(over),input(agree),input(over,[scoredSpan(1,1)])],SAMPLES).gapLeftOut).toBe(1);
+  expect(overrideSummary([input(agree)],SAMPLES).gapLeftOut).toBe(0);
+ });
  it('choices split into three groups',()=>{
   const run=play([{chosen:A,rec:A,src:'default'},{chosen:B,rec:B,src:'picked'},{chosen:C,rec:D,src:'picked'},{chosen:A,rec:A}]);
   const s=overrideSummary([input(run)],SAMPLES);
