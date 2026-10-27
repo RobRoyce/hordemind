@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {DIFFICULTIES,GAME_CLASSES,REALMS,type CharacterProfile} from '../../domain/schema';
 import {normalizeBuildUrl} from '../../domain/profile';
 import {Field,Segmented,Select,TextField} from '../kit';
+import {SplinterBlock} from './SplinterBlock';
 import s from './CharacterForm.module.css';
 
 export const TIPS={
@@ -80,5 +81,6 @@ export function CharacterForm({profile,onUpdate}:Props){
    {w=><Segmented label="Mobility" value={profile.mobility} options={MOBILITY_OPTIONS} describedBy={w.describedBy}
     onChange={mobility=>update({mobility})}/>}
   </Field>
+  <SplinterBlock profile={profile} onUpdate={update} help={TIPS.splinter}/>
  </div>;
 }

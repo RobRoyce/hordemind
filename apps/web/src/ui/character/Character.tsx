@@ -6,7 +6,6 @@ import {Button,Field,PageHeader,SectionHeading,Select,TextField} from '../kit';
 import {CharacterForm,TIPS} from './CharacterForm';
 import {CharacterTabs} from './CharacterTabs';
 import {LairBossBlock} from './LairBossBlock';
-import {SplinterBlock} from './SplinterBlock';
 import {StartRunBar} from './StartRunBar';
 import {WarPlanTree} from './WarPlanTree';
 import s from './Character.module.css';
@@ -46,15 +45,12 @@ function CreateFirst({onCreate}:Pick<Props,'onCreate'>){
 }
 
 function Editor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pick<Props,'onUpdate'|'onStart'>){
- const update=(patch:Partial<CharacterProfile>)=>onUpdate({...profile,...patch});
  return <>
   <CharacterForm profile={profile} onUpdate={onUpdate}/>
   <section className={s.section} aria-label="War Plan setup">
    <SectionHeading>Infernal Hordes War Plan</SectionHeading>
    <p className={s.lead}>{WAR_PLAN_HOME}. Learn the same upgrades you have in game.</p>
-   <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}>
-    <SplinterBlock profile={profile} onUpdate={update}/>
-   </WarPlanTree>
+   <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}/>
   </section>
   <section className={s.section} aria-label="Lair Bosses War Plan setup">
    <LairBossBlock profile={profile} onUpdate={onUpdate}/>

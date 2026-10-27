@@ -91,7 +91,7 @@ New `CharacterProfileSchema` fields:
 
 ### Character screen
 
-- **Splinter block.** It replaces the "Splinter of Terror rank" field under the Infernal Hordes War Plan tree.
+- **Splinter block.** It sits in the character settings, after Mobility, and replaces the "Splinter of Terror rank" field that sat under the Infernal Hordes War Plan tree (owner, 2026-10-26).
   - A selector picks the active splinter from Terror, Destruction and Hatred. Nothing is selected until the player picks one.
   - One "Splinter rank" field takes 0–24 for the active splinter. An empty field means not set. The field appears once a splinter is picked.
   - Below the selector and the field, only the active splinter's Hordes bonuses are listed, from the table above, with each node's location. Each bonus shows one of three states: in effect, needs its node learned, or rank not reached. Council Coffers sits in the rewards branch, which the app doesn't track, so it never shows the needs-its-node state.

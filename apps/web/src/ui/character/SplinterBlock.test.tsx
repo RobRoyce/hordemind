@@ -1,12 +1,18 @@
 import {describe,expect,it} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {newProfile} from '../../domain/run';
+import {CharacterForm} from './CharacterForm';
 import {LairBossBlock} from './LairBossBlock';
 import {SplinterBlock} from './SplinterBlock';
 
 describe('SplinterBlock',()=>{
  const profile=(patch:object)=>({...newProfile('A','Paladin'),...patch});
- const render=(patch:object)=>renderToStaticMarkup(<SplinterBlock profile={profile(patch)} onUpdate={()=>{}}/>);
+ const render=(patch:object)=>renderToStaticMarkup(<SplinterBlock profile={profile(patch)} onUpdate={()=>{}} help="Splinter help."/>);
+ it('sits in the character settings',()=>{
+  const html=renderToStaticMarkup(<CharacterForm profile={profile({activeSplinter:'terror',splinterRank:14})} onUpdate={()=>null}/>);
+  expect(html).toContain('Active splinter');
+  expect(html).toContain('Splinter rank');
+ });
  it('Terror active shows only Terror bonuses',()=>{
   const html=render({activeSplinter:'terror',splinterRank:5});
   expect(html).toContain('Cult of Annihilation</b>, first node of the events branch');
