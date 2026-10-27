@@ -1,5 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {newProfile,newRun,recordDecision} from '../domain/run';
+import {compareScenario} from '../recommendation/model';
+import {playerProfile} from '../recommendation/scenario';
 import type {RunRecord} from '../domain/schema';
 import {overrideSummary,type OverrideInput} from './overrides';
 import type {Scored} from './reportCard';
@@ -32,6 +34,13 @@ describe('overrideSummary',()=>{
   expect(s.cost?.priced).toBe(1);
   expect(s.cost?.average).toBe(s.cost?.total);
   expect(Number.isFinite(s.cost!.total)).toBe(true);
+ });
+ it('the cost is the recommendation\'s mean minus the chosen offer\'s, from the picks before the override',()=>{
+  const s=overrideSummary([input(play([{chosen:A},{chosen:C,rec:B,src:'picked'}],5))],SAMPLES);
+  const cmp=compareScenario({history:[A],totalWaves:5,decisionWave:2,profile:playerProfile(newProfile('T','Paladin'))},[B,C],SAMPLES,{sensitivity:false,synergy:false});
+  const mean=(o:string)=>{const a=cmp.assessments.find(x=>x.offer===o);return a?.modeled?a.mean:NaN};
+  expect(mean(B)-mean(C)).not.toBe(0);
+  expect(s.cost?.total).toBeCloseTo(mean(B)-mean(C),9);
  });
  it("an unmodeled pick can't be priced",()=>{
   const s=overrideSummary([input(play([{chosen:MYSTERY,rec:A,src:'picked'}]))],SAMPLES);
