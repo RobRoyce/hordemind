@@ -30,11 +30,17 @@ describe('gameCounts',()=>{
   expect(g.repeats.withMadness).toEqual({hits:1,total:2});
   expect(g.repeats.withoutMadness).toEqual({hits:1,total:2});
  });
+ it('repeats split by Method and Madness',()=>{
+  // previous pick is a Masses offer; the wave-2 set repeats Masses only in the Madness run
+  const g=gameCounts([play(prof(['Method and Madness']),[{offered:[A,B]},{offered:[A2,B]}]),play(prof(),[{offered:[A,B]},{offered:[B,CH]}])]);
+  expect(g.repeats.withMadness).toEqual({hits:1,total:1});
+  expect(g.repeats.withoutMadness).toEqual({hits:0,total:1});
+ });
  it('Reign in Hell runs are excluded from the Chaotic Offering rate',()=>{
-  const sets:Set[]=[{offered:[A,CH]},{offered:[A,B]}];
-  const g=gameCounts([play(prof(['Reign in Hell']),sets),play(prof(['Total Chaos']),sets),play(prof(),sets)]);
+  const withChaotic:Set[]=[{offered:[A,CH]},{offered:[A,B]}];
+  const g=gameCounts([play(prof(['Reign in Hell']),withChaotic),play(prof(['Total Chaos']),withChaotic),play(prof(),[{offered:[A,B]},{offered:[A,B]}])]);
   expect(g.chaotic.withTotalChaos).toEqual({hits:1,total:2});
-  expect(g.chaotic.neither).toEqual({hits:1,total:2});
+  expect(g.chaotic.neither).toEqual({hits:0,total:2});
  });
  it('Varshan medians use single-wave Chaos spans only',()=>{
   const run=(lair:string[],totals:number[])=>play(prof([],lair),[{offered:[A,B]},{offered:[CH,B],total:totals[0]!},{offered:[A,B],total:totals[1]!},{offered:[CH,B],total:totals[2]!},{offered:[A,B],total:totals[3]!}]);
