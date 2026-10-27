@@ -38,7 +38,7 @@
  color:var(--hm-ink);
 }
 
-.reached{color:var(--hm-ink)}
+.reached,.unlearned{color:var(--hm-muted)}
 
 .locked{opacity:.7}
 
