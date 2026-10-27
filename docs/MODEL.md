@@ -61,7 +61,7 @@ The Teeming Masses target is disputed in guide versions (Fiend vs. Lord). Choose
 ## War Plan (owner screenshots, 2026-10-23)
 
 The tree, verbatim tooltips and their use are in [the War Plan research note](research/infernal-hordes-war-plan.md). Effects that change the model:
-- **Impending Doom** is simulated. Aether Events spawn at all four locations with 10 s left, and with 30 s left at Splinter of Terror rank 14.
+- **Impending Doom** is simulated. Aether Events spawn at all four locations with 10 s left, and with 30 s left at Splinter of Terror rank 14, only while Terror is the active splinter.
   - Faster spawning doesn't speed up these timed events, so Doom lowers The Exalted Hordes. Its card says so and shows its value without Doom.
   - Owner observation (2026-10-23): at rank 14, events left at wave end come from the 10 s batch only. The model leaves about one older event as well.
 - **Bedlam** adds +50 to the Chaotic Offering. The value is from its tooltip.

@@ -177,7 +177,7 @@ export function simulateWaveDetailed(spec:WaveSpec,profile:PlayerProfile,seed:nu
   for(const [extra,chance] of r.withEvents)if(streams.extras()<chance)queue.push(event(extra,false));
  };
 
- // Impending Doom: Aether Events at every location late in the wave (and earlier at Splinter rank 14).
+ // Impending Doom: Aether Events at every location late in the wave (and earlier at Splinter of Terror rank 14, only while Terror is the active splinter).
  const T=BASE.waveSeconds.value;
  const doomAt=profile.warPlanNodes.includes('Impending Doom')?[
   ...((profile.terrorRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?[T-WAR_PLAN_EFFECTS.doomSplinterSeconds.value]:[]),
