@@ -11,11 +11,13 @@ describe('SplinterBlock',()=>{
   const html=render({activeSplinter:'terror',splinterRank:5});
   expect(html).toContain('Cult of Annihilation</b>, first node of the events branch');
   expect(html).not.toContain('Lair of Runes');
+  expect(html).toContain('Splinter rank');
  });
  it('Hatred active says it has no Hordes bonus',()=>{
   const html=render({activeSplinter:'hatred',splinterRank:5});
   expect(html).toContain('No Infernal Hordes bonus.');
   expect(html).not.toContain('Rank 5:');
+  expect(html).toContain('Splinter rank');
  });
  it('no active splinter shows a prompt and no rank field',()=>{
   const html=render({});
