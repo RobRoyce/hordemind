@@ -240,8 +240,8 @@ describe('readings of the game text are labelled as readings, not as game facts'
 
 describe('Impending Doom limits faster spawning (owner report)',()=>{
  const quick={sensitivity:false,synergy:false} as const;
- const reasons=(warPlanNodes:string[],splinterRank:number|null=14)=>{
-  const a=compareScenario({history:[],totalWaves:10,decisionWave:1,profile:{killSpeed:'fast',mobility:'high',warPlanNodes,splinterRank}},['The Exalted Hordes'],200,quick).assessments[0];
+ const reasons=(warPlanNodes:string[],terrorRank:number|null=14)=>{
+  const a=compareScenario({history:[],totalWaves:10,decisionWave:1,profile:{killSpeed:'fast',mobility:'high',warPlanNodes,terrorRank}},['The Exalted Hordes'],200,quick).assessments[0];
   return a?.modeled?a.reasons.join(' '):'';
  };
  it('says why Exalted Hordes is worth less and what it would be worth without Impending Doom',()=>{

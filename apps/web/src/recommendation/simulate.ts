@@ -12,7 +12,7 @@ import {BASE,CHAOS_OUTCOMES,EVENT_KINDS,WAR_PLAN_EFFECTS,mechanicsFor,type Event
 export type Breakdown=Record<EventKind,number>;
 export const emptyBreakdown=():Breakdown=>Object.fromEntries(EVENT_KINDS.map(k=>[k,0])) as Breakdown;
 
-export interface PlayerProfile{killSpeed:'fast'|'average'|'slow'|'unknown';mobility:'high'|'average'|'low'|'unknown';warPlanNodes:readonly string[];splinterRank?:number|null}
+export interface PlayerProfile{killSpeed:'fast'|'average'|'slow'|'unknown';mobility:'high'|'average'|'low'|'unknown';warPlanNodes:readonly string[];terrorRank?:number|null}
 
 /** Scales for sensitivity analysis; 1 everywhere is the baseline. */
 export interface Assumptions{completionScale:number;fillScale:number}
@@ -180,7 +180,7 @@ export function simulateWaveDetailed(spec:WaveSpec,profile:PlayerProfile,seed:nu
  // Impending Doom: Aether Events at every location late in the wave (and earlier at Splinter rank 14).
  const T=BASE.waveSeconds.value;
  const doomAt=profile.warPlanNodes.includes('Impending Doom')?[
-  ...((profile.splinterRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?[T-WAR_PLAN_EFFECTS.doomSplinterSeconds.value]:[]),
+  ...((profile.terrorRank??0)>=WAR_PLAN_EFFECTS.doomSplinterRank.value?[T-WAR_PLAN_EFFECTS.doomSplinterSeconds.value]:[]),
   T-WAR_PLAN_EFFECTS.doomSeconds.value]:[];
  // Elites killed while filling the bar may arrive as another enemy; a converted Lord still takes time.
  const killElites=(queue:Pending[])=>{
