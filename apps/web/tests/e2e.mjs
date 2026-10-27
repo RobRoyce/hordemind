@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {checkGraph} from './geometry.mjs';
 import AxeBuilder from '@axe-core/playwright';
+import {seededState,SLOW_RUNS} from './seed.mjs';
 
 // GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
 const browser=await chromium.launch({
@@ -460,6 +461,16 @@ async function journey(viewport){
   const events=exported.state.runs[0].events;
   assert.equal(events.filter(e=>e.type==='offers_presented').length,5);
   assert.equal(events.filter(e=>e.type==='correction').length,2);
+
+  step('Insights shows the report card, choices and game numbers for recorded runs');
+  await page.evaluate(state=>localStorage.setItem('hordemind-v2-local-v1',JSON.stringify(state)),seededState(SLOW_RUNS));
+  await page.reload();
+  await navTo(page,/^Insights/);
+  await page.getByRole('heading',{name:'Insights',exact:true}).waitFor();
+  for(const name of ['Report card','Your choices','Game numbers'])await page.getByRole('heading',{name,exact:true}).waitFor();
+  await page.getByText(/inside the 80% range in \d+% of 30 readings/).waitFor();
+  assert.equal(await page.getByText("Saved data on this device couldn't be read").count(),0);
+  await noSeriousViolations(page,'Insights with analysis');
 
   assert.deepEqual(errors,[],'Browser emitted errors');
  }catch(error){

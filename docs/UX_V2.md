@@ -12,7 +12,12 @@
    - Keys: 1–5 choose a row, Ctrl/⌘+Enter records. Undo prefills the last wave. Ending early is always available.
    - Each round after the first starts in the Aether field. Tab moves forward through the entry fields only: Aether, open event counts, each offer row, then Take. Shift+Tab keeps the full page order, so every control stays reachable by keyboard.
    - Offers with a dangerous bane show a *High danger* or *Some danger* badge with the bane text. Danger never changes the estimate.
-3. **Insights**: completed/in-progress runs, event completeness, charts, calibration warnings, future community benchmarks.
+3. **Insights**: completed/in-progress runs, event completeness, calibration warnings, future community benchmarks.
+   - Report card and Your choices cover the active character and open with "For {name}."; Game numbers pools every character.
+   - Report card compares how often the Aether gain landed inside the model's 80% range, with the average miss and one line per offer family. It needs 3 runs with Aether readings.
+   - Your choices counts pre-selected, self-picked and other offers against the recommendation, prices the other picks and lists the offers taken most over it. Overrides are disagreements to learn from, not mistakes.
+   - Game numbers are plain tallies (Chaotic Offering rate, repeat-family rate, Chaos Wave pay with and without Varshan's Vengeance).
+   - Each section has an empty state that names what is missing. The analysis runs in a Web Worker in the browser; nothing is uploaded.
 
 ## Keyboard and thumb ergonomics
 

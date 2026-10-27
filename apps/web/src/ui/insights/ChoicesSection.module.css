@@ -1,0 +1,18 @@
+.section{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-3);
+}
+
+.scope,.empty{
+ margin:0;
+ color:var(--hm-muted);
+}
+
+.counts{
+ display:flex;
+ flex-wrap:wrap;
+ gap:var(--hm-space-3) var(--hm-space-6);
+}
+
+.line{margin:0}
