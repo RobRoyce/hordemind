@@ -25,7 +25,7 @@ export function EndRunPanel({mode,totalWaves,aether,onAether,aetherError,aetherR
  const ending=mode==='ending';
  const body=<div className={s.body}>
   <h2 id={headingId} tabIndex={-1} ref={headingRef} className={s.heading}>{ending?'End this run now?':`All ${totalWaves} offers recorded`}</h2>
-  <p className={s.text}>{ending?'Use this if you died, left, or stopped recording. Everything recorded so far is kept.':`Play wave ${totalWaves}, then enter your final Aether.`}</p>
+  <p className={s.text}>{ending?'Use this if you died, left, or stopped recording. Everything recorded so far is kept.':`Play wave ${totalWaves} and the Fell Council fight after it, then enter your final Aether.`}</p>
   <Field label={ending?'Final Aether (optional)':'Final Aether'} error={aetherError}>
    {wire=><AetherInput wire={wire} inputRef={aetherRef} value={aether} onChange={onAether}
     missed={!ending&&missed} onMissed={ending?undefined:onMissed}/>}

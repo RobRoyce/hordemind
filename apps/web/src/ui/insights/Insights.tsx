@@ -32,7 +32,8 @@ export function Insights({runs,profile,selectRun,onExport,sync,syncControls}:Pro
   :!result?(busy&&<p role="status" className={s.busy}>Replaying your runs…</p>)
   :<>
    <ReportCardSection name={profile?.name??null} analysis={result.character}/>
-   <ChoicesSection name={profile?.name??null} overrides={result.character?.overrides??null}/>
+   <ChoicesSection name={profile?.name??null} overrides={result.character?.overrides??null}
+    allMiss={result.character?.report?-result.character.report.buckets.averageMiss:null}/>
    <GameNumbersSection counts={result.counts}/>
   </>}
   <section aria-labelledby="run-history">

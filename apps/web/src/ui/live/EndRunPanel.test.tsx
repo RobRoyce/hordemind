@@ -9,6 +9,7 @@ describe('final Aether',()=>{
  it('is required when a full run finishes, unless marked missed',()=>{
   expect(panel('final')).toContain('>Final Aether<');
   expect(panel('final')).toContain('Missed it');
+  expect(panel('final')).toContain('Play wave 10 and the Fell Council fight after it, then enter your final Aether.');
  });
  it('stays optional when a run ends early, so it needs no Missed it',()=>{
   expect(panel('ending')).toContain('Final Aether (optional)');

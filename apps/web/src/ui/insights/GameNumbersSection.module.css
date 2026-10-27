@@ -10,3 +10,15 @@
 }
 
 .line{margin:0}
+
+.frequency{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-3);
+}
+
+.offers{
+ margin:0;
+ padding:0 0 0 var(--hm-space-4);
+ color:var(--hm-muted);
+}

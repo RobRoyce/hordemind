@@ -47,7 +47,7 @@ export function gameCounts(runs:readonly RunRecord[]):GameCounts{
     if(labels.includes(CHAOTIC))rate.hits++;
    }
    const prev=wave>=2?picked.get(wave-1):undefined,family=prev===undefined?undefined:resolveOffer(prev)?.family;
-   // a Chaos slot always follows a Chaos pick, so it says nothing about repeats
+   // after a Chaos pick the next set holds the Chaos slot, which would count as a repeat
    if(family===undefined||family==='Chaos')continue;
    repeatRate.total++;
    if(set.offered.some((n,i)=>i!==set.special&&resolveOffer(n)?.family===family))repeatRate.hits++;

@@ -1,10 +1,9 @@
 import type {CharacterAnalysis} from '../../analysis/analyze';
 import type {RangeStats} from '../../analysis/reportCard';
 import {SectionHeading} from '../kit';
-import {familyLine,headlineParts,leftOutText,needsText,percent} from './insightsText';
+import {familyLine,headlineParts,leftOutText,missCell,needsText,percent} from './insightsText';
 import s from './ReportCardSection.module.css';
 
-const signed=(miss:number)=>{const r=Math.round(miss);return r>0?`+${r}`:String(r)};
 const inRange=(st:RangeStats)=>percent(st.inRange,st.readings);
 
 /** How well the model's 80% range matched the Aether gains in the active character's runs. */
@@ -22,7 +21,7 @@ export function ReportCardSection({name,analysis}:{name:string|null;analysis:Cha
      <thead><tr><th scope="col"><span className="hm-visually-hidden">Measure</span></th><th scope="col">Your buckets</th>{report.calibrated&&<th scope="col">Calibrated</th>}</tr></thead>
      <tbody>
       <tr><th scope="row">Inside the range</th><td data-label="Your buckets">{inRange(report.buckets)}</td>{report.calibrated&&<td data-label="Calibrated">{inRange(report.calibrated)}</td>}</tr>
-      <tr><th scope="row">Average miss</th><td data-label="Your buckets">{signed(report.buckets.averageMiss)}</td>{report.calibrated&&<td data-label="Calibrated">{signed(report.calibrated.averageMiss)}</td>}</tr>
+      <tr><th scope="row">Average miss</th><td data-label="Your buckets">{missCell(report.buckets.averageMiss)}</td>{report.calibrated&&<td data-label="Calibrated">{missCell(report.calibrated.averageMiss)}</td>}</tr>
      </tbody>
     </table>
     {report.byFamily.length>0&&<ul className={s.families}>
