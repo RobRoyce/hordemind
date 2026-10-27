@@ -44,15 +44,6 @@
  font-variant-numeric:lining-nums tabular-nums;
 }
 
-.families{
- margin:0;
- padding:0;
- list-style:none;
- display:flex;
- flex-direction:column;
- gap:var(--hm-space-1);
-}
-
 @media (max-width:699px){
  .table,.table tbody,.table tr,.table th,.table td{display:block}
  .table thead{display:none}

@@ -1,5 +1,7 @@
 import {describe,expect,it} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
+import {LocalStateSchema} from '../../domain/schema';
+import {seededState,SLOW_RUNS} from '../../../tests/seed.mjs';
 import {analyze} from '../../analysis/analyze';
 import {ChoicesSection} from './ChoicesSection';
 import {GameNumbersSection} from './GameNumbersSection';
@@ -27,5 +29,19 @@ describe('empty states',()=>{
   const out=html(<GameNumbersSection counts={empty.counts}/>);
   expect(out).toContain('Record offer sets in Live Run to see these counts.');
   expect(out).not.toContain('How often each offer appeared');
+ });
+});
+
+describe('charts in the sections',()=>{
+ const s=LocalStateSchema.parse(seededState(SLOW_RUNS)),a=analyze(s.runs,s.profiles[0]!.id,20);
+ it('the report card shows Wave by wave and the family chart after its table',()=>{
+  const out=html(<ReportCardSection name="Rob" analysis={a.character}/>);
+  expect(out).toContain('Wave by wave');
+  expect(out.indexOf('<table')).toBeLessThan(out.indexOf('Wave by wave'));
+ });
+ it('game numbers show the offer chart in place of the fold-out list',()=>{
+  const out=html(<GameNumbersSection counts={a.counts}/>);
+  expect(out).toContain('How often each offer appeared');
+  expect(out).not.toContain('<details');
  });
 });

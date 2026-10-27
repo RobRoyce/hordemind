@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {headlineParts,chaoticLine,choicesLeftOutText,costText,gapText,headline,leftOutText,missCell,missText,needsText,percent,repeatLine,rankedText,varshanLine,familyLine,offerSetLabel} from './insightsText';
+import {headlineParts,chaoticLine,choicesLeftOutText,costText,gapText,headline,leftOutText,missCell,missText,needsText,percent,repeatLine,rankedText,varshanLine,offerSetLabel} from './insightsText';
 
 const none={pulse:0,events:0},zero={falling:0,legacy:0,varshanChaos:0};
 
@@ -69,11 +69,6 @@ describe('headline',()=>{
   expect(p.percent).toBe('80%');
   expect(`${p.before}${p.percent}${p.after}`).toBe(headline(24,30));
  });
-});
-
-describe('familyLine',()=>{
- it('names the family, count and miss',()=>
-  expect(familyLine('Masses',12,-9.2)).toBe('After Masses offers (12 readings): predicts 9 too little per reading'));
 });
 
 describe('costText',()=>{

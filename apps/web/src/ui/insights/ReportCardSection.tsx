@@ -1,7 +1,9 @@
 import type {CharacterAnalysis} from '../../analysis/analyze';
 import type {RangeStats} from '../../analysis/reportCard';
 import {SectionHeading} from '../kit';
-import {familyLine,headlineParts,leftOutText,missCell,needsText,percent} from './insightsText';
+import {MissBars} from './charts/MissBars';
+import {RangeStrip} from './charts/RangeStrip';
+import {headlineParts,leftOutText,missCell,needsText,percent} from './insightsText';
 import s from './ReportCardSection.module.css';
 
 const inRange=(st:RangeStats)=>percent(st.inRange,st.readings);
@@ -24,9 +26,8 @@ export function ReportCardSection({name,analysis}:{name:string|null;analysis:Cha
       <tr><th scope="row">Average miss</th><td data-label="Your buckets">{missCell(report.buckets.averageMiss)}</td>{report.calibrated&&<td data-label="Calibrated">{missCell(report.calibrated.averageMiss)}</td>}</tr>
      </tbody>
     </table>
-    {report.byFamily.length>0&&<ul className={s.families}>
-     {report.byFamily.map(f=><li key={f.family}>{familyLine(f.family,f.stats.readings,f.stats.averageMiss)}</li>)}
-    </ul>}
+    <RangeStrip runs={analysis.runs}/>
+    <MissBars families={report.byFamily}/>
    </>}
    {note&&<p className={s.note}>{note}</p>}
   </>}

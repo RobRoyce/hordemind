@@ -470,6 +470,19 @@ async function journey(viewport){
   for(const name of ['Report card','Your choices','Game numbers'])await page.getByRole('heading',{name,exact:true}).waitFor();
   await page.getByText(/inside the 80% range in \d+% of 30 readings/).waitFor();
   assert.equal(await page.getByText("Saved data on this device couldn't be read").count(),0);
+  const strip=page.getByRole('group',{name:/^Wave by wave/});
+  await strip.waitFor();
+  assert.ok(await strip.locator('[data-state]').count()>=1,'the strip draws a dot');
+  const runLabel=page.getByText(/^Run of .*, 3 of 3$/);
+  await runLabel.waitFor();
+  await page.getByRole('button',{name:'Earlier run'}).click();
+  await page.getByText(/^Run of .*, 2 of 3$/).waitFor();
+  await page.getByRole('group',{name:'After each offer family'}).waitFor();
+  const offers=page.getByRole('group',{name:'How often each offer appeared'});
+  await offers.waitFor();
+  const bar=offers.getByRole('img').first();
+  await bar.focus();
+  await page.getByText(/^Appeared \d+ times?$/).waitFor({state:'visible'});
   await noSeriousViolations(page,'Insights with analysis');
 
   assert.deepEqual(errors,[],'Browser emitted errors');

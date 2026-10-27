@@ -38,9 +38,6 @@ export const headline=(inRange:number,readings:number)=>{
  return `${p.before}${p.percent}${p.after}`;
 };
 
-export const familyLine=(family:string,readings:number,averageMiss:number)=>
- `After ${family} offers (${readings} readings): ${missText(averageMiss)}`;
-
 const round=Math.round;
 
 /** A positive total is Aether the recommendation would have gained over the picks you made. */
