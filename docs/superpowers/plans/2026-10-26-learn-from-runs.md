@@ -611,6 +611,21 @@ Copy:
 - [ ] **Step 6: Update the docs and commit** with the message `feat: report card, choices and game numbers on Insights`.
 - [ ] **Step 7: Owner preview and PR**, as in A3 step 7, on branch `feat/run-insights`.
 
+### Task B8: Insights charts (owner, 2026-10-27)
+
+The owner asked for one to three charts on Insights and approved a mockup with three. Spec §7 lists them under Charts.
+
+**Files:**
+- Create: `apps/web/src/ui/insights/charts/` (`scale.ts`, `useChartWidth.ts`, `ChartTip.tsx`, `RangeStrip.tsx`, `MissBars.tsx`, `OfferBars.tsx`, their CSS modules and tests)
+- Modify: `apps/web/src/analysis/analyze.ts` (`CharacterAnalysis.runs`), `ReportCardSection.tsx`, `GameNumbersSection.tsx`, `insightsText.ts`, `kit/tokens.css` (`--hm-cool`), `tests/e2e.mjs`, `docs/UX_V2.md`
+
+**Interfaces:**
+- `interface RunScores{runId:string;createdAt:string;status:RunRecord['status'];totalWaves:number;scored:Scored[]}`
+- `CharacterAnalysis.runs:RunScores[]`, the qualifying runs, newest first
+- `niceMax(v:number):{max:number;step:number}` in `charts/scale.ts`
+
+The full brief is `task-B8-brief.md` in the plan workspace.
+
 ---
 
 ## Phase C: Calibration (PR 3)

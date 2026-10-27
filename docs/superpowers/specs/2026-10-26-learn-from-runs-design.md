@@ -280,6 +280,20 @@ Run history (unchanged), Sync, Research note
 - A section shows how many runs it left out, and why.
 - On phones, tables stack into rows.
 
+#### Charts (owner, 2026-10-27)
+
+Three SVG charts, built without a chart library:
+
+| Chart | Section | Shows |
+|---|---|---|
+| Wave by wave | Report card | One run at a time: the model's 80% range per reading as a bar, the gain as a dot. A dot below the range is red (forecast too high), above is blue (too low). |
+| After each offer family | Report card | Average miss per family as a diverging bar, red right for too much, blue left for too little. Replaces the family lines. |
+| How often each offer appeared | Game numbers | The top 10 offers' share of offer sets, with a toggle between setups. Replaces the fold-out list. |
+
+- A reading that spans several waves draws one wide bar at its per-wave average.
+- Every mark shows its numbers on hover and keyboard focus. Wave by wave also has a table view.
+- On phones, labels sit on their own line above each bar.
+
 ### Live Run and estimate details
 
 - A "Calibrated" marker sits beside the recommendations while calibration is on, and it opens the fitted numbers.
