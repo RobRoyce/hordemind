@@ -1,6 +1,6 @@
 # HordeMind: learn from your runs
 
-- **Status:** draft for owner review, 2026-10-26
+- **Status:** approved by the owner, 2026-10-26
 - **Owner:** Rob Royce
 - **Follow-up:** spec 2, the War Plan advisor, builds on the profile fields and measurements here.
 
