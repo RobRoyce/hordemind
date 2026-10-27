@@ -51,4 +51,4 @@ export function analyze(runs:readonly RunRecord[],profileId:string|null,samples=
 
 /** Drops an analysis computed for a different character. */
 export const analysisFor=(profileId:string|null,a:Analysis|null):Analysis|null=>
- a&&a.character&&a.character.profileId!==profileId?null:a;
+ a&&(a.character?.profileId??null)!==profileId?null:a;

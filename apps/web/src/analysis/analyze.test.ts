@@ -27,4 +27,21 @@ describe('analyze',()=>{
   expect(analysisFor(s.profiles[0]!.id,a)).toBe(a);
   expect(analysisFor(null,a)).toBeNull();
  });
+ it('an analysis computed with no character is dropped once one is selected',()=>{
+  const s=state(),a=analyze(s.runs,null,20);
+  expect(analysisFor('x',a)).toBeNull();
+  expect(analysisFor(null,a)).toBe(a);
+ });
+ it("another character's runs stay out of the report card and choices, and game numbers pool both",()=>{
+  const a=LocalStateSchema.parse(seededState(SLOW_RUNS));
+  const b=LocalStateSchema.parse(seededState({profile:{name:'Other'},runs:[SLOW_RUNS.runs[0]!]}));
+  const id=a.profiles[0]!.id;
+  const both=analyze([...a.runs,...b.runs],id,20),alone=analyze(a.runs,id,20);
+  expect(both.character?.qualifying).toBe(3);
+  expect(both.character?.report?.buckets.readings).toBe(30);
+  expect(both.character?.overrides).toEqual(alone.character?.overrides);
+  const sets=(x:typeof both)=>x.counts.offers.reign.sets+x.counts.offers.chaos.sets+x.counts.offers.neither.sets;
+  expect(sets(both)).toBe(sets(alone)+sets(analyze(b.runs,null,20)));
+  expect(sets(both)).toBe(40);
+ });
 });

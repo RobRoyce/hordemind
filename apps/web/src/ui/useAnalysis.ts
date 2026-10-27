@@ -41,5 +41,8 @@ export function useAnalysis(runs:RunRecord[],profileId:string|null):AnalysisStat
   // `key` captures every input that changes the answer; `attempt` re-sends on retry.
  },[key,attempt]);
  const retry=useCallback(()=>setAttempt(n=>n+1),[]);
- return {result:analysisFor(profileId,state.result),busy:state.busy,error:state.error,retry};
+ const result=analysisFor(profileId,state.result);
+ // a stored result for another character means the new one is still on its way
+ const busy=state.busy||(state.result!==null&&result===null);
+ return {result,busy,error:state.error,retry};
 }
