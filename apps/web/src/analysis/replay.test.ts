@@ -1,0 +1,67 @@
+import {describe,it,expect} from 'vitest';
+import {newProfile,newRun,recordDecision,endRun,undoChoice} from '../domain/run';
+import type {CharacterProfile,RunRecord} from '../domain/schema';
+import {readRun} from './replay';
+
+const A='The Gorging Mass',B='The Rising Spires',C='The Exalted Hordes',D='The Aether Rush',CH='The Chaotic Offering';
+const prof=(over:Partial<CharacterProfile>={}):CharacterProfile=>({...newProfile('T','Paladin'),...over});
+/** Records one decision per pick; reads[i] is the total entered before pick i+1 (reads[0] is ignored). */
+function play(profile:CharacterProfile,picks:string[],reads:(number|null)[]=[]):RunRecord{
+ let run=newRun(profile,picks.length);
+ picks.forEach((p,i)=>{run=recordDecision(run,{offered:[p,'x'],chosenIndex:0,observation:i>0&&reads[i]!=null?{totalAether:reads[i]!}:null})});
+ return run;
+}
+const setTotal=(run:RunRecord,afterWave:number,totalAether:number):RunRecord=>({...run,events:run.events.map(e=>e.type==='aether_observed'&&e.payload.afterWave===afterWave?{...e,payload:{...e.payload,totalAether}}:e)});
+
+describe('readRun',()=>{
+ it('spans run between consecutive readings, starting from zero',()=>{
+  const run=endRun(play(prof(),[A,B,C,D],[0,40,90,null]),'completed',200);
+  expect(readRun(run).spans).toEqual([{fromWave:1,toWave:1,actual:40,chaos:false},{fromWave:2,toWave:2,actual:50,chaos:false},{fromWave:3,toWave:4,actual:110,chaos:false}]);
+ });
+ it('a falling total is skipped and its span merges onward',()=>{
+  const run=setTotal(play(prof(),[A,B,C,D],[0,40,50,120]),2,30);
+  const r=readRun(run);
+  expect(r.spans).toEqual([{fromWave:1,toWave:1,actual:40,chaos:false},{fromWave:2,toWave:3,actual:80,chaos:false}]);
+  expect(r.skipped.falling).toBe(1);
+ });
+ it('undone readings are ignored',()=>{
+  const run=undoChoice(play(prof(),[A,B,C],[0,40,90]));
+  expect(readRun(run).spans).toEqual([{fromWave:1,toWave:1,actual:40,chaos:false}]);
+ });
+ it('legacy readings are counted, not used',()=>{
+  const base=play(prof(),[A,B],[0,40]);
+  const run={...base,events:[...base.events,{...base.events.at(-1)!,id:crypto.randomUUID(),sequence:base.events.length,type:'wave_observed' as const,payload:{wave:2,totalAether:70,eventCounts:{}}}]} as RunRecord;
+  const r=readRun(run);
+  expect(r.skipped.legacy).toBe(1);
+  expect(r.spans).toHaveLength(1);
+ });
+ it('runs with Pulse of Aether or an events-branch node are left out',()=>{
+  expect(readRun(newRun(prof({warPlanNodes:['Pulse of Aether']}),3)).leftOut).toBe('pulse');
+  expect(readRun(newRun(prof({warPlanNodes:['Pulse of Aether','Cult of Annihilation']}),3)).leftOut).toBe('events');
+  expect(readRun(newRun(prof(),3)).leftOut).toBeNull();
+ });
+ it("with Varshan's Vengeance, Chaos Wave spans are not scored",()=>{
+  const reads=[0,40,90];
+  const plain=readRun(play(prof(),[A,CH,C],reads)),varshan=readRun(play(prof({lairBossNodes:["Varshan's Vengeance"]}),[A,CH,C],reads));
+  expect(plain.spans[1]!.chaos).toBe(true);
+  expect(plain.scored).toHaveLength(2);
+  expect(varshan.scored).toHaveLength(1);
+  expect(varshan.skipped.varshanChaos).toBe(1);
+ });
+ it('waves carry the stack in pick order',()=>{
+  const r=readRun(play(prof(),[A,B,C],[0,40,90]));
+  expect(r.waves).toHaveLength(2);
+  const r3=readRun(endRun(play(prof(),[A,B,C],[0,40,90]),'completed',150));
+  expect(r3.waves[2]!.stack).toEqual([A,B,C]);
+  expect(r3.waves[2]!.newPickIndex).toBe(2);
+ });
+ it('an in-progress run with no readings has no spans',()=>{
+  const r=readRun(play(prof(),[A,B]));
+  expect(r.spans).toEqual([]);
+  expect(r.waves).toEqual([]);
+ });
+ it('a run with only a final total is one span',()=>{
+  const r=readRun(endRun(play(prof(),[A,B,C,D,A]),'completed',260));
+  expect(r.spans).toEqual([{fromWave:1,toWave:5,actual:260,chaos:false}]);
+ });
+});
