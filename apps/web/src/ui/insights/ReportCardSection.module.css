@@ -10,7 +10,10 @@
 }
 .note{font-size:var(--hm-text-1)}
 
-.headline{font-size:var(--hm-text-3)}
+.headline{
+ margin:0;
+ font-size:var(--hm-text-3);
+}
 .num{
  color:var(--hm-ember);
  font-family:var(--hm-font-display);
