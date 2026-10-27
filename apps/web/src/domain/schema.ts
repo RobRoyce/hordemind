@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { normalizeNodes } from './warplan';
+import { SPLINTER_IDS, SPLINTER_MAX_RANK } from './splinters';
 
 export const GAME_CLASSES = ['Barbarian','Druid','Necromancer','Rogue','Sorcerer','Spiritborn','Paladin','Warlock'] as const;
 export const CharacterClassSchema = z.enum(GAME_CLASSES);
@@ -8,7 +9,16 @@ export const RealmSchema = z.enum(REALMS);
 export const DIFFICULTIES = ['Unknown','Normal','Hard','Expert','Penitent','Torment I','Torment II','Torment III','Torment IV','Torment V','Torment VI','Torment VII','Torment VIII','Torment IX','Torment X','Torment XI','Torment XII'] as const;
 export const DifficultySchema = z.enum(DIFFICULTIES);
 export const OriginSchema = z.enum(['manual','imported','observed','unknown']);
-export const CharacterProfileSchema = z.object({
+const Rank = z.number().int().min(0).max(SPLINTER_MAX_RANK).nullable().default(null);
+/** Moves a pre-splinter `splinterRank` into the Terror rank and makes Terror active. */
+export function migrateSplinterRank(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null) return raw;
+  const o = raw as Record<string, unknown>;
+  const ranks = (o.splinterRanks ?? {}) as Record<string, unknown>;
+  if (typeof o.splinterRank !== 'number' || (ranks.terror ?? null) !== null) return raw;
+  return { ...o, activeSplinter: o.activeSplinter ?? 'terror', splinterRanks: { destruction: null, hatred: null, ...ranks, terror: o.splinterRank } };
+}
+export const CharacterProfileSchema = z.preprocess(migrateSplinterRank, z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(80),
   className: CharacterClassSchema,
@@ -18,14 +28,17 @@ export const CharacterProfileSchema = z.object({
   difficulty: DifficultySchema.default('Unknown'),
   gamePatch: z.string().trim().min(1).max(80).default('S15-unverified'),
   warPlanNodes: z.array(z.string().max(100)).default([]).transform(normalizeNodes),
-  /** Season 15 Splinter of Terror rank; unlocks War Plan bonuses at ranks 5, 14 and 20. */
-  splinterRank: z.number().int().min(0).max(20).nullable().default(null),
+  /** The equipped Season 15 splinter, with a rank (0-24) per splinter. Terror's bonuses apply only while it is active. */
+  activeSplinter: z.enum(SPLINTER_IDS).nullable().default(null),
+  splinterRanks: z.object({ terror: Rank, destruction: Rank, hatred: Rank }).default({ terror: null, destruction: null, hatred: null }),
+  /** Learned nodes of the Lair Bosses War Plan. */
+  lairBossNodes: z.array(z.string().max(100)).default([]),
   specialOfferingAvailable: z.boolean().default(false),
   killSpeed: z.enum(['fast','average','slow','unknown']).default('unknown'),
   mobility: z.enum(['high','average','low','unknown']).default('unknown'),
   provenance: OriginSchema.default('manual'),
   updatedAt: z.iso.datetime()
-});
+}));
 export type CharacterProfile = z.infer<typeof CharacterProfileSchema>;
 
 const EventBase = z.object({

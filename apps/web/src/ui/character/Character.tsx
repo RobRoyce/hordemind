@@ -53,8 +53,8 @@ function Editor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pick<Props
    <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}>
     <div className={s.splinter}>
      <Field label="Splinter of Terror rank" help={TIPS.splinter}>
-      {w=><NumberField wire={w} min={0} max={20} placeholder="Not set" value={profile.splinterRank??''}
-       onChange={e=>{const v=e.target.value===''?null:Math.max(0,Math.min(20,Math.round(Number(e.target.value))));if(v===null||Number.isFinite(v))update({splinterRank:v})}}/>}
+      {w=><NumberField wire={w} min={0} max={24} placeholder="Not set" value={profile.splinterRanks.terror??''}
+       onChange={e=>{const v=e.target.value===''?null:Math.max(0,Math.min(24,Math.round(Number(e.target.value))));if(v===null||Number.isFinite(v))update({splinterRanks:{...profile.splinterRanks,terror:v},...(v!==null&&!profile.activeSplinter?{activeSplinter:'terror' as const}:{})})}}/>}
      </Field>
     </div>
    </WarPlanTree>
