@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {newProfile,newRun,recordDecision,endRun,undoChoice} from '../domain/run';
 import type {CharacterProfile,RunRecord} from '../domain/schema';
-import {readRun} from './replay';
+import {readRun,replaySpans,seedOf,SD_FLOOR,type RunReadings} from './replay';
 
 const A='The Gorging Mass',B='The Rising Spires',C='The Exalted Hordes',D='The Aether Rush',CH='The Chaotic Offering';
 const prof=(over:Partial<CharacterProfile>={}):CharacterProfile=>({...newProfile('T','Paladin'),...over});
@@ -63,5 +63,39 @@ describe('readRun',()=>{
  it('a run with only a final total is one span',()=>{
   const r=readRun(endRun(play(prof(),[A,B,C,D,A]),'completed',260));
   expect(r.spans).toEqual([{fromWave:1,toWave:5,actual:260,chaos:false}]);
+ });
+});
+
+describe('replaySpans',()=>{
+ const done=()=>readRun(endRun(play(prof({killSpeed:'average'}),[A,B,C,D],[0,40,90,null]),'completed',200));
+ it('replays are repeatable for the same run',()=>{
+  const r=done();
+  expect(replaySpans(r,60)).toEqual(replaySpans(r,60));
+ });
+ it('seedOf is a stable 32-bit hash',()=>{
+  expect(seedOf('a')).toBe(0xe40c292c);
+  expect(seedOf('')).toBe(0x811c9dc5);
+ });
+ it('a slower kill speed predicts less Aether',()=>{
+  const r=done(),slow=replaySpans(r,80,{...r.profile,killSpeed:'slow'}),fast=replaySpans(r,80,{...r.profile,killSpeed:'fast'});
+  slow.forEach((s,i)=>expect(s.mean).toBeLessThan(fast[i]!.mean));
+ });
+ it('a merged span predicts the sum of its waves',()=>{
+  const r=readRun(endRun(play(prof(),[A,B,C],[0,40,90]),'completed',200));
+  const split:RunReadings={...r,spans:[{fromWave:1,toWave:1,actual:0,chaos:false},{fromWave:2,toWave:2,actual:0,chaos:false},{fromWave:3,toWave:3,actual:0,chaos:false}]};
+  const merged:RunReadings={...r,spans:[{fromWave:1,toWave:1,actual:0,chaos:false},{fromWave:2,toWave:3,actual:0,chaos:false}]};
+  const a=replaySpans(split,50),b=replaySpans(merged,50);
+  expect(b[1]!.mean).toBeCloseTo(a[1]!.mean+a[2]!.mean,9);
+ });
+ it('a Chaos Wave span stays inside the Chaos payout range',()=>{
+  const r=readRun(endRun(play(prof({killSpeed:'average',mobility:'average'}),[CH]),'completed',150));
+  expect(r.waves[0]!.chaos).toBe(true);
+  const [p]=replaySpans(r,200);
+  expect(p!.mean).toBeGreaterThan(50);
+  expect(p!.mean).toBeLessThan(330);
+ });
+ it('spread never drops below the floor',()=>{
+  replaySpans(done(),40).forEach(p=>expect(p.sd).toBeGreaterThanOrEqual(SD_FLOOR));
+  expect(replaySpans(done(),1).every(p=>p.sd===SD_FLOOR)).toBe(true);
  });
 });

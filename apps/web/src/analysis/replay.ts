@@ -2,7 +2,8 @@ import type {CharacterProfile,RunRecord} from '../domain/schema';
 import {effectiveEvents} from '../domain/run';
 import {playerProfile} from '../recommendation/scenario';
 import {resolveOffer} from '../catalog';
-import type {PlayerProfile} from '../recommendation/simulate';
+import {simulateWaveDetailed,hash,BASELINE,type Assumptions,type PlayerProfile} from '../recommendation/simulate';
+import type {EventKind} from '../recommendation/mechanics';
 
 /** Aether earned over waves fromWave..toWave, measured by two readings. */
 export interface Span{fromWave:number;toWave:number;actual:number;chaos:boolean}
@@ -53,4 +54,38 @@ export function readRun(run:RunRecord):RunReadings{
  const leftOut:LeftOut|null=nodes.some(n=>EVENT_BRANCH_NODES.includes(n))?'events':nodes.includes('Pulse of Aether')?'pulse':null;
  return {runId:run.id,profileId:snap.id,difficulty:snap.difficulty,createdAt:run.createdAt,status:run.status,profile:playerProfile(snap),lairBossNodes,waves,spans,scored,
   skipped:{falling,legacy,varshanChaos:spans.length-scored.length},leftOut};
+}
+
+export interface SpanPrediction{mean:number;sd:number;p10:number;p90:number}
+/** Smallest spread reported, so a few lucky samples never claim certainty. */
+export const SD_FLOOR=10;
+
+/** FNV-1a, 32 bit. */
+export function seedOf(id:string):number{
+ let h=0x811c9dc5;
+ for(let i=0;i<id.length;i++){h^=id.charCodeAt(i);h=Math.imul(h,0x01000193)}
+ return h>>>0;
+}
+
+/** Simulated Aether per span; one pass replays every wave with that wave's recorded stack. */
+export function replaySpans(r:RunReadings,samples:number,profile:PlayerProfile=r.profile,assumptions:Assumptions=BASELINE):SpanPrediction[]{
+ const totals=r.spans.map(()=>new Array<number>(samples).fill(0));
+ const spanOf=(wave:number)=>r.spans.findIndex(s=>s.fromWave<=wave&&wave<=s.toWave);
+ for(let i=0;i<samples;i++){
+  const seed=hash(seedOf(r.runId)+i*9733);
+  let carry:EventKind[]=[];
+  for(const w of r.waves){
+   const {out,leftover}=simulateWaveDetailed({index:0,stack:w.stack,genericPicks:0,chaos:w.chaos,newPickIndex:w.newPickIndex},
+    profile,hash(seed+Math.imul(w.wave,0x9e3779b1)),assumptions,carry);
+   carry=leftover;
+   const k=spanOf(w.wave);
+   if(k>=0)totals[k]![i]!+=Object.values(out).reduce((a,v)=>a+v,0);
+  }
+ }
+ return totals.map(t=>{
+  const n=t.length,mean=n?t.reduce((a,v)=>a+v,0)/n:0;
+  const sampleSd=n>1?Math.sqrt(t.reduce((a,v)=>a+(v-mean)**2,0)/(n-1)):0;
+  const sorted=[...t].sort((a,b)=>a-b);
+  return {mean,sd:Math.max(SD_FLOOR,sampleSd),p10:sorted[Math.floor(0.1*(n-1))]??0,p90:sorted[Math.ceil(0.9*(n-1))]??0};
+ });
 }
