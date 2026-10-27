@@ -70,7 +70,7 @@ export const rankedText=(lead:string,ranked:readonly {offer:string;count:number}
 /** Notes on choices the Your choices numbers leave out. */
 export function choicesLeftOutText(skippedOlder:number,gapLeftOut:number):string|null{
  const parts=[
-  skippedOlder&&`${skippedOlder} older ${skippedOlder===1?'choice was':'choices were'} recorded before HordeMind saved its recommendation, so ${skippedOlder===1?'it is':'they are'} skipped.`,
+  skippedOlder&&`${n(skippedOlder,'choice was','choices were')} recorded without a recommendation showing, so ${skippedOlder===1?'it is':'they are'} skipped.`,
   gapLeftOut&&`The forecast comparison leaves out ${n(gapLeftOut,'run','runs')} the report card can't score.`
  ].filter(Boolean);
  return parts.length?parts.join(' '):null;

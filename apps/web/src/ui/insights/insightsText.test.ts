@@ -110,13 +110,13 @@ describe('rankedText',()=>{
 describe('choicesLeftOutText',()=>{
  it('is null when nothing was left out',()=>expect(choicesLeftOutText(0,0)).toBeNull());
  it('words each part for one and for many',()=>{
-  expect(choicesLeftOutText(1,0)).toBe('1 older choice was recorded before HordeMind saved its recommendation, so it is skipped.');
-  expect(choicesLeftOutText(3,0)).toBe('3 older choices were recorded before HordeMind saved its recommendation, so they are skipped.');
+  expect(choicesLeftOutText(1,0)).toBe('1 choice was recorded without a recommendation showing, so it is skipped.');
+  expect(choicesLeftOutText(3,0)).toBe('3 choices were recorded without a recommendation showing, so they are skipped.');
   expect(choicesLeftOutText(0,1)).toBe("The forecast comparison leaves out 1 run the report card can't score.");
   expect(choicesLeftOutText(0,2)).toBe("The forecast comparison leaves out 2 runs the report card can't score.");
  });
  it('joins both parts',()=>expect(choicesLeftOutText(2,1)).toBe(
-  "2 older choices were recorded before HordeMind saved its recommendation, so they are skipped. The forecast comparison leaves out 1 run the report card can't score."));
+  "2 choices were recorded without a recommendation showing, so they are skipped. The forecast comparison leaves out 1 run the report card can't score."));
 });
 
 const R=(hits:number,total:number)=>({hits,total});
