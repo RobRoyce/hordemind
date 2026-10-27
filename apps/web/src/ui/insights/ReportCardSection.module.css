@@ -11,7 +11,10 @@
 .note{font-size:var(--hm-text-1)}
 
 .headline{
- margin:0;
+ display:flex;
+ flex-wrap:wrap;
+ align-items:baseline;
+ column-gap:var(--hm-space-2);
  font-size:var(--hm-text-3);
 }
 

@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest';
-import {chaoticLine,costText,gapText,headline,leftOutText,missText,needsText,percent,repeatLine,rankedText,varshanLine,familyLine} from './insightsText';
+import {headlineParts,chaoticLine,costText,gapText,headline,leftOutText,missText,needsText,percent,repeatLine,rankedText,varshanLine,familyLine} from './insightsText';
 
 const none={pulse:0,events:0},zero={falling:0,legacy:0,varshanChaos:0};
 
@@ -51,6 +51,11 @@ describe('percent',()=>{
 describe('headline',()=>{
  it('states the in-range share against the 80% target',()=>
   expect(headline(24,30)).toBe('Your gain landed inside the 80% range in 80% of 30 readings (target 80%).'));
+ it('splits out the percentage so it can be styled',()=>{
+  const p=headlineParts(24,30);
+  expect(p.percent).toBe('80%');
+  expect(`${p.before}${p.percent}${p.after}`).toBe(headline(24,30));
+ });
 });
 
 describe('familyLine',()=>{
@@ -71,20 +76,44 @@ describe('choices text',()=>{
   expect(rankedText([{offer:'A',count:3},{offer:'B',count:1}])).toBe('Most taken over the recommendation: A (3), B (1)'));
 });
 
-describe('game number lines',()=>{
- it('describes The Chaotic Offering rates',()=>{
-  expect(chaoticLine({hits:5,total:20},{hits:9,total:12})).toBe(
-   'The Chaotic Offering, the Chaos Wave offer, appeared in 25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the second row of the offers branch.');
-  expect(chaoticLine({hits:0,total:0},{hits:0,total:0})).toBeNull();
+const R=(hits:number,total:number)=>({hits,total});
+const V=(median:number|null,count:number)=>({median,count});
+const CHAOS='The Chaotic Offering, the Chaos Wave offer, appeared in ';
+const REP="Offers shared your previous pick's family in ";
+
+describe('chaoticLine',()=>{
+ it('compares both sides',()=>expect(chaoticLine(R(5,20),R(9,12))).toBe(
+  CHAOS+'25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the second row of the offers branch.'));
+ it('words a single set',()=>expect(chaoticLine(R(1,1),R(0,1))).toBe(
+  CHAOS+'100% of 1 offer set without Total Chaos and 0% of 1 with it. Total Chaos is in the second row of the offers branch.'));
+ it('words a side with no data',()=>{
+  expect(chaoticLine(R(5,20),R(0,0))).toBe(CHAOS+'25% of 20 offer sets, all without Total Chaos (second row of the offers branch).');
+  expect(chaoticLine(R(0,0),R(9,12))).toBe(CHAOS+'75% of 12 offer sets, all with Total Chaos (second row of the offers branch).');
+  expect(chaoticLine(R(1,1),R(0,0))).toBe(CHAOS+'100% of 1 offer set, all without Total Chaos (second row of the offers branch).');
  });
- it('describes repeats with Method and Madness',()=>{
-  expect(repeatLine({hits:3,total:4},{hits:1,total:4})).toBe(
-   "Offers shared your previous pick's family in 75% of sets with Method and Madness, the first node of the offers branch, and 25% without it.");
-  expect(repeatLine({hits:0,total:0},{hits:0,total:0})).toBeNull();
+ it('is null with no sets',()=>expect(chaoticLine(R(0,0),R(0,0))).toBeNull());
+});
+
+describe('repeatLine',()=>{
+ it('compares both sides with sample sizes',()=>expect(repeatLine(R(3,4),R(1,4))).toBe(
+  REP+'75% of 4 sets with Method and Madness, the first node of the offers branch, and 25% of 4 without it.'));
+ it('words a single set',()=>expect(repeatLine(R(1,1),R(1,2))).toBe(
+  REP+'100% of 1 set with Method and Madness, the first node of the offers branch, and 50% of 2 without it.'));
+ it('words a side with no data',()=>{
+  expect(repeatLine(R(3,4),R(0,0))).toBe(REP+'75% of 4 sets, all with Method and Madness (first node of the offers branch).');
+  expect(repeatLine(R(0,0),R(1,4))).toBe(REP+'25% of 4 sets, all without Method and Madness (first node of the offers branch).');
+  expect(repeatLine(R(0,0),R(1,1))).toBe(REP+'100% of 1 set, all without Method and Madness (first node of the offers branch).');
  });
- it('describes Chaos Wave pay with and without Varshan',()=>{
-  expect(varshanLine({median:310,count:4},{median:280.4,count:1})).toBe(
-   "Chaos Waves paid a median 310 with Varshan's Vengeance (4 waves) and 280 without it (1 wave).");
-  expect(varshanLine({median:null,count:0},{median:null,count:0})).toBeNull();
+ it('is null with no sets',()=>expect(repeatLine(R(0,0),R(0,0))).toBeNull());
+});
+
+describe('varshanLine',()=>{
+ const where="Varshan's Vengeance is next to the root of the Lair Bosses War Plan.";
+ it('compares both sides',()=>expect(varshanLine(V(310,4),V(280.4,1))).toBe(
+  `Chaos Waves paid a median 310 Aether with Varshan's Vengeance (4 waves) and 280 without it (1 wave). ${where}`));
+ it('words a side with no data',()=>{
+  expect(varshanLine(V(310.6,4),V(null,0))).toBe("Chaos Waves paid a median 311 Aether over 4 waves, all with Varshan's Vengeance (next to the root of the Lair Bosses War Plan).");
+  expect(varshanLine(V(null,0),V(280,1))).toBe("Chaos Waves paid a median 280 Aether over 1 wave, all without Varshan's Vengeance (next to the root of the Lair Bosses War Plan).");
  });
+ it('is null with no waves',()=>expect(varshanLine(V(null,0),V(null,0))).toBeNull());
 });

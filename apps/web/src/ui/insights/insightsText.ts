@@ -24,8 +24,13 @@ export function leftOutText(leftOut:{pulse:number;events:number},skipped:{fallin
 
 export const percent=(hits:number,total:number)=>`${total?Math.round(100*hits/total):0}%`;
 
-export const headline=(inRange:number,readings:number)=>
- `Your gain landed inside the 80% range in ${percent(inRange,readings)} of ${readings} readings (target 80%).`;
+export const headlineParts=(inRange:number,readings:number)=>
+ ({before:'Your gain landed inside the 80% range in ',percent:percent(inRange,readings),after:` of ${readings} readings (target 80%).`});
+
+export const headline=(inRange:number,readings:number)=>{
+ const p=headlineParts(inRange,readings);
+ return `${p.before}${p.percent}${p.after}`;
+};
 
 export const familyLine=(family:string,readings:number,averageMiss:number)=>
  `After ${family} offers (${readings} readings): ${missText(averageMiss)}`;
@@ -41,12 +46,34 @@ export const gapText=(average:number)=>
 export const rankedText=(ranked:readonly {offer:string;count:number}[])=>
  `Most taken over the recommendation: ${ranked.map(r=>`${r.offer} (${r.count})`).join(', ')}`;
 
-export const chaoticLine=(without:Rate,withTotalChaos:Rate):string|null=>without.total+withTotalChaos.total===0?null:
- `The Chaotic Offering, the Chaos Wave offer, appeared in ${percent(without.hits,without.total)} of ${n(without.total,'offer set','offer sets')} without Total Chaos and ${percent(withTotalChaos.hits,withTotalChaos.total)} of ${withTotalChaos.total} with it. Total Chaos is in the second row of the offers branch.`;
+const CHAOS='The Chaotic Offering, the Chaos Wave offer, appeared in ';
+const TC='second row of the offers branch';
+export function chaoticLine(without:Rate,withTotalChaos:Rate):string|null{
+ const w=`${percent(without.hits,without.total)} of ${n(without.total,'offer set','offer sets')}`;
+ const c=`${percent(withTotalChaos.hits,withTotalChaos.total)} of ${n(withTotalChaos.total,'offer set','offer sets')}`;
+ if(without.total&&withTotalChaos.total)return `${CHAOS}${w} without Total Chaos and ${percent(withTotalChaos.hits,withTotalChaos.total)} of ${withTotalChaos.total} with it. Total Chaos is in the ${TC}.`;
+ if(without.total)return `${CHAOS}${w}, all without Total Chaos (${TC}).`;
+ if(withTotalChaos.total)return `${CHAOS}${c}, all with Total Chaos (${TC}).`;
+ return null;
+}
 
-export const repeatLine=(withMadness:Rate,without:Rate):string|null=>withMadness.total+without.total===0?null:
- `Offers shared your previous pick's family in ${percent(withMadness.hits,withMadness.total)} of sets with Method and Madness, the first node of the offers branch, and ${percent(without.hits,without.total)} without it.`;
+const REPEAT="Offers shared your previous pick's family in ";
+const MM='first node of the offers branch';
+export function repeatLine(withMadness:Rate,without:Rate):string|null{
+ const w=`${percent(withMadness.hits,withMadness.total)} of ${n(withMadness.total,'set','sets')}`;
+ const o=`${percent(without.hits,without.total)} of ${n(without.total,'set','sets')}`;
+ if(withMadness.total&&without.total)return `${REPEAT}${w} with Method and Madness, the ${MM}, and ${percent(without.hits,without.total)} of ${without.total} without it.`;
+ if(withMadness.total)return `${REPEAT}${w}, all with Method and Madness (${MM}).`;
+ if(without.total)return `${REPEAT}${o}, all without Method and Madness (${MM}).`;
+ return null;
+}
 
-const median=(m:number|null)=>m===null?'n/a':String(Math.round(m));
-export const varshanLine=(withV:{median:number|null;count:number},without:{median:number|null;count:number}):string|null=>withV.count+without.count===0?null:
- `Chaos Waves paid a median ${median(withV.median)} with Varshan's Vengeance (${n(withV.count,'wave','waves')}) and ${median(without.median)} without it (${n(without.count,'wave','waves')}).`;
+const WHERE='next to the root of the Lair Bosses War Plan';
+const median=(m:number|null)=>m===null?0:Math.round(m);
+export function varshanLine(withV:{median:number|null;count:number},without:{median:number|null;count:number}):string|null{
+ const V="Varshan's Vengeance";
+ if(withV.count&&without.count)return `Chaos Waves paid a median ${median(withV.median)} Aether with ${V} (${n(withV.count,'wave','waves')}) and ${median(without.median)} without it (${n(without.count,'wave','waves')}). ${V} is ${WHERE}.`;
+ if(withV.count)return `Chaos Waves paid a median ${median(withV.median)} Aether over ${n(withV.count,'wave','waves')}, all with ${V} (${WHERE}).`;
+ if(without.count)return `Chaos Waves paid a median ${median(without.median)} Aether over ${n(without.count,'wave','waves')}, all without ${V} (${WHERE}).`;
+ return null;
+}
