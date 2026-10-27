@@ -17,10 +17,11 @@ export function migrateSplinterRank(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
   const o = raw as Record<string, unknown>;
   if (typeof o.splinterRank !== 'number' || Object.hasOwn(o, 'splinterRanks')) return raw;
-  const owner = Object.hasOwn(o, 'activeSplinter') && (SPLINTER_IDS as readonly unknown[]).includes(o.activeSplinter) ? o.activeSplinter as string : 'terror';
+  const hasActive = Object.hasOwn(o, 'activeSplinter');
+  const owner = hasActive && (SPLINTER_IDS as readonly unknown[]).includes(o.activeSplinter) ? o.activeSplinter as string : 'terror';
   return {
     ...o,
-    activeSplinter: Object.hasOwn(o, 'activeSplinter') ? o.activeSplinter : 'terror',
+    activeSplinter: hasActive ? o.activeSplinter : 'terror',
     splinterRanks: { terror: null, destruction: null, hatred: null, [owner]: o.splinterRank }
   };
 }

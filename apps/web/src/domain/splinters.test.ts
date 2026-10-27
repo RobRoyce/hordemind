@@ -32,6 +32,10 @@ describe('splinter profile fields',()=>{
   expect(p.activeSplinter).toBeNull();
   expect(p.splinterRanks).toEqual({terror:null,destruction:null,hatred:null});
  });
+ it('an unknown active splinter still fails to parse',()=>{
+  const {activeSplinter:_a,splinterRanks:_r,...legacy}=base();
+  expect(CharacterProfileSchema.safeParse({...legacy,activeSplinter:'bogus',splinterRank:14}).success).toBe(false);
+ });
  it('saved splinterRanks win over a stray splinterRank',()=>{
   const p=CharacterProfileSchema.parse({...base(),splinterRanks:{terror:3,destruction:null,hatred:null},splinterRank:20});
   expect(p.splinterRanks.terror).toBe(3);
