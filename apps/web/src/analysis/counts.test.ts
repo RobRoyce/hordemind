@@ -42,6 +42,15 @@ describe('gameCounts',()=>{
   expect(g.chaotic.withTotalChaos).toEqual({hits:1,total:2});
   expect(g.chaotic.neither).toEqual({hits:0,total:2});
  });
+ it('a Chaos pick is not followed by a repeat check',()=>{
+  // wave 1 picks the Chaotic Offering, so wave 2's set has no previous family to repeat
+  const g=gameCounts([play(prof(),[{offered:[CH,B]},{offered:[CH,A]}])]);
+  expect(g.repeats.withoutMadness).toEqual({hits:0,total:0});
+ });
+ it('the old name "Chaotic Offering" counts toward the Chaotic rate',()=>{
+  const g=gameCounts([play(prof(),[{offered:['Chaotic Offering',B]},{offered:[A,B]}])]);
+  expect(g.chaotic.neither).toEqual({hits:1,total:2});
+ });
  it('Varshan medians use single-wave Chaos spans only',()=>{
   const run=(lair:string[],totals:number[])=>play(prof([],lair),[{offered:[A,B]},{offered:[CH,B],total:totals[0]!},{offered:[A,B],total:totals[1]!},{offered:[CH,B],total:totals[2]!},{offered:[A,B],total:totals[3]!}]);
   // chaos picks at waves 2 and 4; readings after waves 1..4
