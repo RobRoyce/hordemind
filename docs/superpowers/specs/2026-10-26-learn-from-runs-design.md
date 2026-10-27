@@ -122,6 +122,8 @@ New module `recommendation/replay.ts`. The report card, the override tracker and
 - A missed reading (`totalAether: null`) merges its span with the next one.
 - A total lower than the previous total is skipped and counted as a falling total.
 - Legacy `wave_observed` events are skipped because their timing is ambiguous.
+- Aether paid on defeating the Fell Council, the boss after the last wave, belongs to the final reading. It counts only for a completed run whose final total is read after the last wave. Live Run asks for that total after the Council fight (whole-branch review, 2026-10-26).
+- In-progress runs count. Their readings are settled, and a player who starts a new run without ending the old one would otherwise never qualify.
 
 ### Runs left out
 
