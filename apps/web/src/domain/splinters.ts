@@ -33,4 +33,7 @@ export const LAIR_BOSS_NODES:readonly LairBossNode[]=[
 ];
 
 /** Terror's War Plan bonuses apply only while Terror is the active splinter. */
-export const terrorRank=(p:Pick<CharacterProfile,'activeSplinter'|'splinterRank'>):number=>p.activeSplinter==='terror'?p.splinterRank??0:0;
+export const terrorRank=(p:Pick<CharacterProfile,'activeSplinter'|'splinterRanks'>):number=>p.activeSplinter==='terror'?p.splinterRanks.terror??0:0;
+
+/** The active splinter's saved rank, or null when none is active or the rank is unset. */
+export const activeRank=(p:Pick<CharacterProfile,'activeSplinter'|'splinterRanks'>):number|null=>p.activeSplinter?p.splinterRanks[p.activeSplinter]:null;

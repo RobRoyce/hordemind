@@ -1,7 +1,7 @@
 import type {CharacterProfile} from '../../domain/schema';
 import {SPLINTERS} from '../../domain/splinters';
 import {Field,NumberField,Segmented,cx} from '../kit';
-import {bonusState,chooseSplinter,parseRank} from './splinterView';
+import {bonusState,parseRank} from './splinterView';
 import s from './SplinterBlock.module.css';
 
 const OPTIONS=SPLINTERS.map(x=>({value:x.id,label:x.name.replace('Splinter of ','')}));
@@ -14,11 +14,11 @@ export function SplinterBlock({profile,onUpdate,help}:Props){
   <div className={s.pair}>
    <Field label="Active splinter" group help={help}>
     {w=><Segmented label="Active splinter" value={profile.activeSplinter} options={OPTIONS} describedBy={w.describedBy}
-     onChange={id=>onUpdate(chooseSplinter(profile,id))}/>}
+     onChange={id=>onUpdate({activeSplinter:id})}/>}
    </Field>
-   {active&&<Field label="Splinter rank">
-    {w=><NumberField wire={w} min={0} max={24} placeholder="Not set" value={profile.splinterRank??''}
-     onChange={e=>{const v=parseRank(e.target.value);if(v!==undefined)onUpdate({splinterRank:v})}}/>}
+   {active&&<Field label={`${active.name} rank`}>
+    {w=><NumberField wire={w} min={0} max={24} placeholder="Not set" value={profile.splinterRanks[active.id]??''}
+     onChange={e=>{const v=parseRank(e.target.value);if(v!==undefined)onUpdate({splinterRanks:{...profile.splinterRanks,[active.id]:v}})}}/>}
    </Field>}
   </div>
   {!active&&<p className={s.note}>Pick the splinter you have active to enter its rank.</p>}

@@ -9,13 +9,22 @@ export const RealmSchema = z.enum(REALMS);
 export const DIFFICULTIES = ['Unknown','Normal','Hard','Expert','Penitent','Torment I','Torment II','Torment III','Torment IV','Torment V','Torment VI','Torment VII','Torment VIII','Torment IX','Torment X','Torment XI','Torment XII'] as const;
 export const DifficultySchema = z.enum(DIFFICULTIES);
 export const OriginSchema = z.enum(['manual','imported','observed','unknown']);
-/** Before `activeSplinter` existed, `splinterRank` was Terror's rank, so a legacy profile means Terror. */
+/**
+ * A lone `splinterRank` belongs to the active splinter, or to Terror when none is active.
+ * A profile with no `activeSplinter` key predates splinters, so Terror becomes active.
+ */
 export function migrateSplinterRank(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
   const o = raw as Record<string, unknown>;
-  if (Object.hasOwn(o, 'activeSplinter') || typeof o.splinterRank !== 'number') return raw;
-  return { ...o, activeSplinter: 'terror' };
+  if (typeof o.splinterRank !== 'number' || Object.hasOwn(o, 'splinterRanks')) return raw;
+  const owner = Object.hasOwn(o, 'activeSplinter') && (SPLINTER_IDS as readonly unknown[]).includes(o.activeSplinter) ? o.activeSplinter as string : 'terror';
+  return {
+    ...o,
+    activeSplinter: Object.hasOwn(o, 'activeSplinter') ? o.activeSplinter : 'terror',
+    splinterRanks: { terror: null, destruction: null, hatred: null, [owner]: o.splinterRank }
+  };
 }
+const Rank = z.number().int().min(0).max(SPLINTER_MAX_RANK).nullable().default(null);
 export const CharacterProfileSchema = z.preprocess(migrateSplinterRank, z.object({
   id: z.string().uuid(),
   name: z.string().trim().min(1).max(80),
@@ -28,8 +37,8 @@ export const CharacterProfileSchema = z.preprocess(migrateSplinterRank, z.object
   warPlanNodes: z.array(z.string().max(100)).default([]).transform(normalizeNodes),
   /** The equipped Season 15 splinter. Its War Plan bonuses apply only while it is active. */
   activeSplinter: z.enum(SPLINTER_IDS).nullable().default(null),
-  /** The active splinter's rank (0-24). */
-  splinterRank: z.number().int().min(0).max(SPLINTER_MAX_RANK).nullable().default(null),
+  /** Each splinter's rank (0-24) once set. Only the active splinter's bonuses apply. */
+  splinterRanks: z.object({ terror: Rank, destruction: Rank, hatred: Rank }).default({ terror: null, destruction: null, hatred: null }),
   /** Learned nodes of the Lair Bosses War Plan. */
   lairBossNodes: z.array(z.string().max(100)).default([]),
   specialOfferingAvailable: z.boolean().default(false),
