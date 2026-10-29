@@ -2,7 +2,7 @@ import type {CharacterAnalysis} from '../../analysis/analyze';
 import type {RangeStats} from '../../analysis/reportCard';
 import {SectionHeading} from '../kit';
 import {MissBars} from './charts/MissBars';
-import {RangeStrip} from './charts/RangeStrip';
+import {FanChart} from './charts/FanChart';
 import {headlineParts,leftOutText,missCell,needsText,percent} from './insightsText';
 import s from './ReportCardSection.module.css';
 
@@ -26,7 +26,7 @@ export function ReportCardSection({name,analysis}:{name:string|null;analysis:Cha
       <tr><th scope="row">Average miss</th><td data-label="Your buckets">{missCell(report.buckets.averageMiss)}</td>{report.calibrated&&<td data-label="Calibrated">{missCell(report.calibrated.averageMiss)}</td>}</tr>
      </tbody>
     </table>
-    <RangeStrip runs={analysis.runs}/>
+    <FanChart runs={analysis.runs}/>
     <MissBars families={report.byFamily}/>
    </>}
    {note&&<p className={s.note}>{note}</p>}

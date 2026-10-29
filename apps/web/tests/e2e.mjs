@@ -472,7 +472,9 @@ async function journey(viewport){
   assert.equal(await page.getByText("Saved data on this device couldn't be read").count(),0);
   const strip=page.getByRole('group',{name:/^Wave by wave/});
   await strip.waitFor();
-  assert.ok(await strip.locator('[data-state]').count()>=1,'the strip draws a dot');
+  assert.ok(await strip.locator('[data-reading]').count()>=1,'the fan draws a dot');
+  await strip.getByRole('img').first().focus();
+  await page.getByText(/^You had \d+ Aether$/).waitFor({state:'visible'});
   const runLabel=page.getByText(/^Run of .*, 3 of 3$/);
   await runLabel.waitFor();
   await page.getByRole('button',{name:'Earlier run'}).click();

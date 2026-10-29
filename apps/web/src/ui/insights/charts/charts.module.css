@@ -75,21 +75,22 @@
  display:inline-block;
  flex:none;
 }
-.swatchRange{
- width:10px;
- height:14px;
- border-radius:2px;
- background:var(--hm-gold);
- opacity:.3;
-}
-.dot{
- width:10px;
+.swatchOuter,.swatchInner{
+ width:14px;
  height:10px;
- border-radius:50%;
+ background:var(--hm-gold);
 }
-.inside{background:var(--hm-ink)}
-.below{background:var(--hm-rubric)}
-.above{background:var(--hm-cool)}
+.swatchOuter{opacity:.13}
+.swatchInner{opacity:.2}
+.swatchMean,.swatchYou{
+ width:14px;
+ height:2px;
+}
+.swatchMean{
+ background:var(--hm-gold);
+ opacity:.8;
+}
+.swatchYou{background:var(--hm-ink)}
 
 .stepper{
  display:flex;
@@ -116,23 +117,40 @@
  cursor:default;
 }
 
-.rangeBar{
+.fanOuter{
  fill:var(--hm-gold);
- fill-opacity:.22;
+ fill-opacity:.13;
 }
-.mark:hover .rangeBar,.mark:focus-within .rangeBar{fill-opacity:.34}
-.meanTick{
+.fanInner{
+ fill:var(--hm-gold);
+ fill-opacity:.2;
+}
+.fanMean{
+ fill:none;
  stroke:var(--hm-gold);
  stroke-width:1.5;
- opacity:.7;
+ opacity:.8;
 }
-.dotMark{
+.fanYou{
+ fill:none;
+ stroke:var(--hm-ink);
+ stroke-width:2;
+ stroke-linejoin:round;
+}
+.fanDot{
+ fill:var(--hm-ink);
  stroke:var(--hm-bg);
  stroke-width:2;
 }
-.dotMark[data-state="inside"]{fill:var(--hm-ink)}
-.dotMark[data-state="below"]{fill:var(--hm-rubric)}
-.dotMark[data-state="above"]{fill:var(--hm-cool)}
+.cross{
+ stroke:var(--hm-muted);
+ stroke-dasharray:2 3;
+ pointer-events:none;
+}
+.endLabel{
+ fill:var(--hm-muted);
+ font-size:var(--hm-text-1);
+}
 
 .missRight{fill:var(--hm-rubric)}
 .missLeft{fill:var(--hm-cool)}
