@@ -230,11 +230,7 @@ TypeScript types come from `@types/d3-scale` and `@types/d3-shape`. All sizes we
 
 ## 7. Delivery
 
-Two PRs, never stacked, each previewed locally by the owner before it opens:
-1. **Fan chart.** The analysis data, d3 and `FanChart`. It goes first, because it touches the replay that Phase C (calibration) extends.
-2. **War Plan trees.** The import, the kit node look, icons and credits, the Infernal Hordes game layout and the Lair Bosses tree.
-
-Phase C follows. The owner can reorder.
+One branch, `feat/visual-upgrade`, and one PR. The owner previews the finished work locally once, before the PR opens (owner, 2026-10-28). The fan chart lands first on the branch, because it touches the replay that Phase C (calibration) extends. Phase C follows the merge.
 
 ## Open points for the owner
 
