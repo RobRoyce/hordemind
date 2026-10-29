@@ -137,6 +137,16 @@
  stroke-width:2;
  stroke-linejoin:round;
 }
+.fanHit{
+ fill:transparent;
+ outline:none;
+}
+.focusRing{
+ fill:none;
+ stroke:var(--hm-gold);
+ stroke-width:1.5;
+ pointer-events:none;
+}
 .fanDot{
  fill:var(--hm-ink);
  stroke:var(--hm-bg);

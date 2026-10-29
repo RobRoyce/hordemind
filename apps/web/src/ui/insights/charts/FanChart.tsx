@@ -9,7 +9,7 @@ import {ChartTip,useTip} from './ChartTip';
 import {NARROW_BELOW,useChartWidth} from './useChartWidth';
 import s from './charts.module.css';
 
-const L=44,R=80,T=12,B=28,DOT=4.5,MIN_HIT=24,END_GAP=16;
+const L=44,R=80,T=12,B=28,DOT=4.5,END_GAP=16;
 
 export type Verdict='inside'|'below'|'above';
 export interface FanDot{wave:number;total:number;cx:number;cy:number;verdict:Verdict|null;lines:string[]}
@@ -47,7 +47,17 @@ export function fanLayout(run:RunScores,width:number){
   const mid=(yYou+yModel)/2,up=yYou<yModel;
   yYou=mid+(up?-END_GAP/2:END_GAP/2);yModel=mid+(up?END_GAP/2:-END_GAP/2);
  }
- return {width,height,ticks,waves,x:(w:number)=>x(w),y:(v:number)=>y(v),outer:bandPath('p10','p90'),inner:bandPath('p25','p75'),mean,you,dots,
+ const lo=T+10,hi=height-B-2,youAbove=yYou<=yModel;
+ let upper=Math.min(yYou,yModel),lower=Math.max(yYou,yModel);
+ if(upper<lo){upper=lo;lower=Math.max(lower,lo+END_GAP)}
+ if(lower>hi){lower=hi;upper=Math.min(upper,hi-END_GAP)}
+ [yYou,yModel]=youAbove?[upper,lower]:[lower,upper];
+ const xs=run.readings.map(d=>x(d.wave));
+ const hits=xs.map((cx,k)=>{
+  const a=k>0?(xs[k-1]!+cx)/2:x(0),b=k<xs.length-1?(cx+xs[k+1]!)/2:width-R;
+  return {x:a,width:b-a};
+ });
+ return {width,height,ticks,waves,x:(w:number)=>x(w),y:(v:number)=>y(v),outer:bandPath('p10','p90'),inner:bandPath('p25','p75'),mean,you,dots,hits,
   endX:x(last)+8,endYou:{y:yYou,text:`You ${r(lastTotal)}`},endModel:{y:yModel,text:`Model ${r(lastMean)}`}};
 }
 
@@ -66,7 +76,6 @@ function Fan({runs}:{runs:RunScores[]}){
  const i=Math.min(at,runs.length-1),run=runs[i]!;
  const l=fanLayout(run,width),label=`Run of ${runDate(run.createdAt)}, ${runs.length-i} of ${runs.length}`;
  const go=(to:number)=>{clear();setAt(to)};
- const xs=l.dots.map(d=>d.cx);
  return <div className={s.block}>
   <h3 className={s.title}>Wave by wave</h3>
   <p className={s.note}>The band is what the model expected for your running total, given the offers you took. Dots are your Aether readings. Hover or focus one to compare that reading's gain with the model.</p>
@@ -79,7 +88,7 @@ function Fan({runs}:{runs:RunScores[]}){
    <svg className={s.svg} width={width} height={l.height} viewBox={`0 0 ${width} ${l.height}`} role="group" aria-label={`Wave by wave, ${label}`}>
     {l.ticks.map(v=><g key={v}>
      <line className={s.grid} x1={L} x2={width-R} y1={l.y(v)} y2={l.y(v)}/>
-     <text className={s.axis} x={L-8} y={l.y(v)+4} textAnchor="end">{v}</text>
+     {v!==0&&<text className={s.axis} x={L-8} y={l.y(v)+4} textAnchor="end">{v}</text>}
     </g>)}
     {l.waves.map(w=><text key={w} className={s.axis} x={l.x(w)} y={l.height-8} textAnchor="middle">{w===0?'Start':w}</text>)}
     <path className={s.fanOuter} d={l.outer}/>
@@ -90,10 +99,10 @@ function Fan({runs}:{runs:RunScores[]}){
     {l.dots.map(d=><circle key={d.wave} className={s.fanDot} data-reading={d.wave} cx={d.cx} cy={d.cy} r={DOT}/>)}
     <text className={s.endLabel} x={l.endX} y={l.endYou.y}>{l.endYou.text}</text>
     <text className={s.endLabel} x={l.endX} y={l.endModel.y}>{l.endModel.text}</text>
+    {tip&&<circle className={s.focusRing} cx={tip.x} cy={tip.y} r={8}/>}
     {l.dots.map((d,k)=>{
-     const lo=k>0?(xs[k-1]!+d.cx)/2:L,hi=k<xs.length-1?(d.cx+xs[k+1]!)/2:width-R;
-     const wide=hi-lo>=MIN_HIT;
-     return <rect key={d.wave} {...hit(d.lines,d.cx,d.cy)} x={wide?lo:d.cx-MIN_HIT/2} y={T} width={wide?hi-lo:MIN_HIT} height={l.height-B-T}/>;
+     const h=l.hits[k]!;
+     return <rect key={d.wave} {...hit(d.lines,d.cx,d.cy)} className={s.fanHit} x={h.x} y={T} width={h.width} height={l.height-B-T}/>;
     })}
    </svg>
    <ChartTip tip={tip} width={width}/>

@@ -38,6 +38,28 @@ describe('fanLayout',()=>{
  });
 });
 
+describe('fanLayout fixes',()=>{
+ const dense=base({totalWaves:20,fan:Array.from({length:21},(_,w)=>fp(w,w*20)),
+  scored:[],readings:Array.from({length:20},(_,i)=>({wave:i+1,total:(i+1)*20}))});
+ it('tiles the plot with hit areas',()=>{
+  const l=fanLayout(dense,358),h=l.hits;
+  expect(h).toHaveLength(20);
+  expect(h[0]!.x).toBeCloseTo(l.x(0));
+  for(let i=1;i<h.length;i++)expect(h[i]!.x).toBeCloseTo(h[i-1]!.x+h[i-1]!.width);
+  const end=h.at(-1)!;
+  expect(end.x+end.width).toBeCloseTo(358-80);
+ });
+ it('keeps both end labels inside the plot and 16 px apart',()=>{
+  const top=base({fan:[fp(0,0),{wave:5,mean:600,p10:500,p25:550,p75:590,p90:600}],readings:[{wave:1,total:100},{wave:5,total:600}]});
+  const l=fanLayout(top,640);
+  for(const e of [l.endYou,l.endModel]){expect(e.y).toBeGreaterThanOrEqual(12+10);expect(e.y).toBeLessThanOrEqual(l.height-28-2)}
+  expect(Math.abs(l.endYou.y-l.endModel.y)).toBeGreaterThanOrEqual(16);
+ });
+ it('leaves the zero tick without a y-axis label',()=>{
+  expect(html(<FanChart runs={[run]}/>)).not.toMatch(/text-anchor="end"[^>]*>0</);
+ });
+});
+
 describe('FanChart',()=>{
  it('draws a one-reading run without NaN',()=>{
   expect(html(<FanChart runs={[oneReading]}/>)).not.toContain('NaN');
