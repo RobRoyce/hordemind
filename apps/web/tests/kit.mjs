@@ -54,16 +54,27 @@ async function check(viewport){
   await page.getByText('Keep separate profiles for different builds.').waitFor({state:'visible'});
 
   step('arrow keys move between War Plan nodes');
+  // Impending Doom sits directly below Method and Madness in the game layout.
   await page.getByRole('button',{name:'Method and Madness',exact:true}).focus();
   await page.keyboard.press('ArrowDown');
   assert.equal(await page.evaluate(()=>document.activeElement?.textContent),'Impending Doom');
 
+  step('a newly lit connector draws itself, except under reduced motion');
+  const scale=page.getByRole('button',{name:'Scale of Tathamet',exact:true});
+  const lineAnimation=()=>page.locator('path[data-graph-lit][data-from="Cult of Annihilation"][data-to="Scale of Tathamet"]').evaluate(el=>getComputedStyle(el).animationName);
+  await scale.click();
+  assert.notEqual(await lineAnimation(),'none','the new line animates');
+  await scale.click();
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await scale.click();
+  assert.equal(await lineAnimation(),'none','reduced motion keeps the new line still');
+  await scale.click();
+  await page.emulateMedia({reducedMotion:null});
+
   step('War Plan connectors cross no label or node, and nothing overlaps');
-  for(const name of ['Offers and Chaos','Aether events']){
-   const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name,exact:true}));
-   assert.deepEqual(crossings,[],`${name} crossings`);
-   assert.deepEqual(overlaps,[],`${name} overlaps`);
-  }
+  const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'Infernal Hordes War Plan',exact:true}));
+  assert.deepEqual(crossings,[],'War Plan crossings');
+  assert.deepEqual(overlaps,[],'War Plan overlaps');
 
   step('toasts keep to the corner on wide screens, and only their action catches clicks');
   // The gallery's toast stays until Undo, so nothing here races a timer.

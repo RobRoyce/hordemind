@@ -106,7 +106,8 @@ async function journey(viewport){
   assert.equal(await page.getByRole('region',{name:'Upgrade details'}).getAttribute('aria-live'),null,'the details panel is not a live region');
   const description=await warPlan('The Black Pact').evaluate(el=>(el.getAttribute('aria-describedby')??'').split(' ').map(id=>document.getElementById(id)?.textContent??'').join(' '));
   assert(description.includes('An ominous altar appears between waves'),'a focused upgrade is described by its tooltip');
-  const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'War Plan',exact:true}));
+  assert.equal(await page.locator('path[data-graph-lit][data-from="Impending Doom"][data-to="The Black Pact"]').count(),1,'learning both ends lights their connection');
+  const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'Infernal Hordes War Plan',exact:true}));
   assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
   assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
   await noSeriousViolations(page,'Character');

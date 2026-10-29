@@ -16,6 +16,10 @@
  --hm-gold:#e7c47c;
  --hm-amber:#d9a35c;
  --hm-ember:#f0a24a;
+ /* A learned War Plan node's core fades from ember through deep to dark, under a warm white icon. */
+ --hm-ember-deep:#8c3a1c;
+ --hm-ember-dark:#2a120c;
+ --hm-warm-white:#fff1d6;
  /* Rubric and cool are the two poles of the forecast-miss scale. Rubric means the forecast was too high, and cool means it was too low. */
  --hm-rubric:#c4473a;
  --hm-cool:#6a86cf;

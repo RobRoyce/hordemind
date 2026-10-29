@@ -18,6 +18,7 @@ export {WaveTrack} from './WaveTrack';
 export {Sheet} from './Sheet';
 export {AppNav} from './AppNav';
 export {useNarrow} from './useNarrow';
+export {useElementWidth} from './useElementWidth';
 export {DiamondGraph,type GraphNode,type NodeState} from './DiamondGraph';
-export {layoutGraph,DEFAULT_LAYOUT,COMPACT_LAYOUT,type GraphLayout,type GraphNodeInput,type LayoutOptions} from './graphLayout';
+export {layoutGraph,fitLayout,DEFAULT_LAYOUT,type Box,type Connector,type GraphLayout,type GraphNodeInput,type LayoutOptions,type PlacedNode} from './graphLayout';
 export {cx} from './cx';
