@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {IH_GRAPH,LB_GRAPH,ROOT,colSpan,neighbors,type PlanGraph} from './warPlans';
+import {IH_GRAPH,LB_GRAPH,ROOT,neighbors,type PlanGraph} from './warPlans';
 import {WAR_PLAN,nodeById} from './warplan';
 import {LAIR_BOSS_NODES} from './splinters';
 
@@ -31,7 +31,8 @@ describe('War Plan layouts from the game files',()=>{
  it('puts the root at row 0, column 0, and both trees in seven columns and seven rows',()=>{
   for(const g of [IH_GRAPH,LB_GRAPH]){
    expect(g.nodes.find(n=>n.root)).toMatchObject({row:0,col:0,name:ROOT});
-   expect(colSpan(g)).toBe(6);
+   const cols=g.nodes.map(n=>n.col);
+   expect(Math.max(...cols)-Math.min(...cols)).toBe(6);
    expect(Math.max(...g.nodes.map(n=>n.row))).toBe(6);
   }
  });

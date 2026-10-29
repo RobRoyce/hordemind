@@ -15,7 +15,9 @@ describe('SplinterBlock',()=>{
  });
  it('Terror active shows only Terror bonuses',()=>{
   const html=render({activeSplinter:'terror',splinterRanks:ranks(5)});
-  expect(html).toContain('Cult of Annihilation</b>, first node of the events branch');
+  expect(html).toContain('Cult of Annihilation</b>, to the right of the top node in the Infernal Hordes War Plan.');
+  expect(html).toContain('Impending Doom</b>, below Method and Madness, in the middle of the Infernal Hordes War Plan.');
+  expect(html).toContain('Council Coffers</b>, below Exalted Council, on the left of the Infernal Hordes War Plan.');
   expect(html).not.toContain('Lair of Runes');
   expect(html).toContain('Splinter of Terror rank');
  });

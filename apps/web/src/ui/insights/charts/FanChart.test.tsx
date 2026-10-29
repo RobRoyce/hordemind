@@ -55,6 +55,12 @@ describe('fanLayout fixes',()=>{
   for(const e of [l.endYou,l.endModel]){expect(e.y).toBeGreaterThanOrEqual(12+10);expect(e.y).toBeLessThanOrEqual(l.height-28-2)}
   expect(Math.abs(l.endYou.y-l.endModel.y)).toBeGreaterThanOrEqual(16);
  });
+ it('labels Start, then multiples of the step, when waves are too close to label each',()=>{
+  const run10=base({totalWaves:10,fan:Array.from({length:11},(_,w)=>fp(w,w*50)),readings:[{wave:10,total:500}]});
+  const {waves}=fanLayout(run10,288);
+  expect(waves).not.toContain(1);
+  expect(waves).toEqual([0,2,4,6,8,10]);
+ });
  it('leaves the zero tick without a y-axis label',()=>{
   expect(html(<FanChart runs={[run]}/>)).not.toMatch(/text-anchor="end"[^>]*>0</);
  });
@@ -67,6 +73,7 @@ describe('FanChart',()=>{
  it('renders the axis, the legend and one table row per reading',()=>{
   const out=html(<FanChart runs={[run]}/>);
   expect(out).toContain('>Start<');
+  expect(out).toContain('Hover, tap or focus a reading to compare its gain with the model.');
   for(const t of ["Model's 80% range",'50% range',"Model's expected total",'Your total'])expect(out).toContain(t);
   expect(out.match(/<tr/g)).toHaveLength(run.readings.length+1);
  });

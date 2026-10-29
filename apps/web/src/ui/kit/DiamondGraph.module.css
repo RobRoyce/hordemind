@@ -84,6 +84,7 @@
  font-style:italic;
 }
 .mark{fill:var(--hm-ember)}
+.badge{fill:var(--hm-gold)}
 
 .hit{
  position:absolute;
@@ -93,6 +94,8 @@
  cursor:pointer;
 }
 .hit[aria-disabled="true"]{cursor:not-allowed}
+/* The gold ring marks the focused node. */
+.hit:focus-visible{outline:none}
 
 @media (prefers-reduced-motion:reduce){
  .draw,.fresh .core,.fresh .halo{animation:none}

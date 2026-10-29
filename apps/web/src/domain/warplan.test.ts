@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {WAR_PLAN,WAR_PLAN_POINTS,available,toggleNode,unsupported,normalizeNodes,nodeById} from './warplan';
+import {WAR_PLAN,WAR_PLAN_POINTS,available,toggleNode,unsupported,normalizeNodes,nodeById,pointsUsed} from './warplan';
 
 const pick=(...names:string[])=>names.reduce((sel:string[],n)=>toggleNode(sel,n),[]);
 
@@ -32,6 +32,7 @@ describe('Infernal Hordes War Plan tree (owner screenshots, S15)',()=>{
  it('counts learned upgrades against the tree’s points',()=>{
   expect(WAR_PLAN_POINTS).toBe(7);
   expect(pick('Cult of Annihilation','Scale of Tathamet','Devil\'s Deal')).toHaveLength(3);
+  expect(pointsUsed(['Exalted Council','Method and Madness','Bogus'])).toBe(2);
  });
  it('reports nodes saved before prerequisites existed instead of dropping them',()=>{
   expect(unsupported(['The Black Pact','Method and Madness'])).toEqual(['The Black Pact']);

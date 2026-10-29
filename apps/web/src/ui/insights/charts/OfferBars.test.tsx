@@ -21,7 +21,7 @@ describe('OfferBars',()=>{
   expect(out).toContain('role="radiogroup"');
   expect(out).toMatch(/aria-checked="true"[^>]*>Total Chaos/);
   expect(out).toContain('40 offer sets');
-  expect(out).toContain('Reign in Hell and Total Chaos sit in the second row of the offers branch in the Infernal Hordes War Plan.');
+  expect(out).toContain('Reign in Hell and Total Chaos sit either side of the row below Method and Madness in the Infernal Hordes War Plan.');
  });
  it("shows each row's percent and says it without hovering",()=>{
   const out=html(<OfferBars offers={{neither:some(40),chaos:none,reign:none}}/>);

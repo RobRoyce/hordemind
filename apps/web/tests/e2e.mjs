@@ -101,12 +101,16 @@ async function journey(viewport){
   /** Phones select a node on tap and learn it from the details panel; wider screens learn on click. */
   async function learn(name){
    await warPlan(name).click();
-   if(phone)await page.getByRole('button',{name:`Learn ${name}`,exact:true}).click();
+   if(!phone)return;
+   await page.getByRole('button',{name:`Learn ${name}`,exact:true}).click();
+   await page.getByRole('button',{name:`Unlearn ${name}`,exact:true}).waitFor();
   }
+  const hint=`${phone?'Tap':'Hover or focus'} an upgrade to read its in-game tooltip and how HordeMind uses it.`;
+  await planDetails().getByText(hint,{exact:true}).waitFor();
   // Locked upgrades are aria-disabled; force the click to prove it is ignored.
   await warPlan('The Black Pact').click({force:true});
   if(phone){
-   await planDetails().getByRole('heading',{name:'The Black Pact'}).waitFor();
+   await planDetails().getByRole('heading',{level:3,name:'The Black Pact'}).waitFor();
    assert.equal(await page.getByRole('button',{name:'Learn The Black Pact'}).count(),0,'a locked upgrade offers no Learn button');
   }
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'false','locked upgrades cannot be learned');
@@ -126,6 +130,7 @@ async function journey(viewport){
   if(phone)assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'the Character screen never scrolls sideways');
   await page.getByText('Icon credits',{exact:true}).click();
   await page.getByText("Varshan's Vengeance, Lair Bosses War Plan: Fanged skull by Lorc",{exact:true}).waitFor();
+  await page.getByText('Top node, Infernal Hordes War Plan: Tower flag by Delapouite',{exact:true}).waitFor();
   assert.equal(await page.getByRole('link',{name:'game-icons.net',exact:true}).getAttribute('href'),'https://game-icons.net/');
   await noSeriousViolations(page,'Character');
   await noZoomingFields(page,'Character');
@@ -139,6 +144,16 @@ async function journey(viewport){
   await learn('Nemesis Tides');
   await learn('Infernal Deception');
   assert((await page.getByRole('region',{name:'Lair Bosses War Plan details'}).innerText()).includes('Belial can ambush you after the run. No effect on Aether.'));
+  if(phone){
+   // With Exotic Armory just above the bottom nav, its details panel starts below the fold until the tap scrolls to it.
+   const armory=warPlan('Exotic Armory');
+   await armory.evaluate(el=>scrollBy(0,el.getBoundingClientRect().bottom-(innerHeight-80)));
+   const node=await armory.boundingBox();
+   await page.mouse.click(node.x+node.width/2,node.y+node.height/2);
+   const button=await page.getByRole('button',{name:'Learn Exotic Armory',exact:true}).boundingBox();
+   const nav=await page.getByRole('navigation',{name:'Main navigation'}).boundingBox();
+   assert(button.y>=0&&button.y+button.height<=nav.y,`the Learn button sits in view, above the bottom nav (button ${button.y}–${button.y+button.height}, nav from ${nav.y})`);
+  }
   await page.reload();
   await warPlan('Infernal Deception').waitFor();
   const {activeSplinter,splinterRanks,lairBossNodes}=(await stored()).profiles[0];

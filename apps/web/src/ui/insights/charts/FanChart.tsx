@@ -26,7 +26,7 @@ export function fanLayout(run:RunScores,width:number){
  const y=scaleLinear().domain([0,top||1]).range([height-B,T]).nice();
  const ticks=y.ticks(4);
  const band=(width-L-R)/last,every=band>=22?1:band>=11?2:5;
- const waves=[0,...Array.from({length:last},(_,i)=>i+1).filter(w=>w%every===0||w===1)];
+ const waves=[0,...Array.from({length:last},(_,i)=>i+1).filter(w=>w%every===0)];
  const fx=(d:{wave:number})=>x(d.wave);
  const bandPath=(lo:'p10'|'p25',hi:'p90'|'p75')=>area<typeof run.fan[number]>().x(fx).y0(d=>y(d[lo])).y1(d=>y(d[hi])).curve(curveMonotoneX)(run.fan)??'';
  const mean=line<typeof run.fan[number]>().x(fx).y(d=>y(d.mean)).curve(curveMonotoneX)(run.fan)??'';
@@ -78,7 +78,7 @@ function Fan({runs}:{runs:RunScores[]}){
  const go=(to:number)=>{clear();setAt(to)};
  return <div className={s.block}>
   <h3 className={s.title}>Wave by wave</h3>
-  <p className={s.note}>The band is what the model expected for your running total, given the offers you took. Dots are your Aether readings. Hover or focus one to compare that reading's gain with the model.</p>
+  <p className={s.note}>The band is what the model expected for your running total, given the offers you took. Dots are your Aether readings. Hover, tap or focus a reading to compare its gain with the model.</p>
   <div className={s.stepper}>
    <button type="button" className={s.step} aria-label="Earlier run" disabled={i>=runs.length-1} onClick={()=>go(i+1)}>‹</button>
    <span aria-live="polite">{label}</span>

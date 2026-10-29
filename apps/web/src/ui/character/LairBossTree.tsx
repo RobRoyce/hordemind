@@ -29,7 +29,7 @@ export function LairBossTree({profile,onUpdate}:Props){
  const learned=profile.lairBossNodes;
  return <>
   <SectionHeading>Lair Bosses War Plan</SectionHeading>
-  <p className={c.lead}>{LAIR_BOSS_HOME}. Learn the same upgrades you have in game. Upgrades marked ◆&nbsp;Hordes change an Infernal Hordes run.</p>
+  <p className={c.lead}>{LAIR_BOSS_HOME}. Learn the same upgrades you have in game. Upgrades marked ◆ change an Infernal Hordes run.</p>
   <PlanTree label="Lair Bosses War Plan" nodes={NODES} edges={LB_GRAPH.edges} state={id=>lairBossState(learned,id)}
    onToggle={id=>onUpdate(toggleLairBossNode(profile,id))} detail={id=><Detail id={id} learned={learned}/>} stranded={strandedLairBoss(learned)}/>
  </>;

@@ -30,6 +30,3 @@ export function nodeState(learned:readonly string[],id:string):NodeState{
  const partner=nodeById(id)?.exclusive;
  return partner&&learned.includes(partner)?'excluded':'open';
 }
-
-/** Learned upgrades across every branch. */
-export const countedUpgrades=(learned:readonly string[])=>learned.filter(id=>nodeById(id)!==null).length;

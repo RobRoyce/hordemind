@@ -1,7 +1,7 @@
 import {describe,expect,it} from 'vitest';
 import {ROOT} from '../../domain/warPlans';
 import {DEFAULT_LAYOUT,layoutGraph,type Box} from '../kit';
-import {WAR_PLAN_EDGES,countedUpgrades,nodeState,warPlanGraphNodes} from './warPlanView';
+import {WAR_PLAN_EDGES,nodeState,warPlanGraphNodes} from './warPlanView';
 
 const intersects=(p:Box,q:Box)=>p.x<q.x+q.width&&q.x<p.x+p.width&&p.y<q.y+q.height&&q.y<p.y+p.height;
 
@@ -37,8 +37,5 @@ describe('War Plan view',()=>{
    expect(intersects(a.label,diamond(b)),`${a.id} label covers ${b.id}`).toBe(false);
    if(b.label)expect(intersects(a.label,b.label),`${a.id} label overlaps ${b.id}`).toBe(false);
   }
- });
- it('counts every learned upgrade, Rewards included',()=>{
-  expect(countedUpgrades(['Exalted Council','Method and Madness'])).toBe(2);
  });
 });

@@ -22,7 +22,7 @@ interface Props{
  /** Connections between node ids. They have no direction. */
  edges:readonly (readonly [string,string])[];
  state:(id:string)=>NodeState;
- /** The node showing its details, drawn with a gold ring. */
+ /** The node showing its details, drawn with a gold ring. It is the graph's Tab stop. */
  focused:string|null;
  onActivate:(id:string)=>void;
  onFocusNode:(id:string)=>void;
@@ -50,6 +50,10 @@ function neighbor(nodes:readonly PlacedNode[],from:PlacedNode,[sx,sy]:readonly [
 const diamond=(x:number,y:number,r:number)=>`M${x} ${y-r} L${x+r} ${y} L${x} ${y+r} L${x-r} ${y} Z`;
 const line=([[x1,y1],[x2,y2]]:Connector['points'])=>`M${x1} ${y1} L${x2} ${y2}`;
 const MIN_HIT=44;
+/** How far the focus ring sits outside the rim. */
+const RING=6;
+/** Half the width of the badge that stands in for a mark when labels are hidden. It hangs just below the ring. */
+const BADGE=3;
 /** Room around the graph for a blur to spread into. */
 const FILTER_MARGIN=40;
 const stop=(offset:number,color:string)=><stop offset={offset} style={{stopColor:color}}/>;
@@ -87,6 +91,8 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
  const {learned,fresh}=useFreshlyLearned(nodes.filter(n=>stateOf(n.id)==='learned').map(n=>n.id));
  const lit=L.connectors.filter(c=>learned.has(c.from)&&learned.has(c.to));
  const targets=L.nodes.filter(n=>!n.root);
+ // One Tab stop per graph; arrow keys move between nodes.
+ const tabStop=(targets.find(n=>n.id===focused)??targets.find(n=>learned.has(n.id))??targets[0])?.id;
  const baseline=(n:PlacedNode,row:number)=>n.label!.y+(row+1)*options.lineHeight-4;
 
  function onKeyDown(e:KeyboardEvent,from:PlacedNode){
@@ -146,10 +152,11 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
       return <g key={n.id} className={cx(s[st],n.root&&s.root,fresh.has(n.id)&&s.fresh)}>
        {st==='learned'&&<path className={s.halo} d={diamond(n.x,n.y,n.r+4)} filter={url('halo')}/>}
        <path className={s.backing} d={diamond(n.x,n.y,n.r+3)}/>
-       {focused===n.id&&<path className={s.ring} d={diamond(n.x,n.y,n.r+6)}/>}
+       {focused===n.id&&<path className={s.ring} d={diamond(n.x,n.y,n.r+RING)}/>}
        <path className={s.rim} d={diamond(n.x,n.y,n.r)} stroke={url(dim?'rim-dim':'rim')}/>
        <path data-graph-core={n.id} className={s.core} d={diamond(n.x,n.y,n.r-4)} fill={url(`core-${dim?'locked':st}`)}/>
        {Icon&&<g className={s.icon} transform={`translate(${n.x-icon/2} ${n.y-icon/2})`}><Icon size={icon} className={s.glyph}/></g>}
+       {!options.labels&&node.mark&&<path data-graph-badge={n.id} className={s.badge} d={diamond(n.x,n.y+n.r+RING+BADGE,BADGE)}/>}
        {n.label&&<>
         <rect className={s.plate} x={n.label.x} y={n.label.y} width={n.label.width} height={n.label.height} rx={3}/>
         <text data-graph-label={n.id} className={s.label} x={n.x} textAnchor="middle">
@@ -174,7 +181,7 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
      // Safari doesn't focus a tapped button, so a click shows the node too.
      return <Fragment key={n.id}>
       <button type="button" data-graph-node={n.id} ref={el=>{if(el)buttons.current.set(n.id,el);else buttons.current.delete(n.id)}}
-       className={s.hit} style={{left:n.x-half,top,width:2*half,height:Math.max(bottom,top+tall)-top}}
+       className={s.hit} style={{left:n.x-half,top,width:2*half,height:Math.max(bottom,top+tall)-top}} tabIndex={n.id===tabStop?0:-1}
        aria-pressed={st==='learned'} aria-disabled={st==='locked'||undefined}
        aria-describedby={[descriptionId,describedBy].filter(Boolean).join(' ')||undefined}
        onClick={()=>{onFocusNode(n.id);if(st!=='locked')onActivate(n.id)}} onFocus={()=>onFocusNode(n.id)} onMouseEnter={()=>onFocusNode(n.id)}

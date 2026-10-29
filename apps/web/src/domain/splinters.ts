@@ -9,9 +9,9 @@ export interface Splinter{id:SplinterId;name:string;bonuses:readonly SplinterBon
 
 export const SPLINTERS:readonly Splinter[]=[
  {id:'terror',name:'Splinter of Terror',bonuses:[
-  {rank:5,node:'Cult of Annihilation',where:'First node of the events branch in the Infernal Hordes War Plan',effect:'A Doomsayer appears at the start of each wave.',note:'Not modeled: Doomsayer Aether is unpublished.',learnedIn:'warPlanNodes'},
-  {rank:14,node:'Impending Doom',where:'Second row of the offers branch in the Infernal Hordes War Plan',effect:'Impending Doom also triggers with 30 seconds left.',note:'Included in estimates.',learnedIn:'warPlanNodes'},
-  {rank:20,node:'Council Coffers',where:'Second node of the rewards branch in the Infernal Hordes War Plan',effect:'The Chest of Talismans costs 1 Aether.',note:"Rewards only; it doesn't change estimates.",learnedIn:null}
+  {rank:5,node:'Cult of Annihilation',where:'To the right of the top node in the Infernal Hordes War Plan',effect:'A Doomsayer appears at the start of each wave.',note:'Not modeled: Doomsayer Aether is unpublished.',learnedIn:'warPlanNodes'},
+  {rank:14,node:'Impending Doom',where:'Below Method and Madness, in the middle of the Infernal Hordes War Plan',effect:'Impending Doom also triggers with 30 seconds left.',note:'Included in estimates.',learnedIn:'warPlanNodes'},
+  {rank:20,node:'Council Coffers',where:'Below Exalted Council, on the left of the Infernal Hordes War Plan',effect:'The Chest of Talismans costs 1 Aether.',note:"Rewards only; it doesn't change estimates.",learnedIn:null}
  ]},
  {id:'destruction',name:'Splinter of Destruction',bonuses:[
   {rank:14,node:'Lair of Runes',where:'Next to the root of the Lair Bosses War Plan',effect:'Lair Bosses drop additional Runes.',note:"Reaches a Hordes run only through Belial's ambush (Infernal Deception).",learnedIn:'lairBossNodes'},

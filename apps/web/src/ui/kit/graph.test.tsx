@@ -1,6 +1,10 @@
-import {describe,expect,it} from 'vitest';
+import {describe,expect,it,vi} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {DiamondGraph,type GraphNode,type NodeState} from './DiamondGraph';
+
+// Server rendering never matches the phone query, so a test switches the phone layout on here.
+const media=vi.hoisted(()=>({narrow:false}));
+vi.mock('./useNarrow',()=>({useNarrow:()=>media.narrow}));
 
 const Icon=({size,className}:{size?:number|string;className?:string})=><svg data-icon="" width={size} height={size} className={className}/>;
 const NODES:GraphNode[]=[
@@ -11,7 +15,7 @@ const NODES:GraphNode[]=[
 ];
 const EDGES=[['r','a'],['r','b'],['a','c'],['b','c']] as const;
 const state=(id:string):NodeState=>id==='a'?'learned':id==='c'?'open':'locked';
-const graph=(label='Test tree')=><DiamondGraph label={label} nodes={NODES} edges={EDGES} state={state} focused={null} onActivate={()=>{}} onFocusNode={()=>{}}/>;
+const graph=(label='Test tree',focused:string|null=null)=><DiamondGraph label={label} nodes={NODES} edges={EDGES} state={state} focused={focused} onActivate={()=>{}} onFocusNode={()=>{}}/>;
 const html=renderToStaticMarkup(graph());
 const count=(re:RegExp)=>html.match(re)?.length??0;
 
@@ -46,6 +50,27 @@ describe('DiamondGraph',()=>{
   for(const id of ids)expect(id).toMatch(/^[A-Za-z0-9_-]+$/);
   const texts=ids.map(id=>new RegExp(`id="${id}"[^>]*>([^<]*)<`).exec(out)?.[1]);
   expect(texts).toContain('◆ Hordes');
+ });
+ it('gives each graph one Tab stop: the focused node, else the first learned upgrade, else the first node',()=>{
+  const stop=(out:string)=>[...out.matchAll(/<button[^>]*>/g)].map(m=>m[0]).filter(b=>b.includes('tabindex="0"')).map(b=>/data-graph-node="([^"]+)"/.exec(b)![1]);
+  expect(stop(html)).toEqual(['a']);
+  expect(count(/tabindex="-1"/g)).toBe(2);
+  expect(stop(renderToStaticMarkup(graph('Test tree','c')))).toEqual(['c']);
+  const only=(st:(id:string)=>NodeState)=>renderToStaticMarkup(<DiamondGraph label="Other" nodes={NODES} edges={EDGES} state={st} focused={null} onActivate={()=>{}} onFocusNode={()=>{}}/>);
+  expect(stop(only(id=>id==='b'?'learned':'open'))).toEqual(['b']);
+  expect(stop(only(()=>'open'))).toEqual(['a']);
+  expect(stop(renderToStaticMarkup(<>{graph('One')}{graph('Two','b')}</>))).toEqual(['a','b']);
+ });
+ it('badges each marked node on phones, where labels are hidden',()=>{
+  const badges=(out:string)=>out.match(/data-graph-badge=/g)?.length??0;
+  expect(badges(html)).toBe(0);
+  media.narrow=true;
+  try{
+   const out=renderToStaticMarkup(graph());
+   expect(out).not.toContain('data-graph-label=');
+   expect(badges(out)).toBe(NODES.filter(n=>n.mark).length);
+   expect(out).toMatch(/data-graph-badge="b"/);
+  }finally{media.narrow=false}
  });
  it('keeps gradient and filter ids apart for two graphs on one page',()=>{
   const both=renderToStaticMarkup(<>{graph('One')}{graph('Two')}</>);

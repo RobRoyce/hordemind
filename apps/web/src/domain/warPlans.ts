@@ -18,6 +18,3 @@ export const LB_GRAPH:PlanGraph=graph(plans.plans.lairBosses);
 
 /** Names joined to `id` by one edge. */
 export const neighbors=(g:PlanGraph,id:string):string[]=>g.edges.flatMap(([a,b])=>a===id?[b]:b===id?[a]:[]);
-
-/** Columns between the leftmost and rightmost node. */
-export const colSpan=(g:PlanGraph):number=>Math.max(...g.nodes.map(n=>n.col))-Math.min(...g.nodes.map(n=>n.col));

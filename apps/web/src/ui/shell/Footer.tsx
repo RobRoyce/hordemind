@@ -5,9 +5,9 @@ import s from './Footer.module.css';
 
 const AUTHORS=`${ICON_AUTHORS.slice(0,-1).join(', ')} and ${ICON_AUTHORS.at(-1)}`;
 const IN_HORDES=new Set(IH_GRAPH.nodes.map(n=>n.name));
-/** One line per icon, each tree's root first, then its upgrades branch by branch. */
+/** One line per icon, each tree's top node first, then its upgrades. */
 const CREDITS=([['Infernal Hordes',IH_ROOT_ICON,true],['Lair Bosses',LB_ROOT_ICON,false]] as const).flatMap(([plan,root,hordes])=>
- [['Root',root] as const,...Object.entries(PLAN_ICONS).filter(([name])=>IN_HORDES.has(name)===hordes)]
+ [['Top node',root] as const,...Object.entries(PLAN_ICONS).filter(([name])=>IN_HORDES.has(name)===hordes)]
   .map(([node,i])=>`${node}, ${plan} War Plan: ${i.name} by ${i.author}`));
 
 export function Footer({reportUrl,sourceUrl}:{reportUrl:string;sourceUrl:string}){

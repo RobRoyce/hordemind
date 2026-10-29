@@ -11,11 +11,19 @@ const intersects=(p:Box,q:Box)=>p.x<q.x+q.width&&q.x<p.x+p.width&&p.y<q.y+q.heig
 describe('LairBossTree',()=>{
  const html=renderToStaticMarkup(<LairBossTree profile={newProfile('A','Paladin')} onUpdate={()=>null}/>);
  it('draws every Lair Bosses upgrade as a button',()=>expect(html.match(/data-graph-node=/g)).toHaveLength(17));
- // The lead and each node's hidden description repeat the mark, so count the label lines.
+ // Each node's hidden description repeats the mark, so count the label lines.
  it('marks the six upgrades that change a Hordes run',()=>expect(html.match(/◆ Hordes<\/tspan>/g)).toHaveLength(6));
  it('warns about saved upgrades with no path',()=>{
-  const p={...newProfile('A','Paladin'),lairBossNodes:['Infernal Deception']};
-  expect(renderToStaticMarkup(<LairBossTree profile={p} onUpdate={()=>null}/>)).toContain('Saved before HordeMind followed the tree: Infernal Deception');
+  const p={...newProfile('A','Paladin'),lairBossNodes:['Infernal Deception','Exotic Armory']};
+  expect(renderToStaticMarkup(<LairBossTree profile={p} onUpdate={()=>null}/>)).toContain(
+   'Saved before HordeMind followed the tree: Infernal Deception, Exotic Armory. Learn an upgrade that connects them to the top node, or unlearn them.');
+ });
+ it('points to the marks in its lead',()=>expect(html).toContain('Learn the same upgrades you have in game. Upgrades marked ◆ change an Infernal Hordes run.'));
+ it('asks desktop users to hover or focus an upgrade',()=>
+  expect(html).toContain('Hover or focus an upgrade to read its in-game tooltip and how HordeMind uses it.'));
+ it('names only locked upgrades in its legend, having no choose-one pairs',()=>{
+  expect(html).toContain('>Locked</li>');
+  expect(html).not.toContain('Locked or excluded');
  });
  it('names its details region after the tree',()=>expect(html).toContain('aria-label="Lair Bosses War Plan details"'));
 });
