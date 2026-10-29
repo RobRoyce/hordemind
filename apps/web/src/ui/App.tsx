@@ -147,7 +147,7 @@ export function App(){
   <main className={cx(s.main,s[view])}>
    {view==='character'&&<Character profiles={data.profiles} selectedProfile={selectedProfile} onUpdate={updateProfile} onCreate={createProfile} onSelect={selectProfile} onStart={start}/>}
    {view==='run'&&<LiveRun run={activeRun} profile={selectedProfile} recentOffers={recent} saveRun={saveRun} onStart={start} onGoCharacter={()=>navigate('character')}/>}
-   {view==='insights'&&<Insights runs={data.runs} selectRun={id=>{setData(old=>({...old,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
+   {view==='insights'&&<Insights runs={data.runs} profile={selectedProfile} selectRun={id=>{setData(old=>({...old,activeRunId:id}));navigate('run')}} onExport={()=>repository.export(data)} sync={sync} syncControls={syncControls}/>}
   </main>
   <Footer reportUrl={newIssueUrl} sourceUrl={REPO_URL}/>
   <Toast message={toast?.message??null} {...(toast?.action?{action:toast.action}:{})}/>

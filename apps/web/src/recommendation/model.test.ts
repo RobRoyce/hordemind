@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {newProfile,newRun,recordDecision} from '../domain/run';
-import {compareScenario,hasMechanics} from './model';
+import {compareScenario,hasMechanics,offerGap} from './model';
 import {compareRun,scenarioFromRun} from './scenario';
 
 const paladin=()=>{
@@ -270,5 +270,20 @@ describe('explanations do not report simulation noise as effects',()=>{
    const a=compareScenario({history:hist,totalWaves:10,decisionWave:wave,profile:{killSpeed,mobility,warPlanNodes:[]}},['The Exalted Hordes'],150,{sensitivity:false,synergy:false}).assessments[0];
    expect(a?.modeled&&a.reasons.join(' '),`${hist} ${killSpeed} wave ${wave}`).not.toMatch(/lowers Aether/);
   }
+ });
+});
+
+describe('offerGap',()=>{
+ const doom=()=>({...state(['The Puffing Masses'],3),profile:{...paladin(),warPlanNodes:['Impending Doom']}});
+ const mean=(c:ReturnType<typeof compareScenario>,o:string)=>{const a=c.assessments.find(x=>x.offer===o);return a?.modeled?a.mean:NaN};
+ it('equals the compareScenario difference',()=>{
+  const [a,b]=['The Bursting Masses','The Rising Spires'];
+  const c=compareScenario(doom(),[a!,b!],60,{sensitivity:false,synergy:false});
+  expect(Math.abs(mean(c,a!)-mean(c,b!))).toBeGreaterThan(0);
+  expect(offerGap(doom(),a!,b!,60)).toBeCloseTo(mean(c,a!)-mean(c,b!),9);
+ });
+ it('is null for an unmodeled offer',()=>{
+  expect(offerGap(doom(),'The Unmodeled Mystery','The Bursting Masses',60)).toBeNull();
+  expect(offerGap(doom(),'The Bursting Masses','The Unmodeled Mystery',60)).toBeNull();
  });
 });

@@ -14,6 +14,7 @@ When actively playing, enter the 3–4 offers presented, compare explainable rec
 - [x] License & import integration inventory
 - [x] PR build/typecheck/test pipeline; no live-site change
 - [ ] Built-app Playwright tests verified and reviewed
+- [x] Insights report card, your choices and game numbers from recorded runs (learn-from-runs, phase B)
 - [ ] Preview v2 build in isolation
 
 **Exit:** v2 build passes CI; browser can create profile, record a full run, reload, export JSON; old site untouched.

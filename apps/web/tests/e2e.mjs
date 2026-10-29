@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {checkGraph} from './geometry.mjs';
 import AxeBuilder from '@axe-core/playwright';
+import {seededState,SLOW_RUNS} from './seed.mjs';
 
 // GitHub Ubuntu runners ship Chrome; avoid downloading browser binaries on every PR.
 const browser=await chromium.launch({
@@ -460,6 +461,29 @@ async function journey(viewport){
   const events=exported.state.runs[0].events;
   assert.equal(events.filter(e=>e.type==='offers_presented').length,5);
   assert.equal(events.filter(e=>e.type==='correction').length,2);
+
+  step('Insights shows the report card, choices and game numbers for recorded runs');
+  await page.evaluate(state=>localStorage.setItem('hordemind-v2-local-v1',JSON.stringify(state)),seededState(SLOW_RUNS));
+  await page.reload();
+  await navTo(page,/^Insights/);
+  await page.getByRole('heading',{name:'Insights',exact:true}).waitFor();
+  for(const name of ['Report card','Your choices','Game numbers'])await page.getByRole('heading',{name,exact:true}).waitFor();
+  await page.getByText(/inside the 80% range in \d+% of 30 readings/).waitFor();
+  assert.equal(await page.getByText("Saved data on this device couldn't be read").count(),0);
+  const strip=page.getByRole('group',{name:/^Wave by wave/});
+  await strip.waitFor();
+  assert.ok(await strip.locator('[data-state]').count()>=1,'the strip draws a dot');
+  const runLabel=page.getByText(/^Run of .*, 3 of 3$/);
+  await runLabel.waitFor();
+  await page.getByRole('button',{name:'Earlier run'}).click();
+  await page.getByText(/^Run of .*, 2 of 3$/).waitFor();
+  await page.getByRole('group',{name:'After each offer family'}).waitFor();
+  const offers=page.getByRole('group',{name:'How often each offer appeared'});
+  await offers.waitFor();
+  const bar=offers.getByRole('img').first();
+  await bar.focus();
+  await page.getByText(/^Appeared \d+ times?$/).waitFor({state:'visible'});
+  await noSeriousViolations(page,'Insights with analysis');
 
   assert.deepEqual(errors,[],'Browser emitted errors');
  }catch(error){

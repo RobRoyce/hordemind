@@ -1,0 +1,12 @@
+.section{
+ display:flex;
+ flex-direction:column;
+ gap:var(--hm-space-3);
+}
+
+.scope,.empty{
+ margin:0;
+ color:var(--hm-muted);
+}
+
+.line{margin:0}

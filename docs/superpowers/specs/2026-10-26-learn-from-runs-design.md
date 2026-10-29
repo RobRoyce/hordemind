@@ -122,6 +122,8 @@ New module `recommendation/replay.ts`. The report card, the override tracker and
 - A missed reading (`totalAether: null`) merges its span with the next one.
 - A total lower than the previous total is skipped and counted as a falling total.
 - Legacy `wave_observed` events are skipped because their timing is ambiguous.
+- Aether paid on defeating the Fell Council, the boss after the last wave, belongs to the final reading. It counts only for a completed run whose final total is read after the last wave. Live Run asks for that total after the Council fight (whole-branch review, 2026-10-26).
+- In-progress runs count. Their readings are settled, and a player who starts a new run without ending the old one would otherwise never qualify.
 
 ### Runs left out
 
@@ -277,6 +279,20 @@ Run history (unchanged), Sync, Research note
 - Every section has an empty state that names what's missing, such as "Record 2 more runs with Aether readings to see the report card."
 - A section shows how many runs it left out, and why.
 - On phones, tables stack into rows.
+
+#### Charts (owner, 2026-10-27)
+
+Three SVG charts, built without a chart library:
+
+| Chart | Section | Shows |
+|---|---|---|
+| Wave by wave | Report card | One run at a time: the model's 80% range per reading as a bar, the gain as a dot. A dot below the range is red (forecast too high), above is blue (too low). |
+| After each offer family | Report card | Average miss per family as a diverging bar, red right for too much, blue left for too little. Replaces the family lines. |
+| How often each offer appeared | Game numbers | The top 10 offers' share of offer sets, with a toggle between setups. Replaces the fold-out list. |
+
+- A reading that spans several waves draws one wide bar at its per-wave average.
+- Every mark shows its numbers on hover and keyboard focus. Wave by wave also has a table view.
+- On phones, labels sit on their own line above each bar.
 
 ### Live Run and estimate details
 

@@ -10,7 +10,7 @@ HordeMind is an open-source project for recording Infernal Hordes decisions and 
 
 - **Strategy Lab:** character profiles that save as you edit. Covers class, realm, difficulty up to Torment XII, clear speed, mobility, a build-planner bookmark, War Plan nodes, the Season 15 splinters, and the Lair Bosses War Plan nodes. Selecting The Black Pact enables the one-use special offer.
 - **Live Run:** one screen per wave. Search the offers on your screen by name or mechanic, see a ranked recommendation, and record your choice by click or keyboard. The Aether total after the previous wave is required on the same screen, or marked missed so it's never guessed. Includes undo with prefill, end run early, and a Black Pact row while the Pact is unused.
-- **Insights:** run history and a JSON export of the full append-only journal.
+- **Insights:** run history, a JSON export, and a report card on the model's Aether forecasts, your choices against the recommendations, and game-number counts, all computed in the browser.
 - Everything is saved **in your browser**. Optional **private sync** copies runs to your own account on a local Supabase server (`make up`, then Insights → Private sync). Nothing is shared for research.
 
 **About the recommender:** each wave is a 60-second time budget in which slow events (Soulspires, high-health banes) displace other events. Every mechanic value is tagged as guide-backed, disputed, or assumed. Each recommendation reports whether it survives other timing assumptions and what a pick unlocks later. Black Pact advice is a break-even rule, not an invented probability. None of it is calibrated against recorded runs yet. See [ADR 0004](docs/adr/0004-time-competitive-recommender.md) and the [model notes](docs/MODEL.md).
