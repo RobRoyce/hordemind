@@ -93,7 +93,7 @@ export function repeatLine(withMadness:Rate,without:Rate):string|null{
  return null;
 }
 
-const WHERE='next to the root of the Lair Bosses War Plan';
+const WHERE='next to the top node of the Lair Bosses War Plan';
 const median=(m:number|null)=>m===null?0:Math.round(m);
 export function varshanLine(withV:{median:number|null;count:number},without:{median:number|null;count:number}):string|null{
  const V="Varshan's Vengeance";

@@ -14,8 +14,8 @@ export const SPLINTERS:readonly Splinter[]=[
   {rank:20,node:'Council Coffers',where:'Below Exalted Council, on the left of the Infernal Hordes War Plan',effect:'The Chest of Talismans costs 1 Aether.',note:"Rewards only; it doesn't change estimates.",learnedIn:null}
  ]},
  {id:'destruction',name:'Splinter of Destruction',bonuses:[
-  {rank:14,node:'Lair of Runes',where:'Next to the root of the Lair Bosses War Plan',effect:'Lair Bosses drop additional Runes.',note:"Reaches a Hordes run only through Belial's ambush (Infernal Deception).",learnedIn:'lairBossNodes'},
-  {rank:20,node:'Exotic Armory',where:'Three steps from the root of the Lair Bosses War Plan',effect:'Hoard Chests drop 3 more Unique Items for any class.',note:"Reaches a Hordes run only through Belial's ambush (Infernal Deception).",learnedIn:'lairBossNodes'}
+  {rank:14,node:'Lair of Runes',where:'Next to the top node of the Lair Bosses War Plan',effect:'Lair Bosses drop additional Runes.',note:"Reaches a Hordes run only through Belial's ambush (Infernal Deception).",learnedIn:'lairBossNodes'},
+  {rank:20,node:'Exotic Armory',where:'Three steps from the top node of the Lair Bosses War Plan',effect:'Hoard Chests drop 3 more Unique Items for any class.',note:"Reaches a Hordes run only through Belial's ambush (Infernal Deception).",learnedIn:'lairBossNodes'}
  ]},
  {id:'hatred',name:'Splinter of Hatred',bonuses:[],noHordes:'No Infernal Hordes bonus. Its bonuses act in Nightmare Dungeons, the Pit and Whispers.'}
 ];
@@ -24,11 +24,11 @@ export const LAIR_BOSS_HOME='War Plans table in Temis, Skovos → Activities →
 
 export interface LairBossNode{id:string;where:string;effect:string;aether:'none'|'unknown'}
 export const LAIR_BOSS_NODES:readonly LairBossNode[]=[
- {id:"Varshan's Vengeance",where:'Next to the root of the Lair Bosses War Plan',effect:'Varshan and his minions can appear in a Chaos Wave.',aether:'unknown'},
+ {id:"Varshan's Vengeance",where:'Next to the top node of the Lair Bosses War Plan',effect:'Varshan and his minions can appear in a Chaos Wave.',aether:'unknown'},
  {id:'Blood of Bartuc',where:"Past Varshan's Vengeance in the Lair Bosses War Plan",effect:'The Fell Council gets +1 Monster Power. The Spoils of Greater Equipment can drop Bartuc\'s uniques.',aether:'none'},
- {id:'Infernal Deception',where:'Past Nemesis Tides, which sits next to the root of the Lair Bosses War Plan',effect:'Belial can ambush you after the run.',aether:'none'},
- {id:'Exotic Armory',where:'Three steps from the root of the Lair Bosses War Plan',effect:"Hoard Chests, Belial's included, drop 1 more unique for any class.",aether:'none'},
- {id:'Lair of Runes',where:'Next to the root of the Lair Bosses War Plan',effect:'Lair Bosses, Belial included, get +1 Monster Power and drop more Runes.',aether:'none'},
+ {id:'Infernal Deception',where:'Past Nemesis Tides, which sits next to the top node of the Lair Bosses War Plan',effect:'Belial can ambush you after the run.',aether:'none'},
+ {id:'Exotic Armory',where:'Three steps from the top node of the Lair Bosses War Plan',effect:"Hoard Chests, Belial's included, drop 1 more unique for any class.",aether:'none'},
+ {id:'Lair of Runes',where:'Next to the top node of the Lair Bosses War Plan',effect:'Lair Bosses, Belial included, get +1 Monster Power and drop more Runes.',aether:'none'},
  {id:'Lair of Plenty',where:'Past Lair of Runes in the Lair Bosses War Plan',effect:'Lair Bosses get +1 Monster Power. The extra Hoard Chest excludes Belial.',aether:'none'}
 ];
 

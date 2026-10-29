@@ -143,12 +143,12 @@ describe('repeatLine',()=>{
 });
 
 describe('varshanLine',()=>{
- const where="Varshan's Vengeance is next to the root of the Lair Bosses War Plan.";
+ const where="Varshan's Vengeance is next to the top node of the Lair Bosses War Plan.";
  it('compares both sides',()=>expect(varshanLine(V(310,4),V(280.4,1))).toBe(
   `Chaos Waves paid a median 310 Aether with Varshan's Vengeance (4 waves) and 280 without it (1 wave). ${where}`));
  it('words a side with no data',()=>{
-  expect(varshanLine(V(310.6,4),V(null,0))).toBe("Chaos Waves paid a median 311 Aether over 4 waves, all with Varshan's Vengeance (next to the root of the Lair Bosses War Plan).");
-  expect(varshanLine(V(null,0),V(280,1))).toBe("Chaos Waves paid a median 280 Aether over 1 wave, all without Varshan's Vengeance (next to the root of the Lair Bosses War Plan).");
+  expect(varshanLine(V(310.6,4),V(null,0))).toBe("Chaos Waves paid a median 311 Aether over 4 waves, all with Varshan's Vengeance (next to the top node of the Lair Bosses War Plan).");
+  expect(varshanLine(V(null,0),V(280,1))).toBe("Chaos Waves paid a median 280 Aether over 1 wave, all without Varshan's Vengeance (next to the top node of the Lair Bosses War Plan).");
  });
  it('is null with no waves',()=>expect(varshanLine(V(null,0),V(null,0))).toBeNull());
 });
