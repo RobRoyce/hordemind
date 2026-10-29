@@ -94,8 +94,8 @@
  cursor:pointer;
 }
 .hit[aria-disabled="true"]{cursor:not-allowed}
-/* The gold ring marks the focused node. */
-.hit:focus-visible{outline:none}
+/* The gold ring marks focus. The transparent outline still shows in forced-colors mode. */
+.hit:focus-visible{outline:2px solid transparent;outline-offset:2px}
 
 @media (prefers-reduced-motion:reduce){
  .draw,.fresh .core,.fresh .halo{animation:none}
