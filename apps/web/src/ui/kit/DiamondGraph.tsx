@@ -1,4 +1,4 @@
-import {Fragment,useId,useMemo,useRef,type ComponentType,type CSSProperties,type KeyboardEvent} from 'react';
+import {Fragment,useId,useMemo,useRef,useState,type ComponentType,type CSSProperties,type KeyboardEvent} from 'react';
 import {cx} from './cx';
 import {DEFAULT_LAYOUT,fitLayout,layoutGraph,type Connector,type GraphNodeInput,type PlacedNode} from './graphLayout';
 import {useElementWidth} from './useElementWidth';
@@ -58,12 +58,14 @@ const stop=(offset:number,color:string)=><stop offset={offset} style={{stopColor
 function useFreshlyLearned(learned:readonly string[]){
  const key=learned.join('\n');
  // Starts with nothing fresh, so the first render never animates.
- const seen=useRef({key,learned:new Set(learned),fresh:new Set<string>()});
- if(seen.current.key!==key){
-  const before=seen.current.learned;
-  seen.current={key,learned:new Set(learned),fresh:new Set(learned.filter(id=>!before.has(id)))};
+ const [seen,setSeen]=useState(()=>({key,learned:new Set(learned),fresh:new Set<string>()}));
+ // Set during render, so an abandoned render leaves no trace and a later hover re-render keeps the fresh set.
+ if(seen.key!==key){
+  const next={key,learned:new Set(learned),fresh:new Set(learned.filter(id=>!seen.learned.has(id)))};
+  setSeen(next);
+  return next;
  }
- return seen.current;
+ return seen;
 }
 
 export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,label,describedBy}:Props){
@@ -78,8 +80,8 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
  const byId=useMemo(()=>new Map(nodes.map(n=>[n.id,n])),[nodes]);
  const buttons=useRef(new Map<string,HTMLButtonElement>());
  const idBase=useId();
- const svgId=(name:string)=>`hm${idBase.replace(/[^A-Za-z0-9_-]/g,'')}-${name}`;
- const url=(name:string)=>`url(#${svgId(name)})`;
+ const localId=(name:string)=>`hm${idBase.replace(/[^A-Za-z0-9_-]/g,'')}-${name}`;
+ const url=(name:string)=>`url(#${localId(name)})`;
 
  const stateOf=(id:string):NodeState=>byId.get(id)?.root?'learned':state(id);
  const {learned,fresh}=useFreshlyLearned(nodes.filter(n=>stateOf(n.id)==='learned').map(n=>n.id));
@@ -100,26 +102,26 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
    <div className={s.inner} style={{width:L.width,height:L.height,transform:scale<1?`scale(${scale})`:undefined}}>
     <svg className={s.svg} width={L.width} height={L.height} viewBox={`0 0 ${L.width} ${L.height}`} aria-hidden="true" focusable="false">
      <defs>
-      <linearGradient id={svgId('rim')} x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id={localId('rim')} x1="0" y1="0" x2="0" y2="1">
        {stop(0,'var(--hm-frame-edge-top)')}{stop(1,'var(--hm-frame-edge-bottom)')}
       </linearGradient>
-      <linearGradient id={svgId('rim-dim')} x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id={localId('rim-dim')} x1="0" y1="0" x2="0" y2="1">
        {stop(0,'color-mix(in srgb,var(--hm-frame-edge-top) 50%,var(--hm-bg))')}{stop(1,'color-mix(in srgb,var(--hm-frame-edge-bottom) 40%,var(--hm-bg))')}
       </linearGradient>
-      <radialGradient id={svgId('core-learned')} cx="50%" cy="42%" r="62%">
+      <radialGradient id={localId('core-learned')} cx="50%" cy="42%" r="62%">
        {stop(0,'var(--hm-ember)')}{stop(.45,'var(--hm-ember-deep)')}{stop(1,'var(--hm-ember-dark)')}
       </radialGradient>
-      <radialGradient id={svgId('core-open')} cx="50%" cy="38%" r="70%">
+      <radialGradient id={localId('core-open')} cx="50%" cy="38%" r="70%">
        {stop(0,'color-mix(in srgb,var(--hm-rule) 40%,var(--hm-hair))')}{stop(1,'var(--hm-bg)')}
       </radialGradient>
-      <radialGradient id={svgId('core-locked')} cx="50%" cy="40%" r="70%">
+      <radialGradient id={localId('core-locked')} cx="50%" cy="40%" r="70%">
        {stop(0,'var(--hm-sheet)')}{stop(1,'var(--hm-bg)')}
       </radialGradient>
       {/* Sized to the graph: a filter sized to a straight line's own box clips it to nothing. */}
-      <filter id={svgId('halo')} filterUnits="userSpaceOnUse" x={-FILTER_MARGIN} y={-FILTER_MARGIN} width={L.width+2*FILTER_MARGIN} height={L.height+2*FILTER_MARGIN}>
+      <filter id={localId('halo')} filterUnits="userSpaceOnUse" x={-FILTER_MARGIN} y={-FILTER_MARGIN} width={L.width+2*FILTER_MARGIN} height={L.height+2*FILTER_MARGIN}>
        <feGaussianBlur stdDeviation={options.radius*.35}/>
       </filter>
-      <filter id={svgId('glow')} filterUnits="userSpaceOnUse" x={-FILTER_MARGIN} y={-FILTER_MARGIN} width={L.width+2*FILTER_MARGIN} height={L.height+2*FILTER_MARGIN}>
+      <filter id={localId('glow')} filterUnits="userSpaceOnUse" x={-FILTER_MARGIN} y={-FILTER_MARGIN} width={L.width+2*FILTER_MARGIN} height={L.height+2*FILTER_MARGIN}>
        <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"/>
        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
@@ -146,7 +148,7 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
        <path className={s.backing} d={diamond(n.x,n.y,n.r+3)}/>
        {focused===n.id&&<path className={s.ring} d={diamond(n.x,n.y,n.r+6)}/>}
        <path className={s.rim} d={diamond(n.x,n.y,n.r)} stroke={url(dim?'rim-dim':'rim')}/>
-       <path className={s.core} d={diamond(n.x,n.y,n.r-4)} fill={url(`core-${dim?'locked':st}`)}/>
+       <path data-graph-core={n.id} className={s.core} d={diamond(n.x,n.y,n.r-4)} fill={url(`core-${dim?'locked':st}`)}/>
        {Icon&&<g className={s.icon} transform={`translate(${n.x-icon/2} ${n.y-icon/2})`}><Icon size={icon} className={s.glyph}/></g>}
        {n.label&&<>
         <rect className={s.plate} x={n.label.x} y={n.label.y} width={n.label.width} height={n.label.height} rx={3}/>
@@ -159,7 +161,7 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
       </g>;
      })}
     </svg>
-    {targets.map(n=>{
+    {targets.map((n,i)=>{
      const node=byId.get(n.id)!;
      const st=stateOf(n.id);
      // Each target covers the node and its label, and is at least 44px across where the grid allows.
@@ -168,13 +170,14 @@ export function DiamondGraph({nodes,edges,state,focused,onActivate,onFocusNode,l
      const tall=Math.min(MIN_HIT,options.rowHeight);
      const top=bottom-(n.y-n.r)>=tall?n.y-n.r:n.y-tall/2;
      const description=[node.note,node.mark].filter(Boolean).join('. ');
-     const descriptionId=description?`${idBase}-${n.id}`:undefined;
+     const descriptionId=description?localId(`note-${i}`):undefined;
+     // Safari doesn't focus a tapped button, so a click shows the node too.
      return <Fragment key={n.id}>
       <button type="button" data-graph-node={n.id} ref={el=>{if(el)buttons.current.set(n.id,el);else buttons.current.delete(n.id)}}
        className={s.hit} style={{left:n.x-half,top,width:2*half,height:Math.max(bottom,top+tall)-top}}
        aria-pressed={st==='learned'} aria-disabled={st==='locked'||undefined}
        aria-describedby={[descriptionId,describedBy].filter(Boolean).join(' ')||undefined}
-       onClick={()=>{if(st!=='locked')onActivate(n.id)}} onFocus={()=>onFocusNode(n.id)} onMouseEnter={()=>onFocusNode(n.id)}
+       onClick={()=>{onFocusNode(n.id);if(st!=='locked')onActivate(n.id)}} onFocus={()=>onFocusNode(n.id)} onMouseEnter={()=>onFocusNode(n.id)}
        onKeyDown={e=>onKeyDown(e,n)}>
        <span className="hm-visually-hidden">{node.name}</span>
       </button>

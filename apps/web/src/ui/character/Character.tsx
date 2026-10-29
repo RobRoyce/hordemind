@@ -5,7 +5,7 @@ import {WAR_PLAN_HOME} from '../../domain/warplan';
 import {Button,Field,PageHeader,SectionHeading,Select,TextField} from '../kit';
 import {CharacterForm,TIPS} from './CharacterForm';
 import {CharacterTabs} from './CharacterTabs';
-import {LairBossBlock} from './LairBossBlock';
+import {LairBossTree} from './LairBossTree';
 import {StartRunBar} from './StartRunBar';
 import {WarPlanTree} from './WarPlanTree';
 import s from './Character.module.css';
@@ -53,7 +53,7 @@ function Editor({profile,onUpdate,onStart}:{profile:CharacterProfile}&Pick<Props
    <WarPlanTree learned={profile.warPlanNodes} onToggle={id=>onUpdate(toggleWarPlanNode(profile,id))}/>
   </section>
   <section className={s.section} aria-label="Lair Bosses War Plan setup">
-   <LairBossBlock profile={profile} onUpdate={onUpdate}/>
+   <LairBossTree profile={profile} onUpdate={onUpdate}/>
   </section>
   <section className={s.section} aria-label="Start a run">
    <StartRunBar onStart={waves=>onStart(profile,waves)}/>

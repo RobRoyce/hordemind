@@ -39,6 +39,14 @@ describe('DiamondGraph',()=>{
   expect(count(/data-icon="" width="26"/g)).toBe(1);
   expect(count(/data-icon="" width="30"/g)).toBe(1);
  });
+ it('describes a node by its mark, even when its name has spaces',()=>{
+  const nodes:GraphNode[]=[NODES[0]!,{id:'Reign in Hell',name:'Reign in Hell',row:1,col:0,labelLines:2,labelWidth:110,mark:'◆ Hordes'}];
+  const out=renderToStaticMarkup(<DiamondGraph label="Marked" nodes={nodes} edges={[['r','Reign in Hell']]} state={()=>'open'} focused={null} onActivate={()=>{}} onFocusNode={()=>{}}/>);
+  const ids=/aria-describedby="([^"]+)"/.exec(out)![1]!.split(' ');
+  for(const id of ids)expect(id).toMatch(/^[A-Za-z0-9_-]+$/);
+  const texts=ids.map(id=>new RegExp(`id="${id}"[^>]*>([^<]*)<`).exec(out)?.[1]);
+  expect(texts).toContain('◆ Hordes');
+ });
  it('keeps gradient and filter ids apart for two graphs on one page',()=>{
   const both=renderToStaticMarkup(<>{graph('One')}{graph('Two')}</>);
   const ids=[...both.matchAll(/<(?:linearGradient|radialGradient|filter) id="([^"]+)"/g)].map(m=>m[1]!);

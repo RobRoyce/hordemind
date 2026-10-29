@@ -13,16 +13,35 @@
  margin:0 auto;
 }
 
-.links{white-space:nowrap}
 .footer a{
- display:inline-flex;
- align-items:center;
- min-height:44px;
- margin-left:var(--hm-space-4);
  color:var(--hm-muted);
  text-underline-offset:3px;
 }
 .footer a:hover{color:var(--hm-ink)}
+.links{white-space:nowrap}
+.links a{
+ display:inline-flex;
+ align-items:center;
+ min-height:44px;
+ margin-left:var(--hm-space-4);
+}
+
+.credits{
+ max-width:44rem;
+ margin:0 auto;
+ padding:0;
+ list-style:none;
+ columns:2 18rem;
+ column-gap:var(--hm-space-6);
+ text-align:left;
+}
+/* A hanging indent keeps each wrapped credit visibly one item. */
+.credits li{
+ margin-bottom:var(--hm-space-1);
+ padding-left:var(--hm-space-4);
+ text-indent:calc(-1 * var(--hm-space-4));
+ break-inside:avoid;
+}
 
 @media (max-width:699px){
  .footer{padding-inline:var(--hm-space-4)}

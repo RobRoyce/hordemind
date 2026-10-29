@@ -1,6 +1,7 @@
 import {WAR_PLAN,available,nodeById} from '../../domain/warplan';
 import {IH_GRAPH,ROOT} from '../../domain/warPlans';
 import type {GraphNode,NodeState} from '../kit';
+import {IH_ROOT_ICON,PLAN_ICONS} from './warPlanIcons';
 
 const PLACE=new Map(IH_GRAPH.nodes.map(n=>[n.name,n]));
 
@@ -8,12 +9,12 @@ const PLACE=new Map(IH_GRAPH.nodes.map(n=>[n.name,n]));
 export function warPlanGraphNodes(charWidth=8):GraphNode[]{
  const root=PLACE.get(ROOT)!;
  return [
-  {id:ROOT,name:ROOT,row:root.row,col:root.col,root:true,labelLines:0,labelWidth:0},
+  {id:ROOT,name:ROOT,row:root.row,col:root.col,root:true,labelLines:0,labelWidth:0,icon:IH_ROOT_ICON.icon},
   ...WAR_PLAN.map(n=>{
    const {row,col}=PLACE.get(n.id)!;
    const note=n.exclusive?`or ${n.exclusive}`:undefined;
    return {
-    id:n.id,name:n.id,row,col,...(note?{note}:{}),
+    id:n.id,name:n.id,row,col,icon:PLAN_ICONS[n.id]?.icon,...(note?{note}:{}),
     labelLines:note?2:1,labelWidth:charWidth*Math.max(n.id.length,note?.length??0)
    };
   })

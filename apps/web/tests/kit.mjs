@@ -59,15 +59,21 @@ async function check(viewport){
   await page.keyboard.press('ArrowDown');
   assert.equal(await page.evaluate(()=>document.activeElement?.textContent),'Impending Doom');
 
-  step('a newly lit connector draws itself, except under reduced motion');
+  step('a newly lit connector draws itself and the new node fades in, except under reduced motion');
   const scale=page.getByRole('button',{name:'Scale of Tathamet',exact:true});
   const lineAnimation=()=>page.locator('path[data-graph-lit][data-from="Cult of Annihilation"][data-to="Scale of Tathamet"]').evaluate(el=>getComputedStyle(el).animationName);
+  const nodeAnimation=()=>page.locator('[data-graph-core="Scale of Tathamet"]').evaluate(el=>getComputedStyle(el).animationName);
   await scale.click();
   assert.notEqual(await lineAnimation(),'none','the new line animates');
+  assert.notEqual(await nodeAnimation(),'none','the new node fades in');
+  // Hovering another node re-renders the tree; the motion carries on.
+  await page.getByRole('button',{name:'Bedlam',exact:true}).hover();
+  assert.notEqual(await nodeAnimation(),'none','hovering keeps the fade');
   await scale.click();
   await page.emulateMedia({reducedMotion:'reduce'});
   await scale.click();
   assert.equal(await lineAnimation(),'none','reduced motion keeps the new line still');
+  assert.equal(await nodeAnimation(),'none','reduced motion keeps the new node still');
   await scale.click();
   await page.emulateMedia({reducedMotion:null});
 

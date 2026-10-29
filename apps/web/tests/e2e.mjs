@@ -58,6 +58,7 @@ const navTo=(page,name)=>page.getByRole('navigation',{name:'Main navigation'}).g
 
 async function journey(viewport){
  const context=await browser.newContext({viewport,acceptDownloads:true});
+ const phone=viewport.width<700;
  // Real time until a step pauses it.
  await context.clock.install();
  const page=await context.newPage();
@@ -96,37 +97,56 @@ async function journey(viewport){
   await setChoice(page,/Elite (\/|and) Lord clear speed/,'Fast');
   await setChoice(page,'Mobility','Low');
   const warPlan=name=>page.getByRole('button',{name,exact:true});
+  const planDetails=()=>page.getByRole('region',{name:'Infernal Hordes War Plan details'});
+  /** Phones select a node on tap and learn it from the details panel; wider screens learn on click. */
+  async function learn(name){
+   await warPlan(name).click();
+   if(phone)await page.getByRole('button',{name:`Learn ${name}`,exact:true}).click();
+  }
   // Locked upgrades are aria-disabled; force the click to prove it is ignored.
   await warPlan('The Black Pact').click({force:true});
+  if(phone){
+   await planDetails().getByRole('heading',{name:'The Black Pact'}).waitFor();
+   assert.equal(await page.getByRole('button',{name:'Learn The Black Pact'}).count(),0,'a locked upgrade offers no Learn button');
+  }
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'false','locked upgrades cannot be learned');
-  for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await warPlan(name).click();
+  for(const name of ['Method and Madness','Impending Doom','The Black Pact'])await learn(name);
   assert.equal(await warPlan('The Black Pact').getAttribute('aria-pressed'),'true');
-  assert((await page.getByRole('region',{name:'Upgrade details'}).innerText()).includes('An ominous altar appears between waves'));
+  assert((await planDetails().innerText()).includes('An ominous altar appears between waves'));
   // The focused node's description carries the details, so the panel stays quiet instead of announcing every hover.
-  assert.equal(await page.getByRole('region',{name:'Upgrade details'}).getAttribute('aria-live'),null,'the details panel is not a live region');
+  assert.equal(await planDetails().getAttribute('aria-live'),null,'the details panel is not a live region');
   const description=await warPlan('The Black Pact').evaluate(el=>(el.getAttribute('aria-describedby')??'').split(' ').map(id=>document.getElementById(id)?.textContent??'').join(' '));
   assert(description.includes('An ominous altar appears between waves'),'a focused upgrade is described by its tooltip');
   assert.equal(await page.locator('path[data-graph-lit][data-from="Impending Doom"][data-to="The Black Pact"]').count(),1,'learning both ends lights their connection');
-  const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:'Infernal Hordes War Plan',exact:true}));
-  assert.deepEqual(crossings,[],'War Plan connectors cross no label or node');
-  assert.deepEqual(overlaps,[],'War Plan nodes and labels never overlap');
+  for(const tree of ['Infernal Hordes War Plan','Lair Bosses War Plan']){
+   const {crossings,overlaps}=await checkGraph(page,page.getByRole('group',{name:tree,exact:true}));
+   assert.deepEqual(crossings,[],`${tree} connectors cross no label or node`);
+   assert.deepEqual(overlaps,[],`${tree} nodes and labels never overlap`);
+  }
+  if(phone)assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'the Character screen never scrolls sideways');
+  await page.getByText('Icon credits',{exact:true}).click();
+  await page.getByText("Varshan's Vengeance, Lair Bosses War Plan: Fanged skull by Lorc",{exact:true}).waitFor();
+  assert.equal(await page.getByRole('link',{name:'game-icons.net',exact:true}).getAttribute('href'),'https://game-icons.net/');
   await noSeriousViolations(page,'Character');
   await noZoomingFields(page,'Character');
 
-  step('each splinter keeps its rank, and the active one and Lair Bosses nodes survive a reload');
+  step('each splinter keeps its rank, and the active one and Lair Bosses upgrades survive a reload');
   await setChoice(page,'Active splinter','Terror');
   await page.getByLabel('Splinter of Terror rank',{exact:true}).fill('14');
   await setChoice(page,'Active splinter','Destruction');
   assert.equal(await page.getByLabel('Splinter of Destruction rank',{exact:true}).inputValue(),'');
   await page.getByLabel('Splinter of Destruction rank',{exact:true}).fill('20');
-  await page.getByLabel('Lair of Runes',{exact:true}).check();
+  await learn('Nemesis Tides');
+  await learn('Infernal Deception');
+  assert((await page.getByRole('region',{name:'Lair Bosses War Plan details'}).innerText()).includes('Belial can ambush you after the run. No effect on Aether.'));
   await page.reload();
-  await page.getByLabel('Lair of Runes',{exact:true}).waitFor();
+  await warPlan('Infernal Deception').waitFor();
   const {activeSplinter,splinterRanks,lairBossNodes}=(await stored()).profiles[0];
-  assert.deepEqual({activeSplinter,splinterRanks,lairBossNodes},{activeSplinter:'destruction',splinterRanks:{terror:14,destruction:20,hatred:null},lairBossNodes:['Lair of Runes']});
+  assert.deepEqual({activeSplinter,splinterRanks},{activeSplinter:'destruction',splinterRanks:{terror:14,destruction:20,hatred:null}});
+  assert.deepEqual([...lairBossNodes].sort(),['Infernal Deception','Nemesis Tides']);
   assert.equal(await choiceOf(page,'Active splinter'),'Destruction');
   assert.equal(await page.getByLabel('Splinter of Destruction rank',{exact:true}).inputValue(),'20');
-  assert(await page.getByLabel('Lair of Runes',{exact:true}).isChecked(),'Lair of Runes stays checked');
+  assert.equal(await warPlan('Infernal Deception').getAttribute('aria-pressed'),'true','Infernal Deception stays learned');
   await setChoice(page,'Active splinter','Terror');
   assert.equal(await page.getByLabel('Splinter of Terror rank',{exact:true}).inputValue(),'14');
 

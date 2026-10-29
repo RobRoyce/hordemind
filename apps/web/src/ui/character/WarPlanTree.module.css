@@ -3,18 +3,10 @@
  flex-direction:column;
  gap:var(--hm-space-4);
 }
-.tree p{margin:0}
-
-.top{
- display:flex;
- flex-wrap:wrap;
- align-items:flex-end;
- justify-content:space-between;
- gap:var(--hm-space-3) var(--hm-space-6);
-}
 
 .counter{
  max-width:22rem;
+ margin:0;
  color:var(--hm-muted);
  font-size:var(--hm-text-2);
 }
@@ -27,71 +19,3 @@
  line-height:1;
 }
 .over,.over .count{color:var(--hm-danger)}
-
-.muted{
- color:var(--hm-muted);
- font-size:var(--hm-text-1);
-}
-
-.legend{
- display:flex;
- flex-wrap:wrap;
- gap:var(--hm-space-2) var(--hm-space-5);
- margin:0;
- padding:0;
- list-style:none;
- color:var(--hm-muted);
- font-size:var(--hm-text-1);
-}
-.legend li{
- display:flex;
- align-items:center;
- gap:var(--hm-space-2);
-}
-
-/* Swatches mirror the tree's nodes: the rim as the border, the core as the fill. */
-.swatch{
- width:11px;
- height:11px;
- border:1.5px solid var(--hm-frame-edge-top);
- background:radial-gradient(color-mix(in srgb,var(--hm-rule) 40%,var(--hm-hair)),var(--hm-bg));
- transform:rotate(45deg);
-}
-.learned{background:radial-gradient(var(--hm-ember),var(--hm-ember-deep) 45%,var(--hm-ember-dark))}
-.locked{
- border-color:color-mix(in srgb,var(--hm-frame-edge-top) 50%,var(--hm-bg));
- background:var(--hm-sheet);
-}
-
-/* Holds most tooltips without growing, so the page doesn't jump while you hover. */
-.detail{
- display:flex;
- flex-direction:column;
- gap:var(--hm-space-2);
- min-height:13rem;
- padding:var(--hm-space-4) 0 0;
- border-top:1px solid var(--hm-rule);
-}
-.detail p{margin:0}
-.detail b{font-weight:600}
-
-.detailName{
- margin:0;
- color:var(--hm-gold);
- font-family:var(--hm-font-display);
- font-size:var(--hm-text-4);
- font-weight:500;
-}
-
-.tooltip{font-style:italic}
-
-.report{
- align-self:flex-start;
- margin-top:auto;
- color:var(--hm-gold);
- font-size:var(--hm-text-1);
-}
-
-@media (max-width:699px){
- .detail{min-height:18rem}
-}
