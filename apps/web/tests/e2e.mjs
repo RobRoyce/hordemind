@@ -118,14 +118,14 @@ async function journey(viewport){
   await setChoice(page,'Active splinter','Destruction');
   assert.equal(await page.getByLabel('Splinter of Destruction rank',{exact:true}).inputValue(),'');
   await page.getByLabel('Splinter of Destruction rank',{exact:true}).fill('20');
-  await page.getByLabel('Infernal Deception',{exact:true}).check();
+  await page.getByLabel('Lair of Runes',{exact:true}).check();
   await page.reload();
-  await page.getByLabel('Infernal Deception',{exact:true}).waitFor();
+  await page.getByLabel('Lair of Runes',{exact:true}).waitFor();
   const {activeSplinter,splinterRanks,lairBossNodes}=(await stored()).profiles[0];
-  assert.deepEqual({activeSplinter,splinterRanks,lairBossNodes},{activeSplinter:'destruction',splinterRanks:{terror:14,destruction:20,hatred:null},lairBossNodes:['Infernal Deception']});
+  assert.deepEqual({activeSplinter,splinterRanks,lairBossNodes},{activeSplinter:'destruction',splinterRanks:{terror:14,destruction:20,hatred:null},lairBossNodes:['Lair of Runes']});
   assert.equal(await choiceOf(page,'Active splinter'),'Destruction');
   assert.equal(await page.getByLabel('Splinter of Destruction rank',{exact:true}).inputValue(),'20');
-  assert(await page.getByLabel('Infernal Deception',{exact:true}).isChecked(),'Infernal Deception stays checked');
+  assert(await page.getByLabel('Lair of Runes',{exact:true}).isChecked(),'Lair of Runes stays checked');
   await setChoice(page,'Active splinter','Terror');
   assert.equal(await page.getByLabel('Splinter of Terror rank',{exact:true}).inputValue(),'14');
 

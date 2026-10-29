@@ -1,6 +1,6 @@
 import {CharacterProfileSchema,type CharacterProfile} from './schema';
 import {SPECIAL_OFFER_NODE,toggleNode} from './warplan';
-import {LAIR_BOSS_NODES} from './splinters';
+import {toggleLairBoss} from './lairBossPlan';
 
 export {SPECIAL_OFFER_NODE};
 
@@ -10,12 +10,9 @@ export function toggleWarPlanNode(profile:CharacterProfile,node:string):Characte
  return {...profile,warPlanNodes,specialOfferingAvailable:warPlanNodes.includes(SPECIAL_OFFER_NODE)};
 }
 
-/** Adds or removes a Lair Bosses War Plan node, keeping the tree's order. */
-export function toggleLairBossNode(profile:CharacterProfile,id:string):CharacterProfile{
- const on=new Set(profile.lairBossNodes);
- on.has(id)?on.delete(id):on.add(id);
- return {...profile,lairBossNodes:LAIR_BOSS_NODES.map(n=>n.id).filter(n=>on.has(n))};
-}
+/** Learns or unlearns a Lair Bosses War Plan node, as the game allows. */
+export const toggleLairBossNode=(profile:CharacterProfile,id:string):CharacterProfile=>
+ ({...profile,lairBossNodes:toggleLairBoss(profile.lairBossNodes,id)});
 
 /** Accepts bare hosts such as `maxroll.gg/d4/planner/x` by assuming https. */
 export function normalizeBuildUrl(text:string):{value:string}|{error:string}{
