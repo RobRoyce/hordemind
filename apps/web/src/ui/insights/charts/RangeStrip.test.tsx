@@ -6,7 +6,7 @@ import {RangeStrip,stripLayout} from './RangeStrip';
 
 const sc=(from:number,to:number,actual:number,p10:number,p90:number,mean=(p10+p90)/2):Scored=>
  ({span:{fromWave:from,toWave:to,actual,chaos:false},pred:{mean,sd:5,p10,p90},family:null});
-const run=(id:string,day:number,scored:Scored[]):RunScores=>({runId:id,createdAt:new Date(Date.UTC(2026,9,day,18)).toISOString(),status:'completed',totalWaves:10,scored});
+const run=(id:string,day:number,scored:Scored[]):RunScores=>({runId:id,createdAt:new Date(Date.UTC(2026,9,day,18)).toISOString(),status:'completed',totalWaves:10,scored,fan:[],readings:[]});
 const newest=run('c',3,[sc(1,1,10,20,40),sc(2,2,40,20,40),sc(3,4,90,40,80),sc(5,5,100,30,60)]);
 const runs=[newest,run('b',2,[sc(1,1,30,20,40)]),run('a',1,[sc(1,1,30,20,40)])];
 const html=(el:React.ReactElement)=>renderToStaticMarkup(el).replaceAll('&#x27;',"'");

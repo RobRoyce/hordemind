@@ -22,6 +22,12 @@ describe('analyze',()=>{
   expect(runs.reduce((n,r)=>n+r.scored.length,0)).toBe(a.character!.report!.buckets.readings);
   expect(runs[0]).toMatchObject({status:'completed',totalWaves:10});
  });
+ it('gives each scored run its fan and readings',()=>{
+  const s=state(),run=analyze(s.runs,s.profiles[0]!.id,20).character!.runs[0]!;
+  expect(run.readings.at(-1)!.wave).toBe(run.fan.at(-1)!.wave);
+  expect(run.readings.at(-1)!.total).toBe(run.scored.reduce((a,s)=>a+s.span.actual,0));
+  expect(run.fan[0]!.mean).toBe(0);
+ });
  it('a character without qualifying runs gets an empty state, not an error',()=>{
   const s=LocalStateSchema.parse(seededState({runs:[{...SLOW_RUNS.runs[0]!,totals:[],status:'in_progress',final:null}]}));
   const a=analyze(s.runs,s.profiles[0]!.id,20);
