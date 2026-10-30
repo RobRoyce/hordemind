@@ -1,5 +1,5 @@
 import type {RunRecord} from '../domain/schema';
-import {readRun,replaySpans,type RunReadings} from './replay';
+import {readRun,replayRun,type FanPoint,type RunReadings} from './replay';
 import {scoreRun,reportCard,type ReportCard,type Scored} from './reportCard';
 import {overrideSummary,type OverrideSummary,type Price} from './overrides';
 import {offerGap} from '../recommendation/model';
@@ -13,7 +13,7 @@ export const MIN_READINGS=3;
 export const qualifies=(r:RunReadings)=>r.leftOut===null&&r.scored.length>=MIN_READINGS;
 
 /** One qualifying run's scored spans, for per-wave charts. */
-export interface RunScores{runId:string;createdAt:string;status:RunRecord['status'];totalWaves:number;scored:Scored[]}
+export interface RunScores{runId:string;createdAt:string;status:RunRecord['status'];totalWaves:number;scored:Scored[];fan:FanPoint[];readings:{wave:number;total:number}[]}
 export interface CharacterAnalysis{
  profileId:string;qualifying:number;needed:number;report:ReportCard|null;
  leftOut:{pulse:number;events:number};
@@ -24,7 +24,7 @@ export interface CharacterAnalysis{
 }
 export interface Analysis{character:CharacterAnalysis|null;counts:GameCounts}
 
-interface RunEntry{samples:number;r:RunReadings;scored:Scored[]|null}
+interface RunEntry{samples:number;r:RunReadings;scored:Scored[]|null;fan:FanPoint[]|null}
 /** Remembers per-run replays and override prices between calls; results never differ from an uncached call. */
 export interface AnalysisCache{runs:Map<string,RunEntry>;gaps:Map<string,Map<string,number|null>>}
 export const newAnalysisCache=():AnalysisCache=>({runs:new Map(),gaps:new Map()});
@@ -35,6 +35,9 @@ export function pruneAnalysisCache(cache:AnalysisCache,runs:readonly RunRecord[]
  for(const k of cache.runs.keys())if(!keys.has(k))cache.runs.delete(k);
  for(const id of cache.gaps.keys())if(!ids.has(id))cache.gaps.delete(id);
 }
+
+/** Total Aether at each reading, as the running sum of span gains. */
+const runningTotals=(r:RunReadings)=>{let total=0;return r.spans.map(s=>({wave:s.toWave,total:total+=s.actual}))};
 
 const profileIdOf=(run:RunRecord)=>{
  const e=run.events.find(x=>x.type==='run_started');
@@ -54,16 +57,17 @@ export function analyze(runs:readonly RunRecord[],profileId:string|null,samples=
   let entry=cache?.runs.get(key);
   if(!entry||entry.samples!==samples){
    const r=readRun(run);
-   entry={samples,r,scored:qualifies(r)?scoreRun(r,replaySpans(r,samples)):null};
+   const replay=qualifies(r)?replayRun(r,samples):null;
+   entry={samples,r,scored:replay&&scoreRun(r,replay.spans),fan:replay&&replay.fan};
    cache?.runs.set(key,entry);
   }
-  const {r,scored}=entry;
+  const {r,scored,fan}=entry;
   skipped.falling+=r.skipped.falling;skipped.legacy+=r.skipped.legacy;skipped.varshanChaos+=r.skipped.varshanChaos;
   if(r.leftOut)leftOut[r.leftOut]++;
-  if(!scored)return {run,scored:null};
+  if(!scored||!fan)return {run,scored:null};
   qualifying++;
   buckets.push(...scored);
-  runScores.push({runId:r.runId,createdAt:r.createdAt,status:r.status,totalWaves:r.totalWaves,scored});
+  runScores.push({runId:r.runId,createdAt:r.createdAt,status:r.status,totalWaves:r.totalWaves,scored,fan,readings:runningTotals(r)});
   return {run,scored};
  });
  const price:Price|undefined=cache&&((sc,a,b,n,runId)=>{

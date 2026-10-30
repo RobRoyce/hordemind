@@ -68,30 +68,45 @@ export function seedOf(id:string):number{
  return h>>>0;
 }
 
+export interface FanPoint{wave:number;mean:number;p10:number;p25:number;p75:number;p90:number}
+export interface Replay{spans:SpanPrediction[];fan:FanPoint[]}
+
 /**
- * Simulated Aether per span; one pass replays every wave with that wave's recorded stack.
- * Council Aether is paid on defeating the Fell Council, so it joins only a completed run's final span.
+ * Simulated Aether per span and the running total at every wave; one pass replays every wave with that wave's recorded stack.
+ * Council Aether is paid on defeating the Fell Council, so it joins only a completed run's final span and final fan point.
  */
-export function replaySpans(r:RunReadings,samples:number,profile:PlayerProfile=r.profile,assumptions:Assumptions=BASELINE):SpanPrediction[]{
+export function replayRun(r:RunReadings,samples:number,profile:PlayerProfile=r.profile,assumptions:Assumptions=BASELINE):Replay{
  const totals=r.spans.map(()=>new Array<number>(samples).fill(0));
+ const last=r.spans.at(-1)?.toWave??0;
+ const running=Array.from({length:last+1},()=>new Array<number>(samples).fill(0));
  const spanOf=(wave:number)=>r.spans.findIndex(s=>s.fromWave<=wave&&wave<=s.toWave);
+ const paysCouncil=r.status==='completed'&&r.spans.at(-1)?.toWave===r.totalWaves;
  for(let i=0;i<samples;i++){
   const seed=hash(seedOf(r.runId)+i*9733);
-  let carry:EventKind[]=[],council=0;
+  let carry:EventKind[]=[],council=0,sum=0;
   for(const w of r.waves){
    const {out,leftover}=simulateWaveDetailed({index:0,stack:w.stack,genericPicks:0,chaos:w.chaos,newPickIndex:w.newPickIndex},
     profile,hash(seed+Math.imul(w.wave,0x9e3779b1)),assumptions,carry);
    carry=leftover;
-   const k=spanOf(w.wave);
+   const k=spanOf(w.wave),gain=Object.values(out).reduce((a,v)=>a+v,0)-out.Council;
    council+=out.Council;
-   if(k>=0)totals[k]![i]!+=Object.values(out).reduce((a,v)=>a+v,0)-out.Council;
+   sum+=gain;
+   running[w.wave]![i]=sum;
+   if(k>=0)totals[k]![i]!+=gain;
   }
-  if(r.status==='completed'&&r.spans.at(-1)?.toWave===r.totalWaves)totals[r.spans.length-1]![i]!+=council;
+  if(paysCouncil){totals[r.spans.length-1]![i]!+=council;running[last]![i]!+=council}
  }
- return totals.map(t=>{
-  const n=t.length,mean=n?t.reduce((a,v)=>a+v,0)/n:0;
+ const ranks=(t:number[])=>{
+  const n=t.length,sorted=[...t].sort((a,b)=>a-b);
+  return {mean:n?t.reduce((a,v)=>a+v,0)/n:0,p10:sorted[Math.floor(0.1*(n-1))]??0,p25:sorted[Math.floor(0.25*(n-1))]??0,p75:sorted[Math.ceil(0.75*(n-1))]??0,p90:sorted[Math.ceil(0.9*(n-1))]??0};
+ };
+ const spans=totals.map(t=>{
+  const n=t.length,{mean,p10,p90}=ranks(t);
   const sampleSd=n>1?Math.sqrt(t.reduce((a,v)=>a+(v-mean)**2,0)/(n-1)):0;
-  const sorted=[...t].sort((a,b)=>a-b);
-  return {mean,sd:Math.max(SD_FLOOR,sampleSd),p10:sorted[Math.floor(0.1*(n-1))]??0,p90:sorted[Math.ceil(0.9*(n-1))]??0};
+  return {mean,sd:Math.max(SD_FLOOR,sampleSd),p10,p90};
  });
+ return {spans,fan:running.map((t,wave)=>({wave,...ranks(t)}))};
 }
+
+/** Simulated Aether per span. */
+export const replaySpans=(r:RunReadings,samples:number,profile?:PlayerProfile,assumptions?:Assumptions):SpanPrediction[]=>replayRun(r,samples,profile,assumptions).spans;

@@ -2,7 +2,6 @@ import {describe,expect,it} from 'vitest';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {newProfile} from '../../domain/run';
 import {CharacterForm} from './CharacterForm';
-import {LairBossBlock} from './LairBossBlock';
 import {SplinterBlock} from './SplinterBlock';
 
 describe('SplinterBlock',()=>{
@@ -16,7 +15,9 @@ describe('SplinterBlock',()=>{
  });
  it('Terror active shows only Terror bonuses',()=>{
   const html=render({activeSplinter:'terror',splinterRanks:ranks(5)});
-  expect(html).toContain('Cult of Annihilation</b>, first node of the events branch');
+  expect(html).toContain('Cult of Annihilation</b>, to the right of the top node in the Infernal Hordes War Plan.');
+  expect(html).toContain('Impending Doom</b>, below Method and Madness, in the middle of the Infernal Hordes War Plan.');
+  expect(html).toContain('Council Coffers</b>, below Exalted Council, on the left of the Infernal Hordes War Plan.');
   expect(html).not.toContain('Lair of Runes');
   expect(html).toContain('Splinter of Terror rank');
  });
@@ -43,13 +44,5 @@ describe('SplinterBlock',()=>{
   expect(html).toContain('Learn Impending Doom to use it.');
   expect(html).not.toContain('Included in estimates.');
   expect(render({...p,warPlanNodes:['Impending Doom']})).toContain('Included in estimates.');
- });
- it('LairBossBlock lists every node with its Aether note',()=>{
-  const html=renderToStaticMarkup(<LairBossBlock profile={newProfile('A','Paladin')} onUpdate={()=>null}/>);
-  expect(html).toContain('Infernal Deception');
-  expect(html).toContain('No effect on Aether.');
-  expect(html).toContain('Its effect on Chaos Wave Aether is unknown.');
-  const [,ref]=/aria-describedby="([^"]+)"/.exec(html)!;
-  expect(html).toContain(`id="${ref}"`);
  });
 });

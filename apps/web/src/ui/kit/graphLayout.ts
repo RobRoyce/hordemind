@@ -1,66 +1,48 @@
-// Lays out a tree on a fixed grid from each node's row and col, with right-angle connectors.
+// Lays out a tree on a fixed grid from each node's row and col, with straight connectors between node centres.
 
 export interface Box{x:number;y:number;width:number;height:number}
-export interface GraphNodeInput{id:string;row:number;col:number;parents:readonly string[];labelLines:number;labelWidth:number}
-export interface LayoutOptions{colWidth:number;rowHeight:number;diamond:number;lineHeight:number;labelGap:number}
-export interface PlacedNode{id:string;x:number;y:number;diamond:Box;label:Box}
-export interface Connector{from:string;to:string;points:readonly (readonly [number,number])[]}
+export interface GraphNodeInput{id:string;row:number;col:number;root?:boolean;labelLines:number;labelWidth:number}
+export interface LayoutOptions{colWidth:number;rowHeight:number;radius:number;lineHeight:number;labelGap:number;pad:number;labels:boolean}
+/** `r` runs from the centre to a vertex. The label is null for the root and when labels are off. */
+export interface PlacedNode{id:string;x:number;y:number;r:number;root:boolean;label:Box|null}
+export interface Connector{from:string;to:string;points:readonly [readonly [number,number],readonly [number,number]]}
 export interface GraphLayout{nodes:PlacedNode[];connectors:Connector[];width:number;height:number}
 
-export const DEFAULT_LAYOUT:LayoutOptions={colWidth:140,rowHeight:130,diamond:38,lineHeight:16,labelGap:8};
+export const DEFAULT_LAYOUT:LayoutOptions={colWidth:112,rowHeight:116,radius:26,lineHeight:16,labelGap:8,pad:74,labels:true};
 
-/** Three columns that fit a 390px phone inside 16px gutters. */
-export const COMPACT_LAYOUT:LayoutOptions={colWidth:116,rowHeight:120,diamond:34,lineHeight:16,labelGap:6};
+/** Small nodes without labels, spread so `colSpan` columns fill `width`. */
+export function fitLayout(width:number,colSpan:number):LayoutOptions{
+ const colWidth=(width-40)/Math.max(1,colSpan);
+ return {colWidth,rowHeight:Math.max(48,colWidth),radius:16,lineHeight:16,labelGap:8,pad:20,labels:false};
+}
 
-/** Space above the first row's diamonds. */
-const TOP=8;
-/** Gap between a label's last line and the connector leaving it. */
-const LEAVE=4;
+/** Space above a top-row node and below the lowest one. */
+const EDGE=12;
+/** Space beyond the outermost label. */
+const LABEL_EDGE=8;
+/** How much larger the root is drawn. */
+const ROOT_GROW=6;
 
-export function layoutGraph(nodes:readonly GraphNodeInput[],o:LayoutOptions):GraphLayout{
- const minCol=Math.min(...nodes.map(n=>n.col));
- const half=o.diamond/2;
- // Shift right when a label is wider than its column and would start left of the graph.
- const offset=Math.max(0,...nodes.map(n=>n.labelWidth/2-(n.col-minCol+0.5)*o.colWidth));
+export function layoutGraph(nodes:readonly GraphNodeInput[],edges:readonly (readonly [string,string])[],o:LayoutOptions):GraphLayout{
+ const minCol=Math.min(...nodes.map(n=>n.col)),minRow=Math.min(...nodes.map(n=>n.row));
+ const labelled=(n:GraphNodeInput)=>o.labels&&!n.root;
+ // Shift right when a label is wider than the pad and would start left of the graph.
+ const shift=Math.max(0,...nodes.filter(labelled).map(n=>n.labelWidth/2-o.pad-(n.col-minCol)*o.colWidth));
 
- const placed=new Map<string,PlacedNode&{col:number;labelBottom:number}>();
- for(const n of nodes){
-  const col=n.col-minCol;
-  const x=(col+0.5)*o.colWidth+offset;
-  const y=n.row*o.rowHeight+half+TOP;
-  const labelTop=y+half+o.labelGap;
-  const labelBottom=labelTop+n.labelLines*o.lineHeight;
-  placed.set(n.id,{
-   id:n.id,x,y,col,labelBottom,
-   diamond:{x:x-half,y:y-half,width:o.diamond,height:o.diamond},
-   label:{x:x-n.labelWidth/2,y:labelTop,width:n.labelWidth,height:labelBottom-labelTop}
-  });
- }
+ const placed=nodes.map((n):PlacedNode=>{
+  const x=o.pad+(n.col-minCol)*o.colWidth+shift,y=o.radius+EDGE+(n.row-minRow)*o.rowHeight;
+  const r=n.root?o.radius+ROOT_GROW:o.radius;
+  const label=labelled(n)?{x:x-n.labelWidth/2,y:y+r+o.labelGap,width:n.labelWidth,height:n.labelLines*o.lineHeight}:null;
+  return {id:n.id,x,y,r,root:Boolean(n.root),label};
+ });
+ const byId=new Map(placed.map(p=>[p.id,p]));
+ const connectors=edges.flatMap(([from,to]):Connector[]=>{
+  const a=byId.get(from),b=byId.get(to);
+  return a&&b?[{from,to,points:[[a.x,a.y],[b.x,b.y]]}]:[];
+ });
 
- const connectors:Connector[]=[];
- for(const n of nodes){
-  const child=placed.get(n.id)!;
-  const parents=n.parents.map(id=>placed.get(id)).filter(p=>p!==undefined);
-  const hasParentAbove=parents.some(p=>p.col===child.col);
-  for(const p of parents){
-   const start=[p.x,p.labelBottom+LEAVE] as const;
-   const top=[child.x,child.y-half] as const;
-   let points:(readonly [number,number])[];
-   if(p.col===child.col)points=[start,top];
-   else if(hasParentAbove){
-    // Enter the side vertex that faces the parent, so the top vertex stays free for the parent above.
-    const side=p.x<child.x?child.x-half:child.x+half;
-    points=[start,[p.x,child.y],[side,child.y]];
-   }else{
-    const bus=(p.labelBottom+child.y-half)/2;
-    points=[start,[p.x,bus],[child.x,bus],top];
-   }
-   connectors.push({from:p.id,to:child.id,points});
-  }
- }
-
- const list=[...placed.values()];
- const width=Math.max(...list.map(n=>(n.col+1)*o.colWidth+offset),...list.map(n=>n.label.x+n.label.width));
- const height=Math.max(...list.map(n=>n.labelBottom))+TOP;
- return {nodes:list.map(({id,x,y,diamond,label})=>({id,x,y,diamond,label})),connectors,width,height};
+ const labels=placed.flatMap(p=>p.label?[p.label]:[]);
+ const width=Math.max(...placed.map(p=>p.x+o.pad),...labels.map(b=>b.x+b.width+LABEL_EDGE));
+ const height=Math.max(...placed.map(p=>p.y+p.r+EDGE),...labels.map(b=>b.y+b.height+LABEL_EDGE));
+ return {nodes:placed,connectors,width,height};
 }

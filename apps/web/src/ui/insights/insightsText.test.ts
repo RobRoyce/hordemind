@@ -26,7 +26,7 @@ describe('needsText',()=>{
 describe('leftOutText',()=>{
  it('returns null when nothing was left out',()=>expect(leftOutText(none,zero)).toBeNull());
  it('words each part for one and for many',()=>{
-  expect(leftOutText({pulse:1,events:0},zero)).toBe("1 run was left out because Pulse of Aether (third row of the offers branch in the Infernal Hordes War Plan) or the events branch adds Aether the model can't place yet.");
+  expect(leftOutText({pulse:1,events:0},zero)).toBe("1 run was left out because Pulse of Aether (below Reign in Hell in the Infernal Hordes War Plan) or an upgrade on the tree's right side (Cult of Annihilation and the two after it) adds Aether the model can't place yet.");
   expect(leftOutText({pulse:1,events:2},zero)).toContain("3 runs were left out");
   expect(leftOutText(none,{...zero,falling:1})).toBe('1 reading was skipped because the total went down.');
   expect(leftOutText(none,{...zero,legacy:4})).toBe('4 readings were skipped because they came from an older app version.');
@@ -108,47 +108,47 @@ const REP="Offers shared your previous pick's family in ";
 
 describe('chaoticLine',()=>{
  it('compares both sides',()=>expect(chaoticLine(R(5,20),R(9,12),0)).toBe(
-  CHAOS+'25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the second row of the offers branch in the Infernal Hordes War Plan.'));
+  CHAOS+'25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the row below Method and Madness, on the right, in the Infernal Hordes War Plan.'));
  it('words a single set',()=>expect(chaoticLine(R(1,1),R(0,1),0)).toBe(
-  CHAOS+'100% of 1 offer set without Total Chaos and 0% of 1 with it. Total Chaos is in the second row of the offers branch in the Infernal Hordes War Plan.'));
+  CHAOS+'100% of 1 offer set without Total Chaos and 0% of 1 with it. Total Chaos is in the row below Method and Madness, on the right, in the Infernal Hordes War Plan.'));
  it('words a side with no data',()=>{
-  expect(chaoticLine(R(5,20),R(0,0),0)).toBe(CHAOS+'25% of 20 offer sets, all without Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).');
-  expect(chaoticLine(R(0,0),R(9,12),0)).toBe(CHAOS+'75% of 12 offer sets, all with Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).');
-  expect(chaoticLine(R(1,1),R(0,0),0)).toBe(CHAOS+'100% of 1 offer set, all without Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).');
+  expect(chaoticLine(R(5,20),R(0,0),0)).toBe(CHAOS+'25% of 20 offer sets, all without Total Chaos (row below Method and Madness, on the right, in the Infernal Hordes War Plan).');
+  expect(chaoticLine(R(0,0),R(9,12),0)).toBe(CHAOS+'75% of 12 offer sets, all with Total Chaos (row below Method and Madness, on the right, in the Infernal Hordes War Plan).');
+  expect(chaoticLine(R(1,1),R(0,0),0)).toBe(CHAOS+'100% of 1 offer set, all without Total Chaos (row below Method and Madness, on the right, in the Infernal Hordes War Plan).');
  });
  it('is null with no sets',()=>expect(chaoticLine(R(0,0),R(0,0),0)).toBeNull());
  it('notes that Reign in Hell runs are left out',()=>{
   const note=' Runs with Reign in Hell, in the same row, are left out, because it suppresses Chaos Waves.';
-  expect(chaoticLine(R(5,20),R(9,12),3)).toBe(CHAOS+'25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the second row of the offers branch in the Infernal Hordes War Plan.'+note);
-  expect(chaoticLine(R(5,20),R(0,0),1)).toBe(CHAOS+'25% of 20 offer sets, all without Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).'+note);
-  expect(chaoticLine(R(0,0),R(9,12),1)).toBe(CHAOS+'75% of 12 offer sets, all with Total Chaos (second row of the offers branch in the Infernal Hordes War Plan).'+note);
+  expect(chaoticLine(R(5,20),R(9,12),3)).toBe(CHAOS+'25% of 20 offer sets without Total Chaos and 75% of 12 with it. Total Chaos is in the row below Method and Madness, on the right, in the Infernal Hordes War Plan.'+note);
+  expect(chaoticLine(R(5,20),R(0,0),1)).toBe(CHAOS+'25% of 20 offer sets, all without Total Chaos (row below Method and Madness, on the right, in the Infernal Hordes War Plan).'+note);
+  expect(chaoticLine(R(0,0),R(9,12),1)).toBe(CHAOS+'75% of 12 offer sets, all with Total Chaos (row below Method and Madness, on the right, in the Infernal Hordes War Plan).'+note);
  });
  it('says so when every run had Reign in Hell',()=>{
-  expect(chaoticLine(R(0,0),R(0,0),4)).toBe('The Chaotic Offering rate leaves out all 4 offer sets, because every run had Reign in Hell (second row of the offers branch in the Infernal Hordes War Plan), which suppresses Chaos Waves.');
-  expect(chaoticLine(R(0,0),R(0,0),1)).toBe('The Chaotic Offering rate leaves out all 1 offer set, because every run had Reign in Hell (second row of the offers branch in the Infernal Hordes War Plan), which suppresses Chaos Waves.');
+  expect(chaoticLine(R(0,0),R(0,0),4)).toBe('The Chaotic Offering rate leaves out all 4 offer sets, because every run had Reign in Hell (row below Method and Madness, on the left, in the Infernal Hordes War Plan), which suppresses Chaos Waves.');
+  expect(chaoticLine(R(0,0),R(0,0),1)).toBe('The Chaotic Offering rate leaves out all 1 offer set, because every run had Reign in Hell (row below Method and Madness, on the left, in the Infernal Hordes War Plan), which suppresses Chaos Waves.');
  });
 });
 
 describe('repeatLine',()=>{
  it('compares both sides with sample sizes',()=>expect(repeatLine(R(3,4),R(1,4))).toBe(
-  REP+'75% of 4 sets with Method and Madness, the first node of the offers branch in the Infernal Hordes War Plan, and 25% of 4 without it.'));
+  REP+'75% of 4 sets with Method and Madness, the node directly below the top node in the Infernal Hordes War Plan, and 25% of 4 without it.'));
  it('words a single set',()=>expect(repeatLine(R(1,1),R(1,2))).toBe(
-  REP+'100% of 1 set with Method and Madness, the first node of the offers branch in the Infernal Hordes War Plan, and 50% of 2 without it.'));
+  REP+'100% of 1 set with Method and Madness, the node directly below the top node in the Infernal Hordes War Plan, and 50% of 2 without it.'));
  it('words a side with no data',()=>{
-  expect(repeatLine(R(3,4),R(0,0))).toBe(REP+'75% of 4 sets, all with Method and Madness (first node of the offers branch in the Infernal Hordes War Plan).');
-  expect(repeatLine(R(0,0),R(1,4))).toBe(REP+'25% of 4 sets, all without Method and Madness (first node of the offers branch in the Infernal Hordes War Plan).');
-  expect(repeatLine(R(0,0),R(1,1))).toBe(REP+'100% of 1 set, all without Method and Madness (first node of the offers branch in the Infernal Hordes War Plan).');
+  expect(repeatLine(R(3,4),R(0,0))).toBe(REP+'75% of 4 sets, all with Method and Madness (node directly below the top node in the Infernal Hordes War Plan).');
+  expect(repeatLine(R(0,0),R(1,4))).toBe(REP+'25% of 4 sets, all without Method and Madness (node directly below the top node in the Infernal Hordes War Plan).');
+  expect(repeatLine(R(0,0),R(1,1))).toBe(REP+'100% of 1 set, all without Method and Madness (node directly below the top node in the Infernal Hordes War Plan).');
  });
  it('is null with no sets',()=>expect(repeatLine(R(0,0),R(0,0))).toBeNull());
 });
 
 describe('varshanLine',()=>{
- const where="Varshan's Vengeance is next to the root of the Lair Bosses War Plan.";
+ const where="Varshan's Vengeance is next to the top node of the Lair Bosses War Plan.";
  it('compares both sides',()=>expect(varshanLine(V(310,4),V(280.4,1))).toBe(
   `Chaos Waves paid a median 310 Aether with Varshan's Vengeance (4 waves) and 280 without it (1 wave). ${where}`));
  it('words a side with no data',()=>{
-  expect(varshanLine(V(310.6,4),V(null,0))).toBe("Chaos Waves paid a median 311 Aether over 4 waves, all with Varshan's Vengeance (next to the root of the Lair Bosses War Plan).");
-  expect(varshanLine(V(null,0),V(280,1))).toBe("Chaos Waves paid a median 280 Aether over 1 wave, all without Varshan's Vengeance (next to the root of the Lair Bosses War Plan).");
+  expect(varshanLine(V(310.6,4),V(null,0))).toBe("Chaos Waves paid a median 311 Aether over 4 waves, all with Varshan's Vengeance (next to the top node of the Lair Bosses War Plan).");
+  expect(varshanLine(V(null,0),V(280,1))).toBe("Chaos Waves paid a median 280 Aether over 1 wave, all without Varshan's Vengeance (next to the top node of the Lair Bosses War Plan).");
  });
  it('is null with no waves',()=>expect(varshanLine(V(null,0),V(null,0))).toBeNull());
 });

@@ -35,7 +35,7 @@ function Bars({offers,options}:{offers:GameCounts['offers'];options:{value:Offer
   <h3 className={s.title}>How often each offer appeared</h3>
   <p className={s.note}>Share of offer sets that included each offer. Top 10.</p>
   {options.length>1&&<div className={s.setups}><Segmented label="Offer setup" value={setup} options={options} onChange={v=>{clear();setPick(v)}}/></div>}
-  <p className={s.setupNote}>{offerSetLabel(setup,total)}.{where&&' Reign in Hell and Total Chaos sit in the second row of the offers branch in the Infernal Hordes War Plan.'}</p>
+  <p className={s.setupNote}>{offerSetLabel(setup,total)}.{where&&' Reign in Hell and Total Chaos sit either side of the row below Method and Madness in the Infernal Hordes War Plan.'}</p>
   <div ref={ref} className={s.wrap}>
    <svg className={s.svg} width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="group" aria-label="How often each offer appeared">
     {rows.map(({offer,count},i)=>{

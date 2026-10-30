@@ -1,11 +1,10 @@
 import {useRef,useState} from 'react';
 import type {OfferFamily} from '../../../catalog';
-import {WAR_PLAN,nodeById,toggleNode,type Branch} from '../../../domain/warplan';
-import {nodeState} from '../../character/warPlanView';
+import {nodeById,toggleNode} from '../../../domain/warplan';
+import {WAR_PLAN_EDGES,nodeState,warPlanGraphNodes} from '../../character/warPlanView';
 import {
  Button,CategoryMark,Checkbox,DangerMark,DiamondGraph,Disclosure,Field,Frame,Notice,NumberField,Numeral,PageHeader,
- RuledList,SectionHeading,Segmented,Select,Sheet,Tabs,TextField,Toast,WaveTrack,COMPACT_LAYOUT,DEFAULT_LAYOUT,useNarrow,
- type GraphNode
+ RuledList,SectionHeading,Segmented,Select,Sheet,Tabs,TextField,Toast,WaveTrack
 } from '..';
 import g from './gallery.module.css';
 
@@ -13,22 +12,13 @@ const FAMILIES:readonly OfferFamily[]=['Masses','Spires','Hellborne','Fiends','L
 const REALMS=[{value:'Season 15',label:'Season 15'},{value:'Eternal',label:'Eternal'}] as const;
 const SPEEDS=[{value:'unknown',label:'Not sure'},{value:'fast',label:'Fast'},{value:'average',label:'Average'},{value:'slow',label:'Slow'}] as const;
 
-/** War Plan nodes for one branch, with label boxes estimated at `charWidth` per character. */
-function branchNodes(branch:Branch,charWidth:number):GraphNode[]{
- return WAR_PLAN.filter(n=>n.branch===branch).map(n=>({
-  id:n.id,name:n.id,row:n.row,col:n.col,parents:n.parents,
-  ...(n.exclusive?{note:`or ${n.exclusive}`}:{}),
-  labelLines:n.exclusive?2:1,
-  labelWidth:charWidth*Math.max(n.id.length,n.exclusive?('or '+n.exclusive).length:0)
- }));
-}
+const WAR_PLAN_NODES=warPlanGraphNodes();
 
 function Section({title,children}:{title:string;children:React.ReactNode}){
  return <section className={g.section}><SectionHeading>{title}</SectionHeading>{children}</section>;
 }
 
 export function KitGallery(){
- const narrow=useNarrow();
  const [realm,setRealm]=useState<(typeof REALMS)[number]['value']>('Season 15');
  const [speed,setSpeed]=useState<(typeof SPEEDS)[number]['value']>('unknown');
  const [tab,setTab]=useState('a');
@@ -39,14 +29,6 @@ export function KitGallery(){
  // Reign in Hell makes Total Chaos show the excluded state.
  const [learned,setLearned]=useState<string[]>(['Method and Madness','Reign in Hell','Impending Doom','Cult of Annihilation']);
  const [focused,setFocused]=useState<string|null>(null);
-
- const layout=narrow?COMPACT_LAYOUT:DEFAULT_LAYOUT;
- const charWidth=narrow?7:8;
- const graph=(branch:Branch,title:string)=><div className={g.branch}>
-  <h3 className={g.branchTitle}>{title}</h3>
-  <DiamondGraph label={title} nodes={branchNodes(branch,charWidth)} layout={layout} state={id=>nodeState(learned,id)} focused={focused}
-   onActivate={id=>setLearned(l=>toggleNode(l,id))} onFocusNode={setFocused}/>
- </div>;
 
  return <main className={g.page}>
   <PageHeader title="HordeMind kit" lead="Every component in every state. The app never links to this page."/>
@@ -149,10 +131,8 @@ export function KitGallery(){
   </Section>
 
   <Section title="War Plan graph">
-   <div className={g.branches}>
-    {graph('offers','Offers and Chaos')}
-    {graph('events','Aether events')}
-   </div>
+   <DiamondGraph label="Infernal Hordes War Plan" nodes={WAR_PLAN_NODES} edges={WAR_PLAN_EDGES} state={id=>nodeState(learned,id)} focused={focused}
+    onActivate={id=>setLearned(l=>toggleNode(l,id))} onFocusNode={setFocused}/>
    <p className={g.small}>{focused?nodeById(focused)?.tooltip:'Hover or focus an upgrade to read its tooltip.'}</p>
   </Section>
  </main>;

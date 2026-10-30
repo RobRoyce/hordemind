@@ -1,6 +1,13 @@
+.wrap{width:100%}
+
 .graph{
  position:relative;
- max-width:100%;
+ margin-inline:auto;
+}
+
+.inner{
+ position:relative;
+ transform-origin:0 0;
 }
 
 .svg{
@@ -9,40 +16,75 @@
  overflow:visible;
 }
 
-.edge{
+.groove,.wire,.lit{
  fill:none;
+ stroke-linecap:round;
+}
+.groove{
+ stroke:color-mix(in srgb,var(--hm-bg) 65%,black);
+ stroke-width:6;
+}
+.wire{
  stroke:var(--hm-rule);
- stroke-width:1.5;
- transition:stroke var(--hm-motion);
+ stroke-width:2;
 }
-.lit{stroke:var(--hm-gold)}
+.lit{
+ stroke:var(--hm-ember);
+ stroke-width:2.5;
+}
+.draw{
+ stroke-dasharray:var(--len);
+ animation:draw 520ms ease-out both;
+}
+@keyframes draw{
+ from{stroke-dashoffset:var(--len)}
+ to{stroke-dashoffset:0}
+}
 
-.diamond{
- stroke-width:1.5;
- transition:fill var(--hm-motion),stroke var(--hm-motion);
+.halo{
+ fill:var(--hm-ember);
+ opacity:.55;
 }
+.root .halo{opacity:.35}
+.backing{fill:color-mix(in srgb,var(--hm-bg) 65%,black)}
 .ring{
  fill:none;
- stroke:color-mix(in srgb,var(--hm-gold) 45%,transparent);
- stroke-width:1;
+ stroke:var(--hm-gold);
+ stroke-width:1.5;
+}
+.rim{
+ fill:none;
+ stroke-width:2.5;
+}
+.root .rim{stroke-width:3}
+
+.fresh .core,.fresh .halo{animation:light 420ms ease 260ms both}
+@keyframes light{
+ from{opacity:0}
 }
 
-.learned .diamond{fill:var(--hm-frame-fill-top);stroke:var(--hm-gold)}
-.open .diamond{fill:var(--hm-bg);stroke:var(--hm-ink)}
-.locked .diamond,.excluded .diamond{fill:var(--hm-bg);stroke:var(--hm-faint);stroke-dasharray:3 3}
+.learned .glyph{color:var(--hm-warm-white)}
+.open .glyph{color:var(--hm-gold)}
+.locked .glyph,.excluded .glyph{color:var(--hm-muted)}
+.locked .icon,.excluded .icon{opacity:.38}
 
-.label{font-family:var(--hm-font-text)}
-.name{
- fill:var(--hm-ink);
- font-size:var(--hm-text-2);
+.plate{fill:var(--hm-bg)}
+.label{
+ font-family:var(--hm-font-text);
+ font-size:var(--hm-text-1);
 }
-.learned .name{fill:var(--hm-gold)}
+.name{fill:var(--hm-ink)}
+.learned .name{
+ fill:var(--hm-gold);
+ font-weight:600;
+}
 .locked .name,.excluded .name{fill:var(--hm-muted)}
 .note{
  fill:var(--hm-muted);
- font-size:var(--hm-text-1);
  font-style:italic;
 }
+.mark{fill:var(--hm-ember)}
+.badge{fill:var(--hm-gold)}
 
 .hit{
  position:absolute;
@@ -52,7 +94,9 @@
  cursor:pointer;
 }
 .hit[aria-disabled="true"]{cursor:not-allowed}
+/* The gold ring marks focus. The transparent outline still shows in forced-colors mode. */
+.hit:focus-visible{outline:2px solid transparent;outline-offset:2px}
 
-@media (max-width:699px){
- .name{font-size:var(--hm-text-1)}
+@media (prefers-reduced-motion:reduce){
+ .draw,.fresh .core,.fresh .halo{animation:none}
 }

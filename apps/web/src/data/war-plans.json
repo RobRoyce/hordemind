@@ -1,0 +1,513 @@
+{
+ "source": {
+  "repo": "DiabloTools/d4data",
+  "commit": "76b722a340d22001171b4cfb0fc39e8efa761654",
+  "build": "3.2.3.73883"
+ },
+ "plans": {
+  "infernalHordes": {
+   "nodes": [
+    {
+     "key": "Warplans_BSK_BossBoost",
+     "name": "Exalted Council",
+     "col": -2,
+     "row": 0,
+     "group": null,
+     "root": false,
+     "tooltip": "Bartuc and the Fell Council have +1 Monster Power and drop additional items when slain.",
+     "seasonal": ""
+    },
+    {
+     "key": "root",
+     "name": "root",
+     "col": 0,
+     "row": 0,
+     "group": null,
+     "root": true,
+     "tooltip": "",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_Omens",
+     "name": "Cult of Annihilation",
+     "col": 2,
+     "row": 0,
+     "group": null,
+     "root": false,
+     "tooltip": "Doomsayers appear during the Infernal Hordes. Doomsayers are dangerous enemies but also drop Aether.",
+     "seasonal": "At Rank 5 with the Splinter of Terror, a Doomsayer appears at the start of each wave."
+    },
+    {
+     "key": "Warplans_BSK_RuneChest",
+     "name": "Council Coffers",
+     "col": -3,
+     "row": 1,
+     "group": null,
+     "root": false,
+     "tooltip": "The Chest of Talismans will appear after defeating either the Fell Council or Bartuc.",
+     "seasonal": "At Rank 20 with the Splinter of Terror, the Chest of Talismans now costs 1 Aether."
+    },
+    {
+     "key": "Warplans_BSK_ObduciteBoost",
+     "name": "Forged in Flame",
+     "col": -1,
+     "row": 1,
+     "group": 11,
+     "root": false,
+     "tooltip": "Obducite drops instead of Gem Fragments in the Infernal Hordes.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_KillCommand",
+     "name": "Scale of Tathamet",
+     "col": 3,
+     "row": 1,
+     "group": null,
+     "root": false,
+     "tooltip": "Once per wave the Scale of Tathamet may appear, a primordial relic that kills all enemies within the Infernal Hordes.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_GemBoost",
+     "name": "Flawless Find",
+     "col": -2,
+     "row": 2,
+     "group": 11,
+     "root": false,
+     "tooltip": "Gem Fragments drop instead of Obducite in the Infernal Hordes.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_LikeBargains",
+     "name": "Method and Madness",
+     "col": 0,
+     "row": 2,
+     "group": null,
+     "root": false,
+     "tooltip": "Your Infernal Offerings are more likely to share a category with your previous choice.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_SuperChest",
+     "name": "Infernal Hoard",
+     "col": -3,
+     "row": 3,
+     "group": null,
+     "root": false,
+     "tooltip": "Defeating either the Fell Council or Bartuc reveals the Hoard of Greater Equipment, which contains a colossal deluge of equipment and other rewards.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_Order1",
+     "name": "Reign in Hell",
+     "col": -1,
+     "row": 3,
+     "group": 21,
+     "root": false,
+     "tooltip": "An additional Infernal Offering appears each wave. However, you suppress Chaos Waves from appearing.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_Chaos1",
+     "name": "Total Chaos",
+     "col": 1,
+     "row": 3,
+     "group": 21,
+     "root": false,
+     "tooltip": "Chaos Waves appear more frequently. However, one less Infernal Offering appears each wave.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_Challenges",
+     "name": "Devil's Deal",
+     "col": 3,
+     "row": 3,
+     "group": null,
+     "root": false,
+     "tooltip": "At the start of the Infernal Hordes, gain an Infernal Challenge. Completing the Infernal Challenge will grant +200 Aether.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_EventRush",
+     "name": "Impending Doom",
+     "col": 0,
+     "row": 4,
+     "group": null,
+     "root": false,
+     "tooltip": "When the current wave has 10 seconds remaining, Aether Events spawn at all locations.",
+     "seasonal": "At Rank 14 with the Splinter of Terror, Impending Doom also triggers when the current wave has 30 seconds remaining."
+    },
+    {
+     "key": "Warplans_BSK_Order2",
+     "name": "Pulse of Aether",
+     "col": -1,
+     "row": 5,
+     "group": 22,
+     "root": false,
+     "tooltip": "Suppressing a Chaos Wave grants +50 Aether. All enemies in the Infernal Hordes gain +1 Monster Power.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_Chaos2",
+     "name": "Bedlam",
+     "col": 1,
+     "row": 5,
+     "group": 22,
+     "root": false,
+     "tooltip": "When you enter a Chaos Wave, gain +50 Aether and all enemies in the Infernal Hordes gain +1 Monster Power.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BSK_Replicator",
+     "name": "The Black Pact",
+     "col": 0,
+     "row": 6,
+     "group": null,
+     "root": false,
+     "tooltip": "An ominous altar appears between waves in the Infernal Hordes. It can be invoked only once, and provides an Infernal Offering that shares a category with your previous choice.",
+     "seasonal": ""
+    }
+   ],
+   "edges": [
+    [
+     "root",
+     "Warplans_BSK_Omens"
+    ],
+    [
+     "Warplans_BSK_BossBoost",
+     "root"
+    ],
+    [
+     "Warplans_BSK_Chaos1",
+     "Warplans_BSK_Chaos2"
+    ],
+    [
+     "Warplans_BSK_EventRush",
+     "Warplans_BSK_Replicator"
+    ],
+    [
+     "Warplans_BSK_KillCommand",
+     "Warplans_BSK_Challenges"
+    ],
+    [
+     "Warplans_BSK_LikeBargains",
+     "root"
+    ],
+    [
+     "Warplans_BSK_LikeBargains",
+     "Warplans_BSK_Chaos1"
+    ],
+    [
+     "Warplans_BSK_LikeBargains",
+     "Warplans_BSK_EventRush"
+    ],
+    [
+     "Warplans_BSK_Omens",
+     "Warplans_BSK_KillCommand"
+    ],
+    [
+     "Warplans_BSK_Order1",
+     "Warplans_BSK_LikeBargains"
+    ],
+    [
+     "Warplans_BSK_Order2",
+     "Warplans_BSK_Order1"
+    ],
+    [
+     "Warplans_BSK_Order2",
+     "Warplans_BSK_Replicator"
+    ],
+    [
+     "Warplans_BSK_Replicator",
+     "Warplans_BSK_Chaos2"
+    ],
+    [
+     "Warplans_BSK_RuneChest",
+     "Warplans_BSK_BossBoost"
+    ],
+    [
+     "Warplans_BSK_RuneChest",
+     "Warplans_BSK_GemBoost"
+    ],
+    [
+     "Warplans_BSK_RuneChest",
+     "Warplans_BSK_ObduciteBoost"
+    ],
+    [
+     "Warplans_BSK_RuneChest",
+     "Warplans_BSK_SuperChest"
+    ]
+   ]
+  },
+  "lairBosses": {
+   "nodes": [
+    {
+     "key": "root",
+     "name": "root",
+     "col": 0,
+     "row": 0,
+     "group": null,
+     "root": true,
+     "tooltip": "",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_4",
+     "name": "Lair of Runes",
+     "col": -3,
+     "row": 1,
+     "group": null,
+     "root": false,
+     "tooltip": "Lair Bosses have +1 Monster Power. Lair Bosses have a higher chances of dropping specific Runes.",
+     "seasonal": "At Rank 14 with the Splinter of Destruction, Lair Bosses drop additional Runes."
+    },
+    {
+     "key": "Warplans_BossLair_2",
+     "name": "Nemesis Tides",
+     "col": 3,
+     "row": 1,
+     "group": null,
+     "root": false,
+     "tooltip": "Initiate Lair Bosses have a chance to appear instead of Helltide Commanders after Helltide Events. Killing Lair Bosses in Helltides while earning the Event Mastery grants many random Lair Boss materials. This only occurs in Torment+ difficulties.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_9",
+     "name": "Grigoire's Gambit",
+     "col": -2,
+     "row": 2,
+     "group": null,
+     "root": false,
+     "tooltip": "After opening a Tortured Gift in Helltides, there is a chance Grigoire's knights will ambush you. When killed in Helltide, they may drop Unique Items available from his Hoard Chest.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_1",
+     "name": "Two by Two",
+     "col": 0,
+     "row": 2,
+     "group": null,
+     "root": false,
+     "tooltip": "After opening a Hoard Chest, there is a low chance a Portal will open that will take you to the Nemesis Lair, where you will fight two Initiate Lair Bosses at the same time. Slaying both will yield great rewards. You cannot enter a Nemesis Lair from Belial's throne room.",
+     "seasonal": "At Rank 18 with the Splinter of Destruction, the chance for a portal is increased."
+    },
+    {
+     "key": "Warplans_BossLair_15",
+     "name": "Varshan's Vengeance",
+     "col": 2,
+     "row": 2,
+     "group": null,
+     "root": false,
+     "tooltip": "Varshan and his minions can now appear in a Chaos Wave within the Infernal Hordes. After killing Varshan in the Infernal Hordes, the Spoils of Greater Equipment may drop Unique Items available from his Hoard Chest.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_11",
+     "name": "Children of Zir",
+     "col": -1,
+     "row": 3,
+     "group": null,
+     "root": false,
+     "tooltip": "When exploring the Pit, Lord Zir's Bloodseekers can now ambush you. Killing them in the Pit can now drop Unique Items from his Hoard Chest.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_13",
+     "name": "Out of the Cold",
+     "col": 1,
+     "row": 3,
+     "group": null,
+     "root": false,
+     "tooltip": "When fighting a Boss in a Nightmare Dungeon, the Beast in Ice has a chance to appear and attack you. When this occurs, killing the Nightmare Dungeon Boss has a chance to drop Unique Items from the Beast in Ice's Hoard Chest.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_10",
+     "name": "Duriel's Invasion",
+     "col": -2,
+     "row": 4,
+     "group": null,
+     "root": false,
+     "tooltip": "When summoning the Blood Maiden in Helltides, there is a chance Duriel can be summoned instead. Killing Duriel in Helltides can now drop Unique Items from his Hoard Chest.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_1A",
+     "name": "Greater Nemesis",
+     "col": 0,
+     "row": 4,
+     "group": null,
+     "root": false,
+     "tooltip": "After completing a Nemesis Lair, there is a chance that a portal will appear that will take you to a Greater Nemesis Lair. Within this heinous place lies two Greater Lair Bosses. Slaying both bosses will yield great rewards.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_16",
+     "name": "Blood of Bartuc",
+     "col": 2,
+     "row": 4,
+     "group": null,
+     "root": false,
+     "tooltip": "The Fell Council in the Infernal Hordes has +1 Monster Power. After defeating the Fell Council, the Spoils of Greater Equipment may drop Unique Items associated with Bartuc.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_3A",
+     "name": "Lair of Plenty",
+     "col": -3,
+     "row": 5,
+     "group": null,
+     "root": false,
+     "tooltip": "Lair Bosses have +1 Monster Power. Gain +1 Hoard Chest when you slay a Lair Boss (excluding Belial).",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_12",
+     "name": "Embers of Anguish",
+     "col": -1,
+     "row": 5,
+     "group": null,
+     "root": false,
+     "tooltip": "When exploring the Pit, Embers of Anguish can appear. Activating one drops Progress Orbs, and causes Andariel to ambush you at the end of the Pit. Killing Andariel in the Pit can now drop Unique Items from her Hoard Chest.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_14",
+     "name": "Dog of Astaroth",
+     "col": 1,
+     "row": 5,
+     "group": null,
+     "root": false,
+     "tooltip": "When fighting a Boss in a Nightmare Dungeon, the Amalgam of Rage has a chance to appear and attack you. Killing the Amalgam of Rage in Nightmare Dungeons can drop Unique Items associated with Astaroth",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_3B",
+     "name": "Infernal Deception",
+     "col": 3,
+     "row": 5,
+     "group": null,
+     "root": false,
+     "tooltip": "Belial can now ambush you after completing the Infernal Hordes.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_8",
+     "name": "Golden Hoard",
+     "col": -2,
+     "row": 6,
+     "group": null,
+     "root": false,
+     "tooltip": "All equipment that would drop from Hoard Chests are converted to Gold, except for Unique and Mythic items.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_7",
+     "name": "Ultimate Nemesis",
+     "col": 0,
+     "row": 6,
+     "group": null,
+     "root": false,
+     "tooltip": "After defeating all Bosses within the Greater Nemesis Lair, the Call Of Evil will appear. This altar will accept 3 Superior Lair Keys and open a Portal that takes you to the Ultimate Nemesis Lair. Inside the Ultimate Nemesis Lair, all enemies gain +5 Monster Power. Defeating the Boss Encounter will award you with 10 Hoard Chests worth of Items.",
+     "seasonal": ""
+    },
+    {
+     "key": "Warplans_BossLair_2B",
+     "name": "Exotic Armory",
+     "col": 2,
+     "row": 6,
+     "group": null,
+     "root": false,
+     "tooltip": "Hoard Chests drop one additional Unique Item, but it can be for any Class.",
+     "seasonal": "At Rank 20 with the Splinter of Destruction, Hoard Chests drop an additional 3 Unique Items for any Class."
+    }
+   ],
+   "edges": [
+    [
+     "root",
+     "Warplans_BossLair_13"
+    ],
+    [
+     "root",
+     "Warplans_BossLair_15"
+    ],
+    [
+     "root",
+     "Warplans_BossLair_2"
+    ],
+    [
+     "Warplans_BossLair_1",
+     "root"
+    ],
+    [
+     "Warplans_BossLair_1",
+     "Warplans_BossLair_1A"
+    ],
+    [
+     "Warplans_BossLair_10",
+     "Warplans_BossLair_8"
+    ],
+    [
+     "Warplans_BossLair_11",
+     "root"
+    ],
+    [
+     "Warplans_BossLair_12",
+     "Warplans_BossLair_11"
+    ],
+    [
+     "Warplans_BossLair_13",
+     "Warplans_BossLair_14"
+    ],
+    [
+     "Warplans_BossLair_14",
+     "Warplans_BossLair_2B"
+    ],
+    [
+     "Warplans_BossLair_15",
+     "Warplans_BossLair_16"
+    ],
+    [
+     "Warplans_BossLair_1A",
+     "Warplans_BossLair_7"
+    ],
+    [
+     "Warplans_BossLair_2",
+     "Warplans_BossLair_3B"
+    ],
+    [
+     "Warplans_BossLair_2B",
+     "Warplans_BossLair_16"
+    ],
+    [
+     "Warplans_BossLair_2B",
+     "Warplans_BossLair_3B"
+    ],
+    [
+     "Warplans_BossLair_3A",
+     "Warplans_BossLair_4"
+    ],
+    [
+     "Warplans_BossLair_3A",
+     "Warplans_BossLair_8"
+    ],
+    [
+     "Warplans_BossLair_4",
+     "root"
+    ],
+    [
+     "Warplans_BossLair_8",
+     "Warplans_BossLair_12"
+    ],
+    [
+     "Warplans_BossLair_9",
+     "root"
+    ],
+    [
+     "Warplans_BossLair_9",
+     "Warplans_BossLair_10"
+    ]
+   ]
+  }
+ }
+}

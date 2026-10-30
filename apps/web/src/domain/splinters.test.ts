@@ -66,8 +66,8 @@ describe('splinter profile fields',()=>{
   expect(activeRank({activeSplinter:null,splinterRanks:{terror:5,destruction:null,hatred:null}})).toBeNull();
  });
  it('Lair Bosses nodes toggle on and off',()=>{
-  const p=toggleLairBossNode(newProfile('A','Paladin'),'Infernal Deception');
-  expect(p.lairBossNodes).toEqual(['Infernal Deception']);
-  expect(toggleLairBossNode(p,'Infernal Deception').lairBossNodes).toEqual([]);
+  const p=toggleLairBossNode(toggleLairBossNode(newProfile('A','Paladin'),'Nemesis Tides'),'Infernal Deception');
+  expect(p.lairBossNodes).toEqual(['Nemesis Tides','Infernal Deception']);
+  expect(toggleLairBossNode(p,'Infernal Deception').lairBossNodes).toEqual(['Nemesis Tides']);
  });
 });

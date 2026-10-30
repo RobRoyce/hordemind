@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {newProfile,newRun,recordDecision,endRun,undoChoice} from '../domain/run';
 import type {CharacterProfile,RunRecord} from '../domain/schema';
-import {readRun,replaySpans,seedOf,SD_FLOOR,type RunReadings} from './replay';
+import {readRun,replayRun,replaySpans,seedOf,SD_FLOOR,type RunReadings} from './replay';
 
 const A='The Gorging Mass',B='The Rising Spires',C='The Exalted Hordes',D='The Aether Rush',CH='The Chaotic Offering';
 const prof=(over:Partial<CharacterProfile>={}):CharacterProfile=>({...newProfile('T','Paladin'),...over});
@@ -86,6 +86,28 @@ describe('replaySpans',()=>{
   real.forEach((p,i)=>expect(p.mean).toBeCloseTo(twin[i]!.mean,9));
  });
  const done=()=>readRun(endRun(play(prof({killSpeed:'average'}),[A,B,C,D],[0,40,90,null]),'completed',200));
+ const r=done(),completed=council(EC,true);
+ it('starts the fan at zero and ends it at the last reading',()=>{
+  const {fan}=replayRun(r,200);
+  expect(fan[0]).toEqual({wave:0,mean:0,p10:0,p25:0,p75:0,p90:0});
+  expect(fan.at(-1)!.wave).toBe(r.spans.at(-1)!.toWave);
+  expect(fan).toHaveLength(r.spans.at(-1)!.toWave+1);
+ });
+ it('ends the fan at the sum of the span means',()=>{
+  const {spans,fan}=replayRun(r,200);
+  expect(fan.at(-1)!.mean).toBeCloseTo(spans.reduce((a,s)=>a+s.mean,0),6);
+ });
+ it('orders the fan percentiles at every wave',()=>{
+  for(const f of replayRun(r,200).fan)expect(f.p10<=f.p25&&f.p25<=f.p75&&f.p75<=f.p90).toBe(true);
+ });
+ it('adds Council Aether only at the final wave of a completed run',()=>{
+  const done=replayRun(completed,200).fan,left=replayRun({...completed,status:'abandoned'},200).fan;
+  expect(done.slice(0,-1)).toEqual(left.slice(0,-1));
+  expect(done.at(-1)!.mean).toBeGreaterThan(left.at(-1)!.mean);
+ });
+ it('keeps replaySpans equal to the spans of replayRun',()=>{
+  expect(replaySpans(r,200)).toEqual(replayRun(r,200).spans);
+ });
  it('replays are repeatable for the same run',()=>{
   const r=done();
   expect(replaySpans(r,60)).toEqual(replaySpans(r,60));

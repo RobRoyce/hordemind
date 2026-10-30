@@ -9,6 +9,7 @@ import {writeFile} from 'node:fs/promises';
 const REPO='DiabloTools/d4data';
 const COMMIT=process.argv[2]??'76b722a340d22001171b4cfb0fc39e8efa761654';
 const OUT=new URL('../apps/web/src/data/game-text.json',import.meta.url);
+const PLANS_OUT=new URL('../apps/web/src/data/war-plans.json',import.meta.url);
 const STRINGS='json/enUS_Text/meta/StringList';
 
 // Developer switches and boss portals share the offer prefix but are not offers.
@@ -63,6 +64,28 @@ for(const file of files.filter(f=>f.startsWith('Power_Warplans_BSK_'))){
  warPlan.push({key,desc:strip((s.desc??'').replace(/\r\n/g,' ')),seasonal:strip(s.warplan_seasonal_desc??'')});
 }
 
+/** Reads a War Plan SkillKit into named nodes on a column/row grid, plus named edges. */
+async function plan(kit,xStep){
+ const {arNodes,arConnections}=JSON.parse(await raw(`json/base/meta/SkillKit/${kit}.skl.json`));
+ const rootY=arNodes.find(n=>n.eRootNodeType===1).vPosition.y;
+ const nodes=[];
+ for(const n of arNodes){
+  const fx=n.vPosition.x/xStep,fy=(n.vPosition.y-rootY)/480;
+  const col=Math.round(fx),row=Math.round(fy);
+  const root=n.eRootNodeType===1;
+  if(Math.abs(fx-col)>0.01||Math.abs(fy-row)>0.01)throw new Error(`${kit}: node at (${n.vPosition.x},${n.vPosition.y}) is off the grid`);
+  const group=n.nExclusiveGroupId===-1?null:n.nExclusiveGroupId;
+  if(root){nodes.push({key:'root',name:'root',col,row,group,root:true,tooltip:'',seasonal:''});continue;}
+  const key=n.gbidReward.name;
+  const s=entries(await raw(`${STRINGS}/Power_${key}.stl.json`));
+  nodes.push({key,name:strip(s.name??key),col,row,group,root:false,tooltip:strip((s.desc??'').replace(/\r\n/g,' ')),seasonal:strip(s.warplan_seasonal_desc??'')});
+ }
+ const keyAt=arNodes.map(n=>n.eRootNodeType===1?'root':n.gbidReward.name);
+ const edges=arConnections.map(c=>[keyAt[c.nIndexNodeA],keyAt[c.nIndexNodeB]]).sort((a,b)=>a.join('|').localeCompare(b.join('|')));
+ return {nodes:nodes.sort((a,b)=>a.row-b.row||a.col-b.col),edges};
+}
+const plans={infernalHordes:await plan('Warplans_InfernalHordes',800),lairBosses:await plan('Warplans_BossLair',1000)};
+
 const result={
  source:{repo:REPO,commit:COMMIT,build,url:`https://github.com/${REPO}/tree/${COMMIT}/${STRINGS}`,
   note:'Infernal Hordes text from the Diablo IV client (code name BSK). © Blizzard Entertainment.'},
@@ -71,3 +94,5 @@ const result={
 };
 await writeFile(OUT,JSON.stringify(result,null,1)+'\n');
 console.log(`Wrote ${offers.length} offers and ${warPlan.length} War Plan upgrades from build ${build} (${COMMIT.slice(0,7)}).`);
+await writeFile(PLANS_OUT,JSON.stringify({source:{repo:REPO,commit:COMMIT,build},plans},null,1)+'\n');
+console.log(`Wrote War Plan layouts: ${Object.entries(plans).map(([k,p])=>`${k} ${p.nodes.length} nodes, ${p.edges.length} edges`).join('; ')}.`);

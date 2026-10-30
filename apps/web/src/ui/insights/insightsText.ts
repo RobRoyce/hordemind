@@ -13,7 +13,7 @@ export const needsText=(needed:number)=>`Record ${needed} more ${needed===1?'run
 export function leftOutText(leftOut:{pulse:number;events:number},skipped:{falling:number;legacy:number;varshanChaos:number}):string|null{
  const runs=leftOut.pulse+leftOut.events;
  const parts=[
-  runs&&`${n(runs,'run was','runs were')} left out because Pulse of Aether (third row of the offers branch in the Infernal Hordes War Plan) or the events branch adds Aether the model can't place yet.`,
+  runs&&`${n(runs,'run was','runs were')} left out because Pulse of Aether (below Reign in Hell in the Infernal Hordes War Plan) or an upgrade on the tree's right side (Cult of Annihilation and the two after it) adds Aether the model can't place yet.`,
   skipped.falling&&`${n(skipped.falling,'reading was','readings were')} skipped because the total went down.`,
   skipped.legacy&&`${n(skipped.legacy,'reading was','readings were')} skipped because they came from an older app version.`,
   skipped.varshanChaos&&`${n(skipped.varshanChaos,'Chaos Wave reading was','Chaos Wave readings were')} skipped because Varshan's Vengeance (Lair Bosses War Plan) can change them.`
@@ -68,7 +68,8 @@ export function choicesLeftOutText(skippedOlder:number,gapLeftOut:number):string
 
 const CHAOS='The Chaotic Offering, the Chaos Wave offer, appeared in ';
 const WAR_PLAN='in the Infernal Hordes War Plan';
-const TC=`second row of the offers branch ${WAR_PLAN}`;
+const TC=`row below Method and Madness, on the right, ${WAR_PLAN}`;
+const RH=`row below Method and Madness, on the left, ${WAR_PLAN}`;
 const REIGN_NOTE=' Runs with Reign in Hell, in the same row, are left out, because it suppresses Chaos Waves.';
 export function chaoticLine(without:Rate,withTotalChaos:Rate,reignSets:number):string|null{
  const w=`${percent(without.hits,without.total)} of ${n(without.total,'offer set','offer sets')}`;
@@ -77,12 +78,12 @@ export function chaoticLine(without:Rate,withTotalChaos:Rate,reignSets:number):s
  if(without.total&&withTotalChaos.total)return `${CHAOS}${w} without Total Chaos and ${percent(withTotalChaos.hits,withTotalChaos.total)} of ${withTotalChaos.total} with it. Total Chaos is in the ${TC}.${note}`;
  if(without.total)return `${CHAOS}${w}, all without Total Chaos (${TC}).${note}`;
  if(withTotalChaos.total)return `${CHAOS}${c}, all with Total Chaos (${TC}).${note}`;
- if(reignSets>0)return `The Chaotic Offering rate leaves out all ${n(reignSets,'offer set','offer sets')}, because every run had Reign in Hell (${TC}), which suppresses Chaos Waves.`;
+ if(reignSets>0)return `The Chaotic Offering rate leaves out all ${n(reignSets,'offer set','offer sets')}, because every run had Reign in Hell (${RH}), which suppresses Chaos Waves.`;
  return null;
 }
 
 const REPEAT="Offers shared your previous pick's family in ";
-const MM=`first node of the offers branch ${WAR_PLAN}`;
+const MM=`node directly below the top node ${WAR_PLAN}`;
 export function repeatLine(withMadness:Rate,without:Rate):string|null{
  const w=`${percent(withMadness.hits,withMadness.total)} of ${n(withMadness.total,'set','sets')}`;
  const o=`${percent(without.hits,without.total)} of ${n(without.total,'set','sets')}`;
@@ -92,7 +93,7 @@ export function repeatLine(withMadness:Rate,without:Rate):string|null{
  return null;
 }
 
-const WHERE='next to the root of the Lair Bosses War Plan';
+const WHERE='next to the top node of the Lair Bosses War Plan';
 const median=(m:number|null)=>m===null?0:Math.round(m);
 export function varshanLine(withV:{median:number|null;count:number},without:{median:number|null;count:number}):string|null{
  const V="Varshan's Vengeance";
